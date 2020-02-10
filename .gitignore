@@ -1,0 +1,23 @@
+bin/
+[Tt]est*/
+[Tt]est*.*
+
+# CMake
+CMakeFiles/
+CMakeScripts/
+CMakeCache.txt
+cmake_install.cmake
+install_manifest.txt
+compile_commands.json
+CTestTestfile.cmake
+
+# Make
+Makefile
+
+# Visual Studio
+.vs/
+*.sln
+*.vcxproj
+*.filters
+*.user
+cpp.hint
