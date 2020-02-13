@@ -102,7 +102,7 @@ namespace svm {
 
 	class ReferenceObject final : public Object {
 	public:
-		Object* Value = 0;
+		Object* Value = nullptr;
 
 	public:
 		ReferenceObject() noexcept;

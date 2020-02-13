@@ -34,13 +34,18 @@ namespace svm {
 		Je,
 		Jne,
 		Ja,
-		Jnae,
+		Jae,
 		Jb,
-		Jnbe,
+		Jbe,
 		Call,
 		Ret,
+	};
 
-		GetField,
-		SetField,
+	static constexpr const char* Mnemonics[] = {
+		"nop",
+		"push", "pop", "load", "store",
+		"add", "sub", "mul", "imul", "div", "idiv", "mod", "imod", "neg",
+		"and", "or", "xor", "not", "shl", "shr", "sal", "sar",
+		"cmp", "icmp", "jmp", "je", "jne", "ja", "jae", "jb", "jbe", "call", "ret",
 	};
 }
