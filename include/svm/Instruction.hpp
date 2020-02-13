@@ -57,15 +57,20 @@ namespace svm {
 	class Instruction final {
 	public:
 		static constexpr std::uint32_t NoOperand = std::numeric_limits<std::uint32_t>::max();
+		static constexpr std::uint64_t NoOffset = std::numeric_limits<std::uint64_t>::max();
 
 	public:
 		svm::OpCode OpCode = OpCode::Nop;
 		std::uint32_t Operand = NoOperand;
 
+		std::uint64_t Offset = NoOffset;
+
 	public:
 		Instruction() noexcept = default;
 		Instruction(svm::OpCode opCode) noexcept;
+		Instruction(svm::OpCode opCode, std::uint64_t offset) noexcept;
 		Instruction(svm::OpCode opCode, std::uint32_t operand) noexcept;
+		Instruction(svm::OpCode opCode, std::uint32_t operand, std::uint64_t offset) noexcept;
 		Instruction(const Instruction& instruction) noexcept;
 		~Instruction() = default;
 
@@ -76,6 +81,7 @@ namespace svm {
 
 	public:
 		bool HasOperand() const noexcept;
+		bool HasOffset() const noexcept;
 		std::string ToString() const;
 	};
 

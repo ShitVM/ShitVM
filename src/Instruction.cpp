@@ -1,18 +1,26 @@
 #include <svm/Instruction.hpp>
 
+#include <iomanip>
+#include <ios>
 #include <sstream>
 
 namespace svm {
 	Instruction::Instruction(svm::OpCode opCode) noexcept
 		: OpCode(opCode) {}
+	Instruction::Instruction(svm::OpCode opCode, std::uint64_t offset) noexcept
+		: OpCode(opCode), Offset(offset) {}
 	Instruction::Instruction(svm::OpCode opCode, std::uint32_t operand) noexcept
 		: OpCode(opCode), Operand(operand) {}
+	Instruction::Instruction(svm::OpCode opCode, std::uint32_t operand, std::uint64_t offset) noexcept
+		: OpCode(opCode), Operand(operand), Offset(offset) {}
 	Instruction::Instruction(const Instruction& instruction) noexcept
-		: OpCode(instruction.OpCode), Operand(instruction.Operand) {}
+		: OpCode(instruction.OpCode), Operand(instruction.Operand), Offset(instruction.Offset) {}
 
 	Instruction& Instruction::operator=(const Instruction& instruction) noexcept {
 		OpCode = instruction.OpCode;
 		Operand = instruction.Operand;
+
+		Offset = instruction.Offset;
 		return *this;
 	}
 	bool Instruction::operator==(const Instruction& instruction) const noexcept {
@@ -25,6 +33,9 @@ namespace svm {
 	bool Instruction::HasOperand() const noexcept {
 		return Operand != NoOperand;
 	}
+	bool Instruction::HasOffset() const noexcept {
+		return Offset != NoOffset;
+	}
 	std::string Instruction::ToString() const {
 		std::ostringstream oss;
 		oss << *this;
@@ -32,9 +43,12 @@ namespace svm {
 	}
 
 	std::ostream& operator<<(std::ostream& stream, const Instruction& instruction) {
+		if (instruction.HasOffset()) {
+			stream << std::hex << std::uppercase << std::setw(16) << std::setfill('0') << instruction.Offset << ": ";
+		}
 		stream << Mnemonics[static_cast<int>(instruction.OpCode)];
 		if (instruction.HasOperand()) {
-			stream << ' ' << std::showbase << std::hex << instruction.Operand;
+			stream << " 0x" << instruction.Operand << std::dec << std::nouppercase;
 		}
 		return stream;
 	}
