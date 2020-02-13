@@ -39,5 +39,8 @@ namespace svm {
 		Jnbe,
 		Call,
 		Ret,
+
+		GetField,
+		SetField,
 	};
 }
