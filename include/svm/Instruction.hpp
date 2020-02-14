@@ -14,7 +14,7 @@ namespace svm {
 		Pop,
 		Load,
 		Store,
-		
+
 		Add,
 		Sub,
 		Mul,

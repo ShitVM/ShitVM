@@ -10,7 +10,7 @@ namespace svm {
 	class Parser final {
 	private:
 		std::vector<std::uint8_t> m_File;
-			
+		std::size_t m_Pos = 0;
 		Instructions m_Instructions;
 
 	public:
@@ -29,8 +29,12 @@ namespace svm {
 		void Clear() noexcept;
 		void Load(const std::string& path);
 		bool IsLoaded() const noexcept;
+		void Parse();
 		bool IsParsed() const noexcept;
 
 		const Instructions& GetInstructions() const noexcept;
+
+	private:
+		void ParseFunctions();
 	};
 }
