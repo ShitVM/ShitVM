@@ -3,6 +3,7 @@
 #include <iomanip>
 #include <ios>
 #include <sstream>
+#include <utility>
 
 namespace svm {
 	Instruction::Instruction(svm::OpCode opCode) noexcept
@@ -49,6 +50,30 @@ namespace svm {
 		stream << Mnemonics[static_cast<int>(instruction.OpCode)];
 		if (instruction.HasOperand()) {
 			stream << " 0x" << instruction.Operand << std::dec << std::nouppercase;
+		}
+		return stream;
+	}
+}
+
+namespace svm {
+	Instructions& operator<<(Instructions& instructions, const Instruction& instruction) {
+		instructions.push_back(instruction);
+		return instructions;
+	}
+	Instructions& operator<<(Instructions& instructions, Instruction&& instruction) {
+		instructions.push_back(std::move(instruction));
+		return instructions;
+	}
+
+	std::ostream& operator<<(std::ostream& stream, const Instructions& instructions) {
+		bool isFirst = true;
+		for (const auto& inst : instructions) {
+			if (isFirst) {
+				isFirst = false;
+			} else {
+				stream << '\n';
+			}
+			stream << inst;
 		}
 		return stream;
 	}

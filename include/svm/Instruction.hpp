@@ -4,6 +4,7 @@
 #include <limits>
 #include <ostream>
 #include <string>
+#include <vector>
 
 namespace svm {
 	enum class OpCode {
@@ -86,4 +87,11 @@ namespace svm {
 	};
 
 	std::ostream& operator<<(std::ostream& stream, const Instruction& instruction);
+
+	using Instructions = std::vector<Instruction>;
+
+	Instructions& operator<<(Instructions& instructions, const Instruction& instruction);
+	Instructions& operator<<(Instructions& instructions, Instruction&& instruction);
+
+	std::ostream& operator<<(std::ostream& stream, const Instructions& instructions);
 }
