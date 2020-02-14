@@ -1,5 +1,7 @@
 #include <svm/Parser.hpp>
 
+#include <svm/Memory.hpp>
+
 #include <fstream>
 #include <iomanip>
 #include <ios>
@@ -91,6 +93,10 @@ namespace svm {
 				if (m_Pos + 5 > size) throw std::runtime_error("Failed to parse the file. Missing operand after opcode 0x" + ToHexString(opCodeByte) + " at offset " + ToHexString(m_Pos));
 				operand = *reinterpret_cast<const std::uint32_t*>(m_File.data() + m_Pos + 1);
 				m_Pos += 4;
+
+				if (GetEndian() != Endian::Little) {
+					operand = ReverseEndian(operand);
+				}
 			}
 
 			m_Instructions.emplace_back(static_cast<OpCode>(opCodeByte), operand, m_Pos);
