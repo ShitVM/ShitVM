@@ -1,5 +1,6 @@
 #pragma once
 
+#include <svm/ByteFile.hpp>
 #include <svm/Instruction.hpp>
 
 #include <cstdint>
@@ -11,6 +12,8 @@ namespace svm {
 	private:
 		std::vector<std::uint8_t> m_File;
 		std::size_t m_Pos = 0;
+
+		std::string m_Path;
 		Instructions m_Instructions;
 
 	public:
@@ -32,6 +35,8 @@ namespace svm {
 		void Parse();
 		bool IsParsed() const noexcept;
 
+		ByteFile GetResult();
+		std::string_view GetPath() const noexcept;
 		const Instructions& GetInstructions() const noexcept;
 
 	private:

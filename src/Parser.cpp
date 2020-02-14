@@ -10,19 +10,25 @@
 
 namespace svm {
 	Parser::Parser(const Parser& parser)
-		: m_File(parser.m_File), m_Pos(parser.m_Pos), m_Instructions(parser.m_Instructions) {}
+		: m_File(parser.m_File), m_Pos(parser.m_Pos),
+		m_Path(parser.m_Path), m_Instructions(parser.m_Instructions) {}
 	Parser::Parser(Parser&& parser) noexcept
-		: m_File(std::move(parser.m_File)), m_Pos(parser.m_Pos), m_Instructions(std::move(parser.m_Instructions)) {}
+		: m_File(std::move(parser.m_File)), m_Pos(parser.m_Pos),
+		m_Path(std::move(parser.m_Path)), m_Instructions(std::move(parser.m_Instructions)) {}
 
 	Parser& Parser::operator=(const Parser& parser) {
 		m_File = parser.m_File;
 		m_Pos = parser.m_Pos;
+
+		m_Path = parser.m_Path;
 		m_Instructions = parser.m_Instructions;
 		return *this;
 	}
 	Parser& Parser::operator=(Parser&& parser) noexcept {
 		m_File = std::move(parser.m_File);
 		m_Pos = parser.m_Pos;
+
+		m_Path = std::move(parser.m_Path);
 		m_Instructions = std::move(parser.m_Instructions);
 		return *this;
 	}
@@ -30,6 +36,8 @@ namespace svm {
 	void Parser::Clear() noexcept {
 		m_File.clear();
 		m_Pos = 0;
+
+		m_Path.clear();
 		m_Instructions.clear();
 	}
 	void Parser::Load(const std::string& path) {
@@ -51,6 +59,8 @@ namespace svm {
 
 		m_File = std::move(bytes);
 		m_Pos = 0;
+
+		m_Path = path;
 		m_Instructions.clear();
 	}
 	bool Parser::IsLoaded() const noexcept {
@@ -63,6 +73,16 @@ namespace svm {
 		return m_Instructions.size() != 0;
 	}
 
+	ByteFile Parser::GetResult() {
+		if (!IsParsed()) throw std::runtime_error("Failed to move the result. Incomplete parsing.");
+
+		const ByteFile result(std::move(m_Path), std::move(m_Instructions));
+		Clear();
+		return result;
+	}
+	std::string_view Parser::GetPath() const noexcept {
+		return m_Path;
+	}
 	const Instructions& Parser::GetInstructions() const noexcept {
 		return m_Instructions;
 	}
@@ -85,12 +105,12 @@ namespace svm {
 		const std::size_t size = m_File.size();
 		for (; m_Pos < size; ++m_Pos) {
 			const std::uint8_t opCodeByte = m_File[m_Pos];
-			if (opCodeByte > 32) throw std::runtime_error("Failed to parse the file. Unrecognized opcode 0x" + ToHexString(opCodeByte) + " at offset " + ToHexString(m_Pos));
+			if (opCodeByte > 32) throw std::runtime_error("Failed to parse the file. Unrecognized opcode 0x" + ToHexString(opCodeByte) + " at offset " + ToHexString(m_Pos) + '.');
 			std::uint32_t operand = Instruction::NoOperand;
 
 			if ((static_cast<int>(OpCode::Push) <= opCodeByte && opCodeByte <= static_cast<int>(OpCode::Store)) ||
 				(static_cast<int>(OpCode::Jmp) <= opCodeByte && opCodeByte <= static_cast<int>(OpCode::Call))) {
-				if (m_Pos + 5 > size) throw std::runtime_error("Failed to parse the file. Missing operand after opcode 0x" + ToHexString(opCodeByte) + " at offset " + ToHexString(m_Pos));
+				if (m_Pos + 5 > size) throw std::runtime_error("Failed to parse the file. Missing operand after opcode 0x" + ToHexString(opCodeByte) + " at offset " + ToHexString(m_Pos) + '.');
 				operand = *reinterpret_cast<const std::uint32_t*>(m_File.data() + m_Pos + 1);
 				m_Pos += 4;
 
