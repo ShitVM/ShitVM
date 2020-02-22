@@ -16,6 +16,16 @@ namespace svm {
 		return *this;
 	}
 
+	void ConstantPool::Clear() noexcept {
+		m_Pool.reset();
+		m_IntCount = 0;
+		m_LongCount = 0;
+		m_DoubleCount = 0;
+	}
+	bool ConstantPool::IsEmpty() const noexcept {
+		return m_Pool == nullptr;
+	}
+
 	std::uint32_t ConstantPool::GetIntOffset() const noexcept {
 		return 0;
 	}

@@ -26,6 +26,9 @@ namespace svm {
 		bool operator!=(const ConstantPool&) = delete;
 
 	public:
+		void Clear() noexcept;
+		bool IsEmpty() const noexcept;
+
 		template<typename T>
 		const T& GetConstant(std::size_t index) const {
 			static_assert(std::is_base_of_v<Object, T>);
