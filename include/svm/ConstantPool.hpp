@@ -4,6 +4,7 @@
 
 #include <cstdint>
 #include <memory>
+#include <ostream>
 #include <type_traits>
 
 namespace svm {
@@ -38,7 +39,7 @@ namespace svm {
 				newIndex -= GetLongOffset();
 			}
 
-			return *reinterpret_cast<const T*>(m_Pool.get() + GetOffset<T>() + index);
+			return *(reinterpret_cast<const T*>(m_Pool.get() + GetOffset<T>()) + newIndex);
 		}
 		template<typename T>
 		std::uint32_t GetOffset() const noexcept {
@@ -63,4 +64,6 @@ namespace svm {
 		std::uint32_t GetLongCount() const noexcept;
 		std::uint32_t GetDoubleCount() const noexcept;
 	};
+
+	std::ostream& operator<<(std::ostream& stream, const ConstantPool& constantPool);
 }

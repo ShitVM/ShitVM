@@ -1,5 +1,6 @@
 #include <svm/Instruction.hpp>
 
+#include <svm/IO.hpp>
 #include <svm/Memory.hpp>
 
 #include <iomanip>
@@ -45,23 +46,8 @@ namespace svm {
 		return oss.str();
 	}
 
-	namespace {
-		int ByteOrTextIndex() {
-			static const int index = std::ios_base::xalloc();
-			return index;
-		}
-	}
-
-	std::ostream& Byte(std::ostream& stream) {
-		stream.iword(ByteOrTextIndex()) = 1;
-		return stream;
-	}
-	std::ostream& Text(std::ostream& stream) {
-		stream.iword(ByteOrTextIndex()) = 0;
-		return stream;
-	}
 	std::ostream& operator<<(std::ostream& stream, const Instruction& instruction) {
-		if (stream.iword(ByteOrTextIndex()) == 0) {
+		if (stream.iword(detail::ByteModeIndex()) == 0) {
 			if (instruction.HasOffset()) {
 				stream << std::hex << std::uppercase << std::setw(16) << std::setfill('0') << instruction.Offset << ": ";
 			}
@@ -134,12 +120,62 @@ namespace svm {
 		return m_InstructionCount;
 	}
 
-	std::ostream& operator<<(std::ostream& stream, const Instructions& instructions) {
-		for (std::uint64_t i = 0; i < instructions.GetInstructionCount(); ++i) {
-			if (i != 0) {
-				stream << '\n';
+	namespace {
+		void PrintInstructions(std::ostream& stream, const Instructions& instructions) {
+			for (std::uint64_t i = 0; i < instructions.GetInstructionCount(); ++i) {
+				if (i != 0 && stream.iword(detail::ByteModeIndex()) == 0) {
+					stream << '\n';
+				}
+				stream << instructions[i];
 			}
-			stream << instructions[i];
+		}
+		void PrintLabels(std::ostream& stream, const Instructions& instructions) {
+			if (stream.iword(detail::ByteModeIndex()) == 1) {
+				std::uint8_t bytes[4];
+				if (GetEndian() == Endian::Little) {
+					*reinterpret_cast<std::uint32_t*>(bytes) = instructions.GetLabelCount();
+				} else {
+					*reinterpret_cast<std::uint32_t*>(bytes) = ReverseEndian(instructions.GetLabelCount());
+				}
+				stream.write(reinterpret_cast<const char*>(bytes), 4);
+			}
+
+			for (std::uint32_t i = 0; i < instructions.GetLabelCount(); ++i) {
+				if (stream.iword(detail::ByteModeIndex()) == 0) {
+					if (i != 0) {
+						stream << '\n';
+					}
+					stream << '[' << i << "]: " << std::hex << std::uppercase << std::setw(16) << std::setfill('0') << instructions.GetLabel(i)
+						   << std::dec << std::nouppercase;
+				} else {
+					std::uint8_t bytes[8];
+					if (GetEndian() == Endian::Little) {
+						*reinterpret_cast<std::uint64_t*>(bytes) = instructions.GetLabel(i);
+					} else {
+						*reinterpret_cast<std::uint64_t*>(bytes) = ReverseEndian(instructions.GetLabel(i));
+					}
+					stream.write(reinterpret_cast<const char*>(bytes), 8);
+				}
+			}
+		}
+	}
+
+	std::ostream& operator<<(std::ostream& stream, const Instructions& instructions) {
+		switch (stream.iword(detail::InstLabelModeIndex())) {
+		case 0:
+			PrintInstructions(stream, instructions);
+			break;
+
+		case 1:
+			PrintLabels(stream, instructions);
+			break;
+
+		case 2:
+			stream << "<Labels>\n";
+			PrintLabels(stream, instructions);
+			stream << "\n\n<Instructions>\n";
+			PrintInstructions(stream, instructions);
+			break;
 		}
 		return stream;
 	}

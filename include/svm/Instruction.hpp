@@ -86,8 +86,6 @@ namespace svm {
 		std::string ToString() const;
 	};
 
-	std::ostream& Byte(std::ostream& stream);
-	std::ostream& Text(std::ostream& stream);
 	std::ostream& operator<<(std::ostream& stream, const Instruction& instruction);
 
 	class Instructions final {
