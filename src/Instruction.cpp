@@ -75,7 +75,8 @@ namespace svm {
 namespace svm {
 	Instructions::Instructions(std::unique_ptr<std::uint64_t[]>&& labels, std::uint32_t labelCount,
 							   std::unique_ptr<Instruction[]> instructions, std::uint64_t instructionCount) noexcept
-		: m_Labels(std::move(labels)), m_LabelCount(labelCount), m_Instructions(std::move(instructions)), m_InstructionCount(instructionCount) {}
+		: m_Labels(std::move(labels)), m_LabelCount(labelCount),
+		m_Instructions(std::move(instructions)), m_InstructionCount(instructionCount) {}
 	Instructions::Instructions(Instructions&& instructions) noexcept
 		: m_Labels(std::move(instructions.m_Labels)), m_LabelCount(instructions.m_LabelCount),
 		m_Instructions(std::move(instructions.m_Instructions)), m_InstructionCount(instructions.m_InstructionCount){}

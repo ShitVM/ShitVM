@@ -45,6 +45,13 @@ namespace svm {
 		Jbe,
 		Call,
 		Ret,
+
+		I2L,
+		I2D,
+		L2I,
+		L2D,
+		D2I,
+		D2L,
 	};
 
 	static constexpr const char* Mnemonics[] = {
@@ -53,6 +60,7 @@ namespace svm {
 		"add", "sub", "mul", "imul", "div", "idiv", "mod", "imod", "neg",
 		"and", "or", "xor", "not", "shl", "shr", "sal", "sar",
 		"cmp", "icmp", "jmp", "je", "jne", "ja", "jae", "jb", "jbe", "call", "ret",
+		"i2l", "i2d", "l2i", "l2d", "d2i", "d2l",
 	};
 
 	class Instruction final {

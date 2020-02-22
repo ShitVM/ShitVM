@@ -29,6 +29,15 @@ namespace svm {
 		return m_Pool == nullptr;
 	}
 
+	const Type* ConstantPool::GetConstantType(std::uint32_t index) const noexcept {
+		if (index >= GetDoubleOffset()) {
+			return DoubleType;
+		} else if (index >= GetLongOffset()) {
+			return LongType;
+		} else {
+			return IntType;
+		}
+	}
 	std::uint32_t ConstantPool::GetIntOffset() const noexcept {
 		return 0;
 	}

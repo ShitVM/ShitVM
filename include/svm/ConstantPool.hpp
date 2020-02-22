@@ -41,6 +41,7 @@ namespace svm {
 
 			return *(reinterpret_cast<const T*>(m_Pool.get() + GetOffset<T>()) + newIndex);
 		}
+		const Type* GetConstantType(std::uint32_t index) const noexcept;
 		template<typename T>
 		std::uint32_t GetOffset() const noexcept {
 			static_assert(std::is_base_of_v<Object, T>);
