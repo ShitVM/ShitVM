@@ -58,7 +58,7 @@ namespace svm {
 	}
 	void Parser::Parse() {
 		if (!IsLoaded()) throw std::runtime_error("Failed to parse the file. Incomplete loading.");
-		else if (m_File.size() < 24) throw std::runtime_error("Failed to parse the file. Invalid format.");
+		else if (m_File.size() < 32) throw std::runtime_error("Failed to parse the file. Invalid format.");
 
 		static constexpr std::uint8_t magic[] = { 0x74, 0x68, 0x74, 0x68 };
 		const auto [magicBegin, magicEnd] = ReadFile(4);
@@ -93,27 +93,30 @@ namespace svm {
 
 	void Parser::ParseVer0000() {
 		ParseConstantPool();
-		ParseFunctions();
+		ParseInstructions();
 	}
 
 	void Parser::ParseConstantPool() {
 		const auto intCount = ReadFile<std::uint32_t>();
 		const auto longCount = ReadFile<std::uint32_t>();
 		const auto doubleCount = ReadFile<std::uint32_t>();
+		const auto lableCount = ReadFile<std::uint32_t>();
 
 		std::unique_ptr<std::uint8_t[]> constantPool(new std::uint8_t[
 			intCount * sizeof(IntObject) +
 			longCount * sizeof(LongObject) +
-			doubleCount * sizeof(DoubleObject)
+			doubleCount * sizeof(DoubleObject) +
+			lableCount * sizeof(LongObject)
 		]());
 
 		void* objPtr = ParseConstants<IntObject>(constantPool.get(), intCount);
 		objPtr = ParseConstants<LongObject>(objPtr, longCount);
 		objPtr = ParseConstants<DoubleObject>(objPtr, doubleCount);
+		objPtr = ParseConstants<LongObject>(objPtr, lableCount);
 	}
-	void Parser::ParseFunctions() {
-		const auto funcCount = ReadFile<std::uint32_t>();
-		for (std::uint32_t i = 0; i < funcCount; ++i) {
+	void Parser::ParseInstructions() {
+		const auto instCount = ReadFile<std::uint64_t>();
+		for (std::uint64_t i = 0; i < instCount; ++i) {
 			const std::uint8_t opCodeByte = m_File[m_Pos];
 			std::uint32_t operand = Instruction::NoOperand;
 			if (static_cast<int>(OpCode::Push) <= opCodeByte && opCodeByte <= static_cast<int>(OpCode::Store) ||

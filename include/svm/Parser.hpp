@@ -75,6 +75,6 @@ namespace svm {
 			}
 			return objPtr;
 		}
-		void ParseFunctions();
+		void ParseInstructions();
 	};
 }
