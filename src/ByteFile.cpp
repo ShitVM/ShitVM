@@ -15,6 +15,15 @@ namespace svm {
 		return *this;
 	}
 
+	void ByteFile::Clear() noexcept {
+		m_Path.clear();
+		m_ConstantPool.Clear();
+		m_Instructions.Clear();
+	}
+	bool ByteFile::IsEmpty() const noexcept {
+		return m_Path.empty() && m_ConstantPool.IsEmpty() && m_Instructions.IsEmpty();
+	}
+
 	std::string_view ByteFile::GetPath() const noexcept {
 		return m_Path;
 	}

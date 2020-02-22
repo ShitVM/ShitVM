@@ -26,6 +26,9 @@ namespace svm {
 		bool operator!=(const ByteFile&) = delete;
 
 	public:
+		void Clear() noexcept;
+		bool IsEmpty() const noexcept;
+
 		std::string_view GetPath() const noexcept;
 		const ConstantPool& GetConstantPool() const noexcept;
 		const Instructions& GetInstructions() const noexcept;
