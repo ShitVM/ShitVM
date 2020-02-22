@@ -27,7 +27,7 @@ namespace svm {
 
 		m_Path.clear();
 		m_ConstantPool.Clear();
-		m_Instructions.clear();
+		m_Instructions.Clear();
 	}
 	void Parser::Load(const std::string& path) {
 		std::ifstream stream(path, std::ifstream::binary);
@@ -51,7 +51,7 @@ namespace svm {
 
 		m_Path = path;
 		m_ConstantPool.Clear();
-		m_Instructions.clear();
+		m_Instructions.Clear();
 	}
 	bool Parser::IsLoaded() const noexcept {
 		return m_File.size() != 0;
@@ -74,7 +74,7 @@ namespace svm {
 		}
 	}
 	bool Parser::IsParsed() const noexcept {
-		return m_Instructions.size() != 0;
+		return !m_Instructions.IsEmpty();
 	}
 
 	ByteFile Parser::GetResult() {
@@ -100,31 +100,47 @@ namespace svm {
 		const auto intCount = ReadFile<std::uint32_t>();
 		const auto longCount = ReadFile<std::uint32_t>();
 		const auto doubleCount = ReadFile<std::uint32_t>();
-		const auto lableCount = ReadFile<std::uint32_t>();
 
 		std::unique_ptr<std::uint8_t[]> constantPool(new std::uint8_t[
 			intCount * sizeof(IntObject) +
 			longCount * sizeof(LongObject) +
-			doubleCount * sizeof(DoubleObject) +
-			lableCount * sizeof(LongObject)
+			doubleCount * sizeof(DoubleObject)
 		]());
 
 		void* objPtr = ParseConstants<IntObject>(constantPool.get(), intCount);
 		objPtr = ParseConstants<LongObject>(objPtr, longCount);
 		objPtr = ParseConstants<DoubleObject>(objPtr, doubleCount);
-		objPtr = ParseConstants<LongObject>(objPtr, lableCount);
+
+		m_ConstantPool = ConstantPool(std::move(constantPool), intCount, longCount, doubleCount);
 	}
 	void Parser::ParseInstructions() {
+		const auto labelCount = ReadFile<std::uint32_t>();
 		const auto instCount = ReadFile<std::uint64_t>();
+
+		std::unique_ptr<std::uint64_t[]> labels(new std::uint64_t[labelCount]());
+		std::unique_ptr<Instruction[]> instructions(new Instruction[static_cast<std::size_t>(instCount)]);
+
+		std::uint64_t* labelPtr = labels.get();
+		for (std::uint32_t i = 0; i < labelCount; ++i) {
+			*labelPtr++ = ReadFile<std::uint64_t>();
+		}
+
+		std::uint64_t nextOffset = 0;
+		Instruction* instPtr = instructions.get();
 		for (std::uint64_t i = 0; i < instCount; ++i) {
-			const std::uint8_t opCodeByte = m_File[m_Pos];
+			const std::uint8_t opCodeByte = ReadFile<std::uint8_t>();
 			std::uint32_t operand = Instruction::NoOperand;
+			const std::uint64_t offset = nextOffset;
 			if (static_cast<int>(OpCode::Push) <= opCodeByte && opCodeByte <= static_cast<int>(OpCode::Store) ||
 				static_cast<int>(OpCode::Jmp) <= opCodeByte && opCodeByte <= static_cast<int>(OpCode::Call)) {
 				operand = ReadFile<std::uint32_t>();
+				nextOffset += 4;
 			}
 
-			m_Instructions.emplace_back(static_cast<OpCode>(opCodeByte), operand, m_Pos);
+			*instPtr++ = Instruction(static_cast<OpCode>(opCodeByte), operand, offset);
+			++nextOffset;
 		}
+
+		m_Instructions = Instructions(std::move(labels), labelCount, std::move(instructions), instCount);
 	}
 }

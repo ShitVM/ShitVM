@@ -2,7 +2,6 @@
 
 #include <svm/Object.hpp>
 
-#include <cstddef>
 #include <cstdint>
 #include <memory>
 #include <type_traits>
@@ -29,10 +28,10 @@ namespace svm {
 		bool IsEmpty() const noexcept;
 
 		template<typename T>
-		const T& GetConstant(std::size_t index) const noexcept {
+		const T& GetConstant(std::uint32_t index) const noexcept {
 			static_assert(std::is_base_of_v<Object, T>);
 
-			std::size_t newIndex = index;
+			std::uint32_t newIndex = index;
 			if (index >= GetDoubleOffset()) {
 				newIndex -= GetDoubleOffset();
 			} else if (index >= GetLongOffset()) {

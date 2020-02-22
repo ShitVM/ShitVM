@@ -87,24 +87,59 @@ namespace svm {
 }
 
 namespace svm {
-	Instructions& operator<<(Instructions& instructions, const Instruction& instruction) {
-		instructions.push_back(instruction);
-		return instructions;
+	Instructions::Instructions(std::unique_ptr<std::uint64_t[]>&& labels, std::uint32_t labelCount,
+							   std::unique_ptr<Instruction[]> instructions, std::uint64_t instructionCount) noexcept
+		: m_Labels(std::move(labels)), m_LabelCount(labelCount), m_Instructions(std::move(instructions)), m_InstructionCount(instructionCount) {}
+	Instructions::Instructions(Instructions&& instructions) noexcept
+		: m_Labels(std::move(instructions.m_Labels)), m_LabelCount(instructions.m_LabelCount),
+		m_Instructions(std::move(instructions.m_Instructions)), m_InstructionCount(instructions.m_InstructionCount){}
+
+	Instructions& Instructions::operator=(Instructions&& instructions) noexcept {
+		m_Labels = std::move(instructions.m_Labels);
+		m_LabelCount = instructions.m_LabelCount;
+		m_Instructions = std::move(instructions.m_Instructions);
+		m_InstructionCount = instructions.m_InstructionCount;
+		return *this;
 	}
-	Instructions& operator<<(Instructions& instructions, Instruction&& instruction) {
-		instructions.push_back(std::move(instruction));
-		return instructions;
+	const Instruction& Instructions::operator[](std::uint64_t offset) const noexcept {
+		return m_Instructions[static_cast<std::size_t>(offset)];
+	}
+
+	void Instructions::Clear() noexcept {
+		m_Labels.reset();
+		m_LabelCount = 0;
+		m_Instructions.reset();
+		m_InstructionCount = 0;
+	}
+	bool Instructions::IsEmpty() const noexcept {
+		return m_Labels == nullptr && m_Instructions == nullptr;
+	}
+
+	std::uint64_t Instructions::GetLabel(std::uint32_t index) const noexcept {
+		return m_Labels[index];
+	}
+	const Instruction& Instructions::GetInstruction(std::uint64_t offset) const noexcept {
+		return m_Instructions[static_cast<std::size_t>(offset)];
+	}
+	const std::uint64_t* Instructions::GetLabels() const noexcept {
+		return m_Labels.get();
+	}
+	const Instruction* Instructions::GetInstructions() const noexcept {
+		return m_Instructions.get();
+	}
+	std::uint32_t Instructions::GetLabelCount() const noexcept {
+		return m_LabelCount;
+	}
+	std::uint64_t Instructions::GetInstructionCount() const noexcept {
+		return m_InstructionCount;
 	}
 
 	std::ostream& operator<<(std::ostream& stream, const Instructions& instructions) {
-		bool isFirst = true;
-		for (const auto& inst : instructions) {
-			if (isFirst) {
-				isFirst = false;
-			} else if (stream.iword(ByteOrTextIndex()) == 0) {
+		for (std::uint64_t i = 0; i < instructions.GetInstructionCount(); ++i) {
+			if (i != 0) {
 				stream << '\n';
 			}
-			stream << inst;
+			stream << instructions[i];
 		}
 		return stream;
 	}

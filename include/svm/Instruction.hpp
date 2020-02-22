@@ -90,10 +90,37 @@ namespace svm {
 	std::ostream& Text(std::ostream& stream);
 	std::ostream& operator<<(std::ostream& stream, const Instruction& instruction);
 
-	using Instructions = std::vector<Instruction>;
+	class Instructions final {
+	private:
+		std::unique_ptr<std::uint64_t[]> m_Labels;
+		std::uint32_t m_LabelCount = 0;
+		std::unique_ptr<Instruction[]> m_Instructions;
+		std::uint64_t m_InstructionCount = 0;
 
-	Instructions& operator<<(Instructions& instructions, const Instruction& instruction);
-	Instructions& operator<<(Instructions& instructions, Instruction&& instruction);
+	public:
+		Instructions() noexcept = default;
+		Instructions(std::unique_ptr<std::uint64_t[]>&& labels, std::uint32_t labelCount,
+					 std::unique_ptr<Instruction[]> instructions, std::uint64_t instructionCount) noexcept;
+		Instructions(Instructions&& instructions) noexcept;
+		~Instructions() = default;
+
+	public:
+		Instructions& operator=(Instructions&& instructions) noexcept;
+		bool operator==(const Instructions&) = delete;
+		bool operator!=(const Instructions&) = delete;
+		const Instruction& operator[](std::uint64_t offset) const noexcept;
+
+	public:
+		void Clear() noexcept;
+		bool IsEmpty() const noexcept;
+
+		std::uint64_t GetLabel(std::uint32_t index) const noexcept;
+		const Instruction& GetInstruction(std::uint64_t offset) const noexcept;
+		const std::uint64_t* GetLabels() const noexcept;
+		const Instruction* GetInstructions() const noexcept;
+		std::uint32_t GetLabelCount() const noexcept;
+		std::uint64_t GetInstructionCount() const noexcept;
+	};
 
 	std::ostream& operator<<(std::ostream& stream, const Instructions& instructions);
 }
