@@ -1,34 +1,22 @@
 #include <svm/Parser.hpp>
 
-#include <svm/Memory.hpp>
-
 #include <fstream>
 #include <iomanip>
 #include <ios>
+#include <memory>
 #include <sstream>
-#include <utility>
 
 namespace svm {
-	Parser::Parser(const Parser& parser)
-		: m_File(parser.m_File), m_Pos(parser.m_Pos),
-		m_Path(parser.m_Path), m_Instructions(parser.m_Instructions) {}
 	Parser::Parser(Parser&& parser) noexcept
 		: m_File(std::move(parser.m_File)), m_Pos(parser.m_Pos),
-		m_Path(std::move(parser.m_Path)), m_Instructions(std::move(parser.m_Instructions)) {}
+		m_Path(std::move(parser.m_Path)), m_ConstantPool(std::move(parser.m_ConstantPool)), m_Instructions(std::move(parser.m_Instructions)) {}
 
-	Parser& Parser::operator=(const Parser& parser) {
-		m_File = parser.m_File;
-		m_Pos = parser.m_Pos;
-
-		m_Path = parser.m_Path;
-		m_Instructions = parser.m_Instructions;
-		return *this;
-	}
 	Parser& Parser::operator=(Parser&& parser) noexcept {
 		m_File = std::move(parser.m_File);
 		m_Pos = parser.m_Pos;
 
 		m_Path = std::move(parser.m_Path);
+		m_ConstantPool = std::move(parser.m_ConstantPool);
 		m_Instructions = std::move(parser.m_Instructions);
 		return *this;
 	}
@@ -38,6 +26,7 @@ namespace svm {
 		m_Pos = 0;
 
 		m_Path.clear();
+		m_ConstantPool.Clear();
 		m_Instructions.clear();
 	}
 	void Parser::Load(const std::string& path) {
@@ -61,13 +50,28 @@ namespace svm {
 		m_Pos = 0;
 
 		m_Path = path;
+		m_ConstantPool.Clear();
 		m_Instructions.clear();
 	}
 	bool Parser::IsLoaded() const noexcept {
 		return m_File.size() != 0;
 	}
 	void Parser::Parse() {
-		ParseFunctions();
+		if (!IsLoaded()) throw std::runtime_error("Failed to parse the file. Incomplete loading.");
+		else if (m_File.size() < 24) throw std::runtime_error("Failed to parse the file. Invalid format.");
+
+		static constexpr std::uint8_t magic[] = { 0x74, 0x68, 0x74, 0x68 };
+		const auto [magicBegin, magicEnd] = ReadFile(4);
+		if (!std::equal(magicBegin, magicEnd, magic)) throw std::runtime_error("Failed to parse the file. Invalid format.");
+
+		const auto version = ReadFile<std::uint32_t>();
+		switch (version) {
+		case 0x0000:
+			ParseVer0000();
+			break;
+
+		default: throw std::runtime_error("Failed to parse the file. Incompatible format.");
+		}
 	}
 	bool Parser::IsParsed() const noexcept {
 		return m_Instructions.size() != 0;
@@ -76,7 +80,7 @@ namespace svm {
 	ByteFile Parser::GetResult() {
 		if (!IsParsed()) throw std::runtime_error("Failed to move the result. Incomplete parsing.");
 
-		const ByteFile result(std::move(m_Path), std::move(m_Instructions));
+		ByteFile result(std::move(m_Path), std::move(m_ConstantPool), std::move(m_Instructions));
 		Clear();
 		return result;
 	}
@@ -87,36 +91,34 @@ namespace svm {
 		return m_Instructions;
 	}
 
-	namespace {
-		template<typename Integer>
-		std::string ToHexString(Integer value) {
-			thread_local std::ostringstream oss;
-			oss << std::hex << std::uppercase << value;
-
-			const std::string result = oss.str();
-			oss.clear();
-			return result;
-		}
+	void Parser::ParseVer0000() {
+		ParseConstantPool();
+		ParseFunctions();
 	}
 
+	void Parser::ParseConstantPool() {
+		const auto intCount = ReadFile<std::uint32_t>();
+		const auto longCount = ReadFile<std::uint32_t>();
+		const auto doubleCount = ReadFile<std::uint32_t>();
+
+		std::unique_ptr<std::uint8_t[]> constantPool(new std::uint8_t[
+			intCount * sizeof(IntObject) +
+			longCount * sizeof(LongObject) +
+			doubleCount * sizeof(DoubleObject)
+		]());
+
+		void* objPtr = ParseConstants<IntObject>(constantPool.get(), intCount);
+		objPtr = ParseConstants<LongObject>(objPtr, longCount);
+		objPtr = ParseConstants<DoubleObject>(objPtr, doubleCount);
+	}
 	void Parser::ParseFunctions() {
-		if (!IsLoaded()) return;
-
-		const std::size_t size = m_File.size();
-		for (; m_Pos < size; ++m_Pos) {
+		const auto funcCount = ReadFile<std::uint32_t>();
+		for (std::uint32_t i = 0; i < funcCount; ++i) {
 			const std::uint8_t opCodeByte = m_File[m_Pos];
-			if (opCodeByte > 32) throw std::runtime_error("Failed to parse the file. Unrecognized opcode 0x" + ToHexString(opCodeByte) + " at offset " + ToHexString(m_Pos) + '.');
 			std::uint32_t operand = Instruction::NoOperand;
-
-			if ((static_cast<int>(OpCode::Push) <= opCodeByte && opCodeByte <= static_cast<int>(OpCode::Store)) ||
-				(static_cast<int>(OpCode::Jmp) <= opCodeByte && opCodeByte <= static_cast<int>(OpCode::Call))) {
-				if (m_Pos + 5 > size) throw std::runtime_error("Failed to parse the file. Missing operand after opcode 0x" + ToHexString(opCodeByte) + " at offset " + ToHexString(m_Pos) + '.');
-				operand = *reinterpret_cast<const std::uint32_t*>(m_File.data() + m_Pos + 1);
-				m_Pos += 4;
-
-				if (GetEndian() != Endian::Little) {
-					operand = ReverseEndian(operand);
-				}
+			if (static_cast<int>(OpCode::Push) <= opCodeByte && opCodeByte <= static_cast<int>(OpCode::Store) ||
+				static_cast<int>(OpCode::Jmp) <= opCodeByte && opCodeByte <= static_cast<int>(OpCode::Call)) {
+				operand = ReadFile<std::uint32_t>();
 			}
 
 			m_Instructions.emplace_back(static_cast<OpCode>(opCodeByte), operand, m_Pos);

@@ -5,7 +5,6 @@
 #include <cstddef>
 #include <cstdint>
 #include <memory>
-#include <stdexcept>
 #include <type_traits>
 
 namespace svm {
@@ -30,11 +29,17 @@ namespace svm {
 		bool IsEmpty() const noexcept;
 
 		template<typename T>
-		const T& GetConstant(std::size_t index) const {
+		const T& GetConstant(std::size_t index) const noexcept {
 			static_assert(std::is_base_of_v<Object, T>);
 
-			if (index >= GetCount<T>()) throw std::out_of_range("Failed to get the constant. The argument 'index' is out of range.");
-			else return *reinterpret_cast<const T*>(m_Pool.get() + GetOffset<T>() + index);
+			std::size_t newIndex = index;
+			if (index >= GetDoubleOffset()) {
+				newIndex -= GetDoubleOffset();
+			} else if (index >= GetLongOffset()) {
+				newIndex -= GetLongOffset();
+			}
+
+			return *reinterpret_cast<const T*>(m_Pool.get() + GetOffset<T>() + index);
 		}
 		template<typename T>
 		std::uint32_t GetOffset() const noexcept {
