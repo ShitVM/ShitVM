@@ -2,6 +2,7 @@
 
 #include <svm/ConstantPool.hpp>
 #include <svm/Function.hpp>
+#include <svm/Instruction.hpp>
 
 #include <string>
 #include <string_view>
@@ -12,10 +13,12 @@ namespace svm {
 		std::string m_Path;
 		ConstantPool m_ConstantPool;
 		Functions m_Functions;
+		Instructions m_EntryPoint;
 
 	public:
 		ByteFile() noexcept = default;
-		ByteFile(std::string path, ConstantPool&& constantPool, Functions&& functions) noexcept;
+		ByteFile(std::string path, ConstantPool&& constantPool,
+				 Functions&& functions, Instructions&& entryPoint) noexcept;
 		ByteFile(ByteFile&& file) noexcept;
 		~ByteFile() = default;
 
@@ -31,5 +34,6 @@ namespace svm {
 		std::string_view GetPath() const noexcept;
 		const ConstantPool& GetConstantPool() const noexcept;
 		const Functions& GetFunctions() const noexcept;
+		const Instructions& GetEntryPoint() const noexcept;
 	};
 }
