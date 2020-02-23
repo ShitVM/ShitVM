@@ -1,22 +1,21 @@
 #pragma once
 
 #include <svm/ConstantPool.hpp>
-#include <svm/Instruction.hpp>
+#include <svm/Function.hpp>
 
 #include <string>
 #include <string_view>
-#include <vector>
 
 namespace svm {
 	class ByteFile final {
 	private:
 		std::string m_Path;
 		ConstantPool m_ConstantPool;
-		Instructions m_Instructions;
+		Functions m_Functions;
 
 	public:
 		ByteFile() noexcept = default;
-		ByteFile(std::string path, ConstantPool&& constantPool, Instructions instructions) noexcept;
+		ByteFile(std::string path, ConstantPool&& constantPool, Functions&& functions) noexcept;
 		ByteFile(ByteFile&& file) noexcept;
 		~ByteFile() = default;
 
@@ -31,6 +30,6 @@ namespace svm {
 
 		std::string_view GetPath() const noexcept;
 		const ConstantPool& GetConstantPool() const noexcept;
-		const Instructions& GetInstructions() const noexcept;
+		const Functions& GetFunctions() const noexcept;
 	};
 }

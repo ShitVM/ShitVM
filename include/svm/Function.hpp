@@ -1,0 +1,37 @@
+#pragma once
+
+#include <svm/Instruction.hpp>
+
+#include <cstdint>
+#include <ostream>
+#include <vector>
+
+namespace svm {
+	class Function final {
+	private:
+		std::uint16_t m_Arity = 0;
+		bool m_HasResult = false;
+		Instructions m_Instructions;
+
+	public:
+		Function() noexcept = default;
+		Function(std::uint16_t arity, bool hasResult, Instructions&& instructions) noexcept;
+		Function(Function&& function) noexcept;
+		~Function() = default;
+
+	public:
+		Function& operator=(Function&& function) noexcept;
+		bool operator==(const Function&) = delete;
+		bool operator!=(const Function&) = delete;
+
+	public:
+		std::uint16_t GetArity() const noexcept;
+		bool HasResult() const noexcept;
+		const Instructions& GetInstructions() const noexcept;
+	};
+
+	using Functions = std::vector<Function>;
+
+	std::ostream& operator<<(std::ostream& stream, const Function& function);
+	std::ostream& operator<<(std::ostream& stream, const Functions& functions);
+}
