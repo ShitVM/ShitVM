@@ -574,7 +574,7 @@ namespace svm {
 		m_StackFrame.Instructions = &m_StackFrame.Function->GetInstructions();
 
 		std::size_t stackOffset = m_Stack.GetUsedSize() - sizeof(m_StackFrame);
-		for (std::uint16_t i = 0; i < m_StackFrame.Function->GetArity(); ++i) {
+		for (std::uint16_t j = 0; j < m_StackFrame.Function->GetArity(); ++j) {
 			const Type* type = m_Stack.Get<const Type*>(stackOffset);
 			m_LocalVariables.push_back(stackOffset);
 			if (type == IntType) {
@@ -609,7 +609,7 @@ namespace svm {
 
 		i = m_StackFrame.Caller;
 
-		for (std::uint16_t i = 0; i < arity; ++i) {
+		for (std::uint16_t j = 0; j < arity; ++j) {
 			const Type* type = m_Stack.GetTopType();
 			if (type == IntType) {
 				m_Stack.Pop<IntObject>();
