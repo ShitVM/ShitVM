@@ -60,7 +60,7 @@ namespace svm {
 
 	namespace {
 		template<typename T>
-		SVM_INLINE void PrintConstants(std::ostream& stream, const ConstantPool& constantPool, const std::string& defIndent, std::uint32_t i) {
+		void PrintConstants(std::ostream& stream, const ConstantPool& constantPool, const std::string& defIndent, std::uint32_t i) {
 			const auto& constant = constantPool.GetConstant<T>(i);
 			stream << '\n' << defIndent << "\t[" << i << "]: " << constant.GetType()->Name << '(' << constant.Value << ')';
 		}

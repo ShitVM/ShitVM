@@ -96,47 +96,47 @@ namespace svm {
 		}
 
 	private:
-		SVM_INLINE void InterpretPush(std::uint32_t operand);
-		SVM_INLINE void InterpretPop();
-		SVM_INLINE void InterpretLoad(std::uint32_t operand);
-		SVM_INLINE void InterpretStore(std::uint32_t operand);
+		void InterpretPush(std::uint32_t operand);
+		void InterpretPop();
+		void InterpretLoad(std::uint32_t operand);
+		void InterpretStore(std::uint32_t operand);
 
-		SVM_INLINE void InterpretAdd();
-		SVM_INLINE void InterpretSub();
-		SVM_INLINE void InterpretMul();
-		SVM_INLINE void InterpretIMul();
-		SVM_INLINE void InterpretDiv();
-		SVM_INLINE void InterpretIDiv();
-		SVM_INLINE void InterpretMod();
-		SVM_INLINE void InterpretIMod();
-		SVM_INLINE void InterpretNeg();
+		void InterpretAdd();
+		void InterpretSub();
+		void InterpretMul();
+		void InterpretIMul();
+		void InterpretDiv();
+		void InterpretIDiv();
+		void InterpretMod();
+		void InterpretIMod();
+		void InterpretNeg();
 
-		SVM_INLINE void InterpretAnd();
-		SVM_INLINE void InterpretOr();
-		SVM_INLINE void InterpretXor();
-		SVM_INLINE void InterpretNot();
-		SVM_INLINE void InterpretShl();
-		SVM_INLINE void InterpretSal();
-		SVM_INLINE void InterpretShr();
-		SVM_INLINE void InterpretSar();
+		void InterpretAnd();
+		void InterpretOr();
+		void InterpretXor();
+		void InterpretNot();
+		void InterpretShl();
+		void InterpretSal();
+		void InterpretShr();
+		void InterpretSar();
 
-		SVM_INLINE void InterpretCmp();
-		SVM_INLINE void InterpretICmp();
-		SVM_INLINE void InterpretJmp(std::uint64_t& i, std::uint32_t operand);
-		SVM_INLINE void InterpretJe(std::uint64_t& i, std::uint32_t operand);
-		SVM_INLINE void InterpretJne(std::uint64_t& i, std::uint32_t operand);
-		SVM_INLINE void InterpretJa(std::uint64_t& i, std::uint32_t operand);
-		SVM_INLINE void InterpretJae(std::uint64_t& i, std::uint32_t operand);
-		SVM_INLINE void InterpretJb(std::uint64_t& i, std::uint32_t operand);
-		SVM_INLINE void InterpretJbe(std::uint64_t& i, std::uint32_t operand);
+		void InterpretCmp();
+		void InterpretICmp();
+		void InterpretJmp(std::uint64_t& i, std::uint32_t operand);
+		void InterpretJe(std::uint64_t& i, std::uint32_t operand);
+		void InterpretJne(std::uint64_t& i, std::uint32_t operand);
+		void InterpretJa(std::uint64_t& i, std::uint32_t operand);
+		void InterpretJae(std::uint64_t& i, std::uint32_t operand);
+		void InterpretJb(std::uint64_t& i, std::uint32_t operand);
+		void InterpretJbe(std::uint64_t& i, std::uint32_t operand);
 		SVM_INLINE void InterpretCall(std::uint64_t& i, std::uint32_t operand);
 		SVM_INLINE void InterpretRet(std::uint64_t& i);
 
-		SVM_INLINE void InterpretI2L();
-		SVM_INLINE void InterpretI2D();
-		SVM_INLINE void InterpretL2I();
-		SVM_INLINE void InterpretL2D();
-		SVM_INLINE void InterpretD2I();
-		SVM_INLINE void InterpretD2L();
+		void InterpretI2L();
+		void InterpretI2D();
+		void InterpretL2I();
+		void InterpretL2D();
+		void InterpretD2I();
+		void InterpretD2L();
 	};
 }
