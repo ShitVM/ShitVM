@@ -67,16 +67,11 @@ namespace svm {
 
 		void ParseConstantPool();
 		template<typename T>
-		void* ParseConstants(void* begin, std::uint32_t count) {
+		void ParseConstants(std::vector<T>& pool) {
 			static_assert(std::is_base_of_v<Object, T>);
-
-			T obj;
-			T* objPtr = static_cast<T*>(begin);
-			for (std::uint32_t i = 0; i < count; ++i) {
+			for (T& obj : pool) {
 				obj.Value = ReadFile<decltype(obj.Value)>();
-				*objPtr++ = obj;
 			}
-			return objPtr;
 		}
 		void ParseFunctions();
 		Instructions ParseInstructions();

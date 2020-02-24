@@ -109,27 +109,18 @@ namespace svm {
 
 	void Parser::ParseConstantPool() {
 		const auto intCount = ReadFile<std::uint32_t>();
-		const auto intPos = m_Pos;
+		std::vector<IntObject> intPool(intCount);
+		ParseConstants(intPool);
 
-		m_Pos += intCount * sizeof(std::uint32_t);
 		const auto longCount = ReadFile<std::uint32_t>();
+		std::vector<LongObject> longPool(longCount);
+		ParseConstants(longPool);
 
-		m_Pos += longCount * sizeof(std::uint64_t);
 		const auto doubleCount = ReadFile<std::uint32_t>();
+		std::vector<DoubleObject> doublePool(doubleCount);
+		ParseConstants(doublePool);
 
-		m_Pos = intPos;
-
-		std::vector<std::uint8_t> pool(
-			intCount * sizeof(IntObject) +
-			longCount * sizeof(LongObject) +
-			doubleCount * sizeof(DoubleObject)
-		);
-
-		void* objPtr = ParseConstants<IntObject>(pool.data(), intCount); m_Pos += sizeof(longCount);
-		objPtr = ParseConstants<LongObject>(objPtr, longCount); m_Pos += sizeof(doubleCount);
-		objPtr = ParseConstants<DoubleObject>(objPtr, doubleCount);
-
-		m_ConstantPool = ConstantPool(std::move(pool), intCount, longCount, doubleCount);
+		m_ConstantPool = ConstantPool(std::move(intPool), std::move(longPool), std::move(doublePool));
 	}
 	void Parser::ParseFunctions() {
 		const auto funcCount = ReadFile<std::uint32_t>();

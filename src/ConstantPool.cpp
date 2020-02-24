@@ -7,27 +7,25 @@
 #include <utility>
 
 namespace svm {
-	ConstantPool::ConstantPool(std::vector<std::uint8_t> pool, std::uint32_t intCount, std::uint32_t longCount, std::uint32_t doubleCount) noexcept
-		: m_Pool(std::move(pool)), m_IntCount(intCount), m_LongCount(longCount), m_DoubleCount(doubleCount) {}
+	ConstantPool::ConstantPool(std::vector<IntObject> intPool, std::vector<LongObject> longPool, std::vector<DoubleObject> doublePool) noexcept
+		: m_IntPool(std::move(intPool)), m_LongPool(std::move(longPool)), m_DoublePool(std::move(doublePool)) {}
 	ConstantPool::ConstantPool(ConstantPool&& pool) noexcept
-		: m_Pool(std::move(pool.m_Pool)), m_IntCount(pool.m_IntCount), m_LongCount(pool.m_LongCount), m_DoubleCount(pool.m_DoubleCount) {}
+		: m_IntPool(std::move(pool.m_IntPool)), m_LongPool(std::move(pool.m_LongPool)), m_DoublePool(std::move(pool.m_DoublePool)) {}
 
 	ConstantPool& ConstantPool::operator=(ConstantPool&& pool) noexcept {
-		m_Pool = std::move(pool.m_Pool);
-		m_IntCount = pool.m_IntCount;
-		m_LongCount = pool.m_LongCount;
-		m_DoubleCount = pool.m_DoubleCount;
+		m_IntPool = std::move(pool.m_IntPool);
+		m_LongPool = std::move(pool.m_LongPool);
+		m_DoublePool = std::move(pool.m_DoublePool);
 		return *this;
 	}
 
 	void ConstantPool::Clear() noexcept {
-		m_Pool.clear();
-		m_IntCount = 0;
-		m_LongCount = 0;
-		m_DoubleCount = 0;
+		m_IntPool.clear();
+		m_LongPool.clear();
+		m_DoublePool.clear();
 	}
 	bool ConstantPool::IsEmpty() const noexcept {
-		return m_Pool.empty();
+		return m_IntPool.empty() && m_LongPool.empty() && m_DoublePool.empty();
 	}
 
 	const Type* ConstantPool::GetConstantType(std::uint32_t index) const noexcept {
@@ -43,19 +41,19 @@ namespace svm {
 		return 0;
 	}
 	std::uint32_t ConstantPool::GetLongOffset() const noexcept {
-		return GetIntCount() * sizeof(IntObject);
+		return GetIntCount();
 	}
 	std::uint32_t ConstantPool::GetDoubleOffset() const noexcept {
-		return GetLongOffset() + GetLongCount() * sizeof(LongObject);
+		return GetLongOffset() + GetLongCount();
 	}
 	std::uint32_t ConstantPool::GetIntCount() const noexcept {
-		return m_IntCount;
+		return static_cast<std::uint32_t>(m_IntPool.size());
 	}
 	std::uint32_t ConstantPool::GetLongCount() const noexcept {
-		return m_LongCount;
+		return static_cast<std::uint32_t>(m_LongPool.size());
 	}
 	std::uint32_t ConstantPool::GetDoubleCount() const noexcept {
-		return m_DoubleCount;
+		return static_cast<std::uint32_t>(m_DoublePool.size());
 	}
 
 	namespace {

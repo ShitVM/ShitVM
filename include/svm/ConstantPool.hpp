@@ -10,12 +10,13 @@
 namespace svm {
 	class ConstantPool final {
 	private:
-		std::vector<std::uint8_t> m_Pool;
-		std::uint32_t m_IntCount = 0, m_LongCount = 0, m_DoubleCount = 0;
+		std::vector<IntObject> m_IntPool;
+		std::vector<LongObject> m_LongPool;
+		std::vector<DoubleObject> m_DoublePool;
 
 	public:
 		ConstantPool() noexcept = default;
-		ConstantPool(std::vector<std::uint8_t> pool, std::uint32_t intCount, std::uint32_t longCount, std::uint32_t doubleCount) noexcept;
+		ConstantPool(std::vector<IntObject> intPool, std::vector<LongObject> longPool, std::vector<DoubleObject> doublePool) noexcept;
 		ConstantPool(ConstantPool&& pool) noexcept;
 		~ConstantPool() = default;
 
@@ -32,14 +33,13 @@ namespace svm {
 		const T& GetConstant(std::uint32_t index) const noexcept {
 			static_assert(std::is_base_of_v<Object, T>);
 
-			std::uint32_t newIndex = index;
-			if (index >= GetDoubleOffset()) {
-				newIndex -= GetDoubleOffset();
-			} else if (index >= GetLongOffset()) {
-				newIndex -= GetLongOffset();
+			if constexpr (std::is_same_v<IntObject, T>) {
+				return m_IntPool[index - GetOffset<T>()];
+			} else if constexpr (std::is_same_v<LongObject, T>) {
+				return m_LongPool[index - GetOffset<T>()];
+			} else if constexpr (std::is_same_v<DoubleObject, T>) {
+				return m_DoublePool[index - GetOffset<T>()];
 			}
-
-			return *(reinterpret_cast<const T*>(&m_Pool[GetOffset<T>()]) + newIndex);
 		}
 		const Type* GetConstantType(std::uint32_t index) const noexcept;
 		template<typename T>
