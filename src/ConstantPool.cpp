@@ -65,7 +65,7 @@ namespace svm {
 			auto value = constant.Value;
 
 			if (iword == 0) {
-				stream << '[' << i << "]: " << constant.GetType()->Name << '(' << constant.Value << ')';
+				stream << "\n\t[" << i << "]: " << constant.GetType()->Name << '(' << constant.Value << ')';
 			} else {
 				if (GetEndian() != Endian::Little) {
 					value = ReverseEndian(value);
@@ -79,7 +79,7 @@ namespace svm {
 		const long iword = stream.iword(detail::ByteModeIndex());
 
 		if (iword == 0) {
-			stream << "ConstantPool:\n\t";
+			stream << "ConstantPool:";
 		}
 
 		static constexpr std::uint32_t((ConstantPool::*types[])() const noexcept) = {
@@ -100,8 +100,6 @@ namespace svm {
 						bytes = ReverseEndian(bytes);
 					}
 					stream.write(reinterpret_cast<const char*>(bytes), sizeof(bytes));
-				} else if (i != 0 && iword == 0) {
-					stream << "\n\t";
 				}
 
 				if (type == &ConstantPool::GetIntCount) {

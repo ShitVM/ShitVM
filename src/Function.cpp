@@ -48,12 +48,12 @@ namespace svm {
 	}
 	std::ostream& operator<<(std::ostream& stream, const Functions& functions) {
 		if (stream.iword(detail::ByteModeIndex()) == 0) {
-			stream << "Functions:\n";
+			stream << "Functions:\n\t";
 			for (std::uint32_t i = 0; i < functions.size(); ++i) {
 				if (i != 0) {
-					stream << '\n';
+					stream << "\n\t";
 				}
-				stream << "\t[" << i << "]: " << functions[i];
+				stream << '[' << i << "]: " << functions[i];
 			}
 		} else {
 			for (const auto& func : functions) {

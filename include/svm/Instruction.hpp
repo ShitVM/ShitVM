@@ -62,7 +62,9 @@ namespace svm {
 		"cmp", "icmp", "jmp", "je", "jne", "ja", "jae", "jb", "jbe", "call", "ret",
 		"i2l", "i2d", "l2i", "l2d", "d2i", "d2l",
 	};
+}
 
+namespace svm {
 	class Instruction final {
 	public:
 		static constexpr std::uint32_t NoOperand = std::numeric_limits<std::uint32_t>::max();
@@ -71,7 +73,6 @@ namespace svm {
 	public:
 		svm::OpCode OpCode = OpCode::Nop;
 		std::uint32_t Operand = NoOperand;
-
 		std::uint64_t Offset = NoOffset;
 
 	public:
@@ -91,22 +92,20 @@ namespace svm {
 	public:
 		bool HasOperand() const noexcept;
 		bool HasOffset() const noexcept;
-		std::string ToString() const;
 	};
 
 	std::ostream& operator<<(std::ostream& stream, const Instruction& instruction);
+}
 
+namespace svm {
 	class Instructions final {
 	private:
-		std::unique_ptr<std::uint64_t[]> m_Labels;
-		std::uint32_t m_LabelCount = 0;
-		std::unique_ptr<Instruction[]> m_Instructions;
-		std::uint64_t m_InstructionCount = 0;
+		std::vector<std::uint64_t> m_Labels;
+		std::vector<Instruction> m_Instructions;
 
 	public:
 		Instructions() noexcept = default;
-		Instructions(std::unique_ptr<std::uint64_t[]>&& labels, std::uint32_t labelCount,
-					 std::unique_ptr<Instruction[]> instructions, std::uint64_t instructionCount) noexcept;
+		Instructions(std::vector<std::uint64_t> labels, std::vector<Instruction> instructions) noexcept;
 		Instructions(Instructions&& instructions) noexcept;
 		~Instructions() = default;
 
@@ -122,8 +121,8 @@ namespace svm {
 
 		std::uint64_t GetLabel(std::uint32_t index) const noexcept;
 		const Instruction& GetInstruction(std::uint64_t offset) const noexcept;
-		const std::uint64_t* GetLabels() const noexcept;
-		const Instruction* GetInstructions() const noexcept;
+		const std::vector<std::uint64_t>& GetLabels() const noexcept;
+		const std::vector<Instruction>& GetInstructions() const noexcept;
 		std::uint32_t GetLabelCount() const noexcept;
 		std::uint64_t GetInstructionCount() const noexcept;
 	};

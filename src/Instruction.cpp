@@ -5,7 +5,6 @@
 
 #include <iomanip>
 #include <ios>
-#include <sstream>
 #include <utility>
 
 namespace svm {
@@ -23,7 +22,6 @@ namespace svm {
 	Instruction& Instruction::operator=(const Instruction& instruction) noexcept {
 		OpCode = instruction.OpCode;
 		Operand = instruction.Operand;
-
 		Offset = instruction.Offset;
 		return *this;
 	}
@@ -39,11 +37,6 @@ namespace svm {
 	}
 	bool Instruction::HasOffset() const noexcept {
 		return Offset != NoOffset;
-	}
-	std::string Instruction::ToString() const {
-		std::ostringstream oss;
-		oss << *this;
-		return oss.str();
 	}
 
 	std::ostream& operator<<(std::ostream& stream, const Instruction& instruction) {
@@ -73,19 +66,14 @@ namespace svm {
 }
 
 namespace svm {
-	Instructions::Instructions(std::unique_ptr<std::uint64_t[]>&& labels, std::uint32_t labelCount,
-							   std::unique_ptr<Instruction[]> instructions, std::uint64_t instructionCount) noexcept
-		: m_Labels(std::move(labels)), m_LabelCount(labelCount),
-		m_Instructions(std::move(instructions)), m_InstructionCount(instructionCount) {}
+	Instructions::Instructions(std::vector<std::uint64_t> labels, std::vector<Instruction> instructions) noexcept
+		: m_Labels(std::move(labels)), m_Instructions(std::move(instructions)) {}
 	Instructions::Instructions(Instructions&& instructions) noexcept
-		: m_Labels(std::move(instructions.m_Labels)), m_LabelCount(instructions.m_LabelCount),
-		m_Instructions(std::move(instructions.m_Instructions)), m_InstructionCount(instructions.m_InstructionCount){}
+		: m_Labels(std::move(instructions.m_Labels)), m_Instructions(std::move(instructions.m_Instructions)) {}
 
 	Instructions& Instructions::operator=(Instructions&& instructions) noexcept {
 		m_Labels = std::move(instructions.m_Labels);
-		m_LabelCount = instructions.m_LabelCount;
 		m_Instructions = std::move(instructions.m_Instructions);
-		m_InstructionCount = instructions.m_InstructionCount;
 		return *this;
 	}
 	const Instruction& Instructions::operator[](std::uint64_t offset) const noexcept {
@@ -93,13 +81,11 @@ namespace svm {
 	}
 
 	void Instructions::Clear() noexcept {
-		m_Labels.reset();
-		m_LabelCount = 0;
-		m_Instructions.reset();
-		m_InstructionCount = 0;
+		m_Labels.clear();
+		m_Instructions.clear();
 	}
 	bool Instructions::IsEmpty() const noexcept {
-		return m_Labels == nullptr && m_Instructions == nullptr;
+		return m_Labels.empty() && m_Instructions.empty();
 	}
 
 	std::uint64_t Instructions::GetLabel(std::uint32_t index) const noexcept {
@@ -108,76 +94,53 @@ namespace svm {
 	const Instruction& Instructions::GetInstruction(std::uint64_t offset) const noexcept {
 		return m_Instructions[static_cast<std::size_t>(offset)];
 	}
-	const std::uint64_t* Instructions::GetLabels() const noexcept {
-		return m_Labels.get();
+	const std::vector<std::uint64_t>& Instructions::GetLabels() const noexcept {
+		return m_Labels;
 	}
-	const Instruction* Instructions::GetInstructions() const noexcept {
-		return m_Instructions.get();
+	const std::vector<Instruction>& Instructions::GetInstructions() const noexcept {
+		return m_Instructions;
 	}
 	std::uint32_t Instructions::GetLabelCount() const noexcept {
-		return m_LabelCount;
+		return static_cast<std::uint32_t>(m_Labels.size());
 	}
 	std::uint64_t Instructions::GetInstructionCount() const noexcept {
-		return m_InstructionCount;
-	}
-
-	namespace {
-		void PrintInstructions(std::ostream& stream, const Instructions& instructions) {
-			for (std::uint64_t i = 0; i < instructions.GetInstructionCount(); ++i) {
-				if (i != 0 && stream.iword(detail::ByteModeIndex()) == 0) {
-					stream << '\n';
-				}
-				stream << instructions[i];
-			}
-		}
-		void PrintLabels(std::ostream& stream, const Instructions& instructions) {
-			if (stream.iword(detail::ByteModeIndex()) == 1) {
-				std::uint8_t bytes[4];
-				if (GetEndian() == Endian::Little) {
-					*reinterpret_cast<std::uint32_t*>(bytes) = instructions.GetLabelCount();
-				} else {
-					*reinterpret_cast<std::uint32_t*>(bytes) = ReverseEndian(instructions.GetLabelCount());
-				}
-				stream.write(reinterpret_cast<const char*>(bytes), 4);
-			}
-
-			for (std::uint32_t i = 0; i < instructions.GetLabelCount(); ++i) {
-				if (stream.iword(detail::ByteModeIndex()) == 0) {
-					if (i != 0) {
-						stream << '\n';
-					}
-					stream << '[' << i << "]: " << std::hex << std::uppercase << std::setw(16) << std::setfill('0') << instructions.GetLabel(i)
-						   << std::dec << std::nouppercase;
-				} else {
-					std::uint8_t bytes[8];
-					if (GetEndian() == Endian::Little) {
-						*reinterpret_cast<std::uint64_t*>(bytes) = instructions.GetLabel(i);
-					} else {
-						*reinterpret_cast<std::uint64_t*>(bytes) = ReverseEndian(instructions.GetLabel(i));
-					}
-					stream.write(reinterpret_cast<const char*>(bytes), 8);
-				}
-			}
-		}
+		return m_Instructions.size();
 	}
 
 	std::ostream& operator<<(std::ostream& stream, const Instructions& instructions) {
-		switch (stream.iword(detail::InstLabelModeIndex())) {
-		case 0:
-			PrintInstructions(stream, instructions);
-			break;
+		if (stream.iword(detail::ByteModeIndex()) == 0) {
+			stream << "Instructions:\n\tLabels:";
+			for (std::uint32_t i = 0; i < instructions.GetLabelCount(); ++i) {
+				stream << "\n\t\t[" << i << "]: " << std::hex << std::uppercase << std::setw(16) << std::setfill('0') << instructions.GetLabel(i)
+					   << std::dec << std::nouppercase;
+			}
+			for (std::uint32_t i = 0; i < instructions.GetInstructionCount(); ++i) {
+				stream << "\n\t" << instructions.GetInstruction(i);
+			}
+		} else {
+			std::uint32_t labelCount = instructions.GetLabelCount();
+			if (GetEndian() != Endian::Little) {
+				labelCount = ReverseEndian(labelCount);
+			}
+			stream.write(reinterpret_cast<const char*>(&labelCount), sizeof(labelCount));
+			for (std::uint32_t i = 0; i < instructions.GetLabelCount(); ++i) {
+				std::uint64_t label = instructions.GetLabel(i);
+				if (GetEndian() != Endian::Little) {
+					label = ReverseEndian(label);
+				}
+				stream.write(reinterpret_cast<const char*>(&label), sizeof(label));
+			}
 
-		case 1:
-			PrintLabels(stream, instructions);
-			break;
-
-		case 2:
-			stream << "<Labels>\n";
-			PrintLabels(stream, instructions);
-			stream << "\n\n<Instructions>\n";
-			PrintInstructions(stream, instructions);
-			break;
+			std::uint64_t instCount = instructions.GetInstructionCount();
+			if (GetEndian() != Endian::Little) {
+				instCount = ReverseEndian(instCount);
+			}
+			stream.write(reinterpret_cast<const char*>(&instCount), sizeof(instCount));
+			for (const auto& inst : instructions.GetInstructions()) {
+				stream << inst;
+			}
 		}
+
 		return stream;
 	}
 }

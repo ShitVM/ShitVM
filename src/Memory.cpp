@@ -1,7 +1,5 @@
 #include <svm/Memory.hpp>
 
-#include <cstdint>
-
 namespace svm {
 #ifndef SVM_LITTLE
 	Endian GetEndian() noexcept {
