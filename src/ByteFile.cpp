@@ -3,13 +3,10 @@
 #include <utility>
 
 namespace svm {
-	ByteFile::ByteFile(std::string path, ConstantPool&& constantPool,
-					   Functions&& functions, Instructions&& entryPoint) noexcept
-		: m_Path(std::move(path)), m_ConstantPool(std::move(constantPool)),
-		m_Functions(std::move(functions)), m_EntryPoint(std::move(entryPoint)) {}
+	ByteFile::ByteFile(std::string path, ConstantPool&& constantPool, Functions&& functions, Instructions&& entryPoint) noexcept
+		: m_Path(std::move(path)), m_ConstantPool(std::move(constantPool)), m_Functions(std::move(functions)), m_EntryPoint(std::move(entryPoint)) {}
 	ByteFile::ByteFile(ByteFile&& file) noexcept
-		: m_Path(std::move(file.m_Path)), m_ConstantPool(std::move(file.m_ConstantPool)),
-		m_Functions(std::move(file.m_Functions)), m_EntryPoint(std::move(file.m_EntryPoint)) {}
+		: m_Path(std::move(file.m_Path)), m_ConstantPool(std::move(file.m_ConstantPool)), m_Functions(std::move(file.m_Functions)), m_EntryPoint(std::move(file.m_EntryPoint)) {}
 
 	ByteFile& ByteFile::operator=(ByteFile&& file) noexcept {
 		m_Path = std::move(file.m_Path);

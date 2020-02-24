@@ -18,3 +18,19 @@
 #if defined(SVM_WINDOWS) || defined(SVM_X86)
 #	define SVM_LITTLE
 #endif
+
+#if defined(_MSC_VER)
+#	define SVM_MSVC
+#elif defined(__GNUC__)
+#	define SVM_GCC
+#elif defined(__clang__)
+#	define SVM_CLANG
+#endif
+
+#if defined(SVM_MSVC)
+#	define SVM_INLINE __forceinline
+#elif defined(SVM_GCC) || defined(SVM_CLANG)
+#	define SVM_INLINE __attribute__((always_inline))
+#else
+#	define SVM_INLINE inline
+#endif

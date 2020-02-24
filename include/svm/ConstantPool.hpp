@@ -3,19 +3,19 @@
 #include <svm/Object.hpp>
 
 #include <cstdint>
-#include <memory>
 #include <ostream>
 #include <type_traits>
+#include <vector>
 
 namespace svm {
 	class ConstantPool final {
 	private:
-		std::unique_ptr<std::uint8_t[]> m_Pool;
+		std::vector<std::uint8_t> m_Pool;
 		std::uint32_t m_IntCount = 0, m_LongCount = 0, m_DoubleCount = 0;
 
 	public:
 		ConstantPool() noexcept = default;
-		ConstantPool(std::unique_ptr<std::uint8_t[]>&& pool, std::uint32_t intCount, std::uint32_t longCount, std::uint32_t doubleCount) noexcept;
+		ConstantPool(std::vector<std::uint8_t> pool, std::uint32_t intCount, std::uint32_t longCount, std::uint32_t doubleCount) noexcept;
 		ConstantPool(ConstantPool&& pool) noexcept;
 		~ConstantPool() = default;
 
@@ -39,7 +39,7 @@ namespace svm {
 				newIndex -= GetLongOffset();
 			}
 
-			return *(reinterpret_cast<const T*>(m_Pool.get() + GetOffset<T>()) + newIndex);
+			return *(reinterpret_cast<const T*>(m_Pool[GetOffset<T>()]) + newIndex);
 		}
 		const Type* GetConstantType(std::uint32_t index) const noexcept;
 		template<typename T>

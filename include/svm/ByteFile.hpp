@@ -17,8 +17,7 @@ namespace svm {
 
 	public:
 		ByteFile() noexcept = default;
-		ByteFile(std::string path, ConstantPool&& constantPool,
-				 Functions&& functions, Instructions&& entryPoint) noexcept;
+		ByteFile(std::string path, ConstantPool&& constantPool, Functions&& functions, Instructions&& entryPoint) noexcept;
 		ByteFile(ByteFile&& file) noexcept;
 		~ByteFile() = default;
 
