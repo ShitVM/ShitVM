@@ -20,7 +20,8 @@ namespace svm {
 
 		std::string m_Path;
 		ConstantPool m_ConstantPool;
-		Instructions m_Instructions;
+		Functions m_Functions;
+		Instructions m_EntryPoint;
 
 	public:
 		Parser() noexcept = default;
@@ -41,7 +42,9 @@ namespace svm {
 
 		ByteFile GetResult();
 		std::string_view GetPath() const noexcept;
-		const Instructions& GetInstructions() const noexcept;
+		const ConstantPool& GetConstantPool() const noexcept;
+		const Functions& GetFunctions() const noexcept;
+		const Instructions& GetEntryPoint() const noexcept;
 
 	private:
 		template<typename T>
@@ -53,11 +56,11 @@ namespace svm {
 				return GetEndian() == Endian::Little ? result : ReverseEndian(result);
 			} else return result;
 		}
-		std::pair<std::vector<std::uint8_t>::iterator, std::vector<std::uint8_t>::iterator> ReadFile(std::size_t size) noexcept {
+		auto ReadFile(std::size_t size) noexcept {
 			const auto begin = m_File.begin() + m_Pos;
 			const auto end = m_File.begin() + m_Pos + size;
 			m_Pos += size;
-			return { begin, end };
+			return std::make_pair(begin, end);
 		}
 
 		void ParseVer0000();
@@ -75,6 +78,7 @@ namespace svm {
 			}
 			return objPtr;
 		}
-		void ParseInstructions();
+		void ParseFunctions();
+		Instructions ParseInstructions();
 	};
 }
