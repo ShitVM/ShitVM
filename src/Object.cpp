@@ -8,13 +8,11 @@ namespace svm {
 		static const Type s_IntType(TypeCode::Int, "int");
 		static const Type s_LongType(TypeCode::Long, "long");
 		static const Type s_DoubleType(TypeCode::Double, "double");
-		static const Type s_ReferenceType(TypeCode::Reference, "reference");
 	}
 
 	const Type* IntType = &s_IntType;
 	const Type* LongType = &s_LongType;
 	const Type* DoubleType = &s_DoubleType;
-	const Type* ReferenceType = &s_ReferenceType;
 }
 
 namespace svm {
@@ -42,9 +40,6 @@ namespace svm {
 	}
 	bool Object::IsDouble() const noexcept {
 		return GetTypeCode() == TypeCode::Double;
-	}
-	bool Object::IsReference() const noexcept {
-		return GetTypeCode() == TypeCode::Reference;
 	}
 }
 
@@ -89,22 +84,6 @@ namespace svm {
 		: Object(object), Value(object.Value) {}
 
 	DoubleObject& DoubleObject::operator=(const DoubleObject& object) noexcept {
-		Object::operator=(object);
-
-		Value = object.Value;
-		return *this;
-	}
-}
-
-namespace svm {
-	ReferenceObject::ReferenceObject() noexcept
-		: Object(LongType) {}
-	ReferenceObject::ReferenceObject(Object* value) noexcept
-		: Object(LongType), Value(value) {}
-	ReferenceObject::ReferenceObject(const ReferenceObject& object) noexcept
-		: Object(object), Value(object.Value) {}
-
-	ReferenceObject& ReferenceObject::operator=(const ReferenceObject& object) noexcept {
 		Object::operator=(object);
 
 		Value = object.Value;

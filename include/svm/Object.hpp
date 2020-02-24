@@ -9,7 +9,6 @@ namespace svm {
 		Int,
 		Long,
 		Double,
-		Reference,
 	};
 
 	class Type final {
@@ -32,7 +31,6 @@ namespace svm {
 	extern const Type* IntType;
 	extern const Type* LongType;
 	extern const Type* DoubleType;
-	extern const Type* ReferenceType;
 
 	class Object {
 	private:
@@ -55,7 +53,6 @@ namespace svm {
 		bool IsInt() const noexcept;
 		bool IsLong() const noexcept;
 		bool IsDouble() const noexcept;
-		bool IsReference() const noexcept;
 	};
 
 	class IntObject final : public Object {
@@ -98,19 +95,5 @@ namespace svm {
 
 	public:
 		DoubleObject& operator=(const DoubleObject& object) noexcept;
-	};
-
-	class ReferenceObject final : public Object {
-	public:
-		Object* Value = nullptr;
-
-	public:
-		ReferenceObject() noexcept;
-		ReferenceObject(Object* value) noexcept;
-		ReferenceObject(const ReferenceObject& object) noexcept;
-		~ReferenceObject() = default;
-
-	public:
-		ReferenceObject& operator=(const ReferenceObject& object) noexcept;
 	};
 }
