@@ -40,28 +40,14 @@ namespace svm {
 	}
 
 	std::ostream& operator<<(std::ostream& stream, const Instruction& instruction) {
-		if (stream.iword(detail::ByteModeIndex()) == 0) {
-			if (instruction.HasOffset()) {
-				stream << std::hex << std::uppercase << std::setw(16) << std::setfill('0') << instruction.Offset << ": "
-					   << std::dec << std::nouppercase;
-			}
-			stream << Mnemonics[static_cast<int>(instruction.OpCode)];
-			if (instruction.HasOperand()) {
-				stream << std::hex << std::uppercase << " 0x" << instruction.Operand << std::dec << std::nouppercase;
-			}
-		} else {
-			std::uint8_t bytes[5];
-			bytes[0] = static_cast<std::uint8_t>(instruction.OpCode);
-			if (instruction.HasOperand()) {
-				if (GetEndian() == Endian::Little) {
-					*reinterpret_cast<std::uint32_t*>(bytes + 1) = instruction.Operand;
-				} else {
-					*reinterpret_cast<std::uint32_t*>(bytes + 1) = ReverseEndian(instruction.Operand);
-				}
-			}
-			stream.write(reinterpret_cast<const char*>(bytes), instruction.HasOperand() ? 5 : 1);
+		if (instruction.HasOffset()) {
+			stream << std::hex << std::uppercase << std::setw(16) << std::setfill('0') << instruction.Offset << ": "
+				<< std::dec << std::nouppercase;
 		}
-
+		stream << Mnemonics[static_cast<int>(instruction.OpCode)];
+		if (instruction.HasOperand()) {
+			stream << std::hex << std::uppercase << " 0x" << instruction.Operand << std::dec << std::nouppercase;
+		}
 		return stream;
 	}
 }
@@ -110,40 +96,15 @@ namespace svm {
 
 	std::ostream& operator<<(std::ostream& stream, const Instructions& instructions) {
 		const std::string defIndent = detail::MakeTabs(stream);
-
-		if (stream.iword(detail::ByteModeIndex()) == 0) {
-			stream << defIndent << "Instructions:\n"
-				   << defIndent << "\tLabels: " << instructions.GetLabelCount();
-			for (std::uint32_t i = 0; i < instructions.GetLabelCount(); ++i) {
-				stream << '\n' << defIndent << "\t\t[" << i << "]: " << instructions.GetLabel(i)
-					   << '(' << std::hex << std::uppercase << std::setw(16) << std::setfill('0') << instructions.GetInstruction(instructions.GetLabel(i)).Offset << ')'
-					   << std::dec << std::nouppercase;
-			}
-			for (std::uint32_t i = 0; i < instructions.GetInstructionCount(); ++i) {
-				stream << '\n' << defIndent << '\t' << instructions.GetInstruction(i);
-			}
-		} else {
-			std::uint32_t labelCount = instructions.GetLabelCount();
-			if (GetEndian() != Endian::Little) {
-				labelCount = ReverseEndian(labelCount);
-			}
-			stream.write(reinterpret_cast<const char*>(&labelCount), sizeof(labelCount));
-			for (std::uint32_t i = 0; i < instructions.GetLabelCount(); ++i) {
-				std::uint64_t label = instructions.GetLabel(i);
-				if (GetEndian() != Endian::Little) {
-					label = ReverseEndian(label);
-				}
-				stream.write(reinterpret_cast<const char*>(&label), sizeof(label));
-			}
-
-			std::uint64_t instCount = instructions.GetInstructionCount();
-			if (GetEndian() != Endian::Little) {
-				instCount = ReverseEndian(instCount);
-			}
-			stream.write(reinterpret_cast<const char*>(&instCount), sizeof(instCount));
-			for (const auto& inst : instructions.GetInstructions()) {
-				stream << inst;
-			}
+		stream << defIndent << "Instructions:\n"
+			   << defIndent << "\tLabels: " << instructions.GetLabelCount();
+		for (std::uint32_t i = 0; i < instructions.GetLabelCount(); ++i) {
+			stream << '\n' << defIndent << "\t\t[" << i << "]: " << instructions.GetLabel(i)
+				   << '(' << std::hex << std::uppercase << std::setw(16) << std::setfill('0') << instructions.GetInstruction(instructions.GetLabel(i)).Offset << ')'
+				   << std::dec << std::nouppercase;
+		}
+		for (std::uint32_t i = 0; i < instructions.GetInstructionCount(); ++i) {
+			stream << '\n' << defIndent << '\t' << instructions.GetInstruction(i);
 		}
 
 		return stream;

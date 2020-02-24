@@ -60,28 +60,16 @@ namespace svm {
 
 	namespace {
 		template<typename T>
-		SVM_INLINE void PrintConstants(std::ostream& stream, const ConstantPool& constantPool, long iword, const std::string& defIndent, std::uint32_t i) {
+		SVM_INLINE void PrintConstants(std::ostream& stream, const ConstantPool& constantPool, const std::string& defIndent, std::uint32_t i) {
 			const auto& constant = constantPool.GetConstant<T>(i);
-			auto value = constant.Value;
-
-			if (iword == 0) {
-				stream << '\n' << defIndent << "\t[" << i << "]: " << constant.GetType()->Name << '(' << constant.Value << ')';
-			} else {
-				if (GetEndian() != Endian::Little) {
-					value = ReverseEndian(value);
-				}
-				stream.write(reinterpret_cast<const char*>(&value), sizeof(value));
-			}
+			stream << '\n' << defIndent << "\t[" << i << "]: " << constant.GetType()->Name << '(' << constant.Value << ')';
 		}
 	}
 
 	std::ostream& operator<<(std::ostream& stream, const ConstantPool& constantPool) {
-		const long iword = stream.iword(detail::ByteModeIndex());
 		const std::string defIndent = detail::MakeTabs(stream);
 
-		if (iword == 0) {
-			stream << defIndent << "ConstantPool:";
-		}
+		stream << defIndent << "ConstantPool:";
 
 		static constexpr std::uint32_t((ConstantPool::*types[])() const noexcept) = {
 			&ConstantPool::GetIntCount,
@@ -95,20 +83,12 @@ namespace svm {
 			const std::uint32_t count = (constantPool.*type)();
 			const std::uint32_t end = offset + count;
 			for (; i < end; ++i) {
-				if (i == 0 && iword == 1) {
-					std::uint32_t bytes = count;
-					if (GetEndian() != Endian::Little) {
-						bytes = ReverseEndian(bytes);
-					}
-					stream.write(reinterpret_cast<const char*>(bytes), sizeof(bytes));
-				}
-
 				if (type == &ConstantPool::GetIntCount) {
-					PrintConstants<IntObject>(stream, constantPool, iword, defIndent, i);
+					PrintConstants<IntObject>(stream, constantPool, defIndent, i);
 				} else if (type == &ConstantPool::GetLongCount) {
-					PrintConstants<LongObject>(stream, constantPool, iword, defIndent, i);
+					PrintConstants<LongObject>(stream, constantPool, defIndent, i);
 				} else if (type == &ConstantPool::GetDoubleCount) {
-					PrintConstants<DoubleObject>(stream, constantPool, iword, defIndent, i);
+					PrintConstants<DoubleObject>(stream, constantPool, defIndent, i);
 				}
 			}
 		}
