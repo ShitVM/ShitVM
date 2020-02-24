@@ -60,8 +60,8 @@ namespace svm {
 		std::size_t StackBegin = 0;
 		std::size_t VariableBegin = 0;
 		std::size_t Caller = std::numeric_limits<std::size_t>::max();
-		const Function* Function = nullptr;
-		const Instructions* Instructions = nullptr;
+		const svm::Function* Function = nullptr;
+		const svm::Instructions* Instructions = nullptr;
 	};
 
 	class Interpreter final {
