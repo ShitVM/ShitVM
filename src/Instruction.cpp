@@ -42,11 +42,12 @@ namespace svm {
 	std::ostream& operator<<(std::ostream& stream, const Instruction& instruction) {
 		if (stream.iword(detail::ByteModeIndex()) == 0) {
 			if (instruction.HasOffset()) {
-				stream << std::hex << std::uppercase << std::setw(16) << std::setfill('0') << instruction.Offset << ": ";
+				stream << std::hex << std::uppercase << std::setw(16) << std::setfill('0') << instruction.Offset << ": "
+					   << std::dec << std::nouppercase;
 			}
 			stream << Mnemonics[static_cast<int>(instruction.OpCode)];
 			if (instruction.HasOperand()) {
-				stream << " 0x" << instruction.Operand << std::dec << std::nouppercase;
+				stream << std::hex << std::uppercase << " 0x" << instruction.Operand << std::dec << std::nouppercase;
 			}
 		} else {
 			std::uint8_t bytes[5];
@@ -114,7 +115,8 @@ namespace svm {
 			stream << defIndent << "Instructions:\n"
 				   << defIndent << "\tLabels: " << instructions.GetLabelCount();
 			for (std::uint32_t i = 0; i < instructions.GetLabelCount(); ++i) {
-				stream << '\n' << defIndent << "\t\t[" << i << "]: " << std::hex << std::uppercase << std::setw(16) << std::setfill('0') << instructions.GetLabel(i)
+				stream << '\n' << defIndent << "\t\t[" << i << "]: " << instructions.GetLabel(i)
+					   << '(' << std::hex << std::uppercase << std::setw(16) << std::setfill('0') << instructions.GetInstruction(instructions.GetLabel(i)).Offset << ')'
 					   << std::dec << std::nouppercase;
 			}
 			for (std::uint32_t i = 0; i < instructions.GetInstructionCount(); ++i) {
