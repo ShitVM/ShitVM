@@ -159,7 +159,7 @@ namespace svm {
 		}
 	}
 	SVM_INLINE void Interpreter::InterpretLoad(std::uint32_t operand) {
-		operand += m_StackFrame.VariableBegin;
+		operand += static_cast<std::uint32_t>(m_StackFrame.VariableBegin);
 
 		const Type* const varType = m_Stack.Get<const Type*>(m_LocalVariables[operand]);
 		if (varType == IntType) {
@@ -171,7 +171,7 @@ namespace svm {
 		}
 	}
 	SVM_INLINE void Interpreter::InterpretStore(std::uint32_t operand) {
-		operand += m_StackFrame.VariableBegin;
+		operand += static_cast<std::uint32_t>(m_StackFrame.VariableBegin);
 
 		const Type* const type = m_Stack.GetTopType();
 		if (type == IntType) {
