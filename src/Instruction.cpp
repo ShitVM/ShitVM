@@ -108,14 +108,17 @@ namespace svm {
 	}
 
 	std::ostream& operator<<(std::ostream& stream, const Instructions& instructions) {
+		const std::string defIndent = detail::MakeTabs(stream);
+
 		if (stream.iword(detail::ByteModeIndex()) == 0) {
-			stream << "Instructions:\n\tLabels:";
+			stream << defIndent << "Instructions:\n"
+				   << defIndent << "\tLabels: " << instructions.GetLabelCount();
 			for (std::uint32_t i = 0; i < instructions.GetLabelCount(); ++i) {
-				stream << "\n\t\t[" << i << "]: " << std::hex << std::uppercase << std::setw(16) << std::setfill('0') << instructions.GetLabel(i)
+				stream << '\n' << defIndent << "\t\t[" << i << "]: " << std::hex << std::uppercase << std::setw(16) << std::setfill('0') << instructions.GetLabel(i)
 					   << std::dec << std::nouppercase;
 			}
 			for (std::uint32_t i = 0; i < instructions.GetInstructionCount(); ++i) {
-				stream << "\n\t" << instructions.GetInstruction(i);
+				stream << '\n' << defIndent << '\t' << instructions.GetInstruction(i);
 			}
 		} else {
 			std::uint32_t labelCount = instructions.GetLabelCount();

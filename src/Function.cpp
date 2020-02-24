@@ -29,10 +29,13 @@ namespace svm {
 	}
 
 	std::ostream& operator<<(std::ostream& stream, const Function& function) {
+		const std::string defIndent = detail::MakeTabs(stream);
+
 		if (stream.iword(detail::ByteModeIndex()) == 0) {
-			stream << "Function:\n\tArity: " << function.GetArity() <<
-					  "\n\tHasResult: " << std::boolalpha << function.HasResult() <<
-					  "\n\tInstructions:\n" << function.GetInstructions();
+			stream << defIndent << "Function\n"
+				   << defIndent << "\tArity: " << function.GetArity() << '\n'
+				   << defIndent << "\tHasResult: " << std::boolalpha << function.HasResult() << '\n'
+				   << Indent << Indent << function.GetInstructions() << UnIndent << UnIndent;
 		} else {
 			std::uint16_t arity = function.GetArity();
 			if (GetEndian() != Endian::Little) {
@@ -47,14 +50,14 @@ namespace svm {
 		return stream;
 	}
 	std::ostream& operator<<(std::ostream& stream, const Functions& functions) {
+		const std::string defIndent = detail::MakeTabs(stream);
+
 		if (stream.iword(detail::ByteModeIndex()) == 0) {
-			stream << "Functions:\n\t";
+			stream << defIndent << "Functions:" << Indent << Indent;
 			for (std::uint32_t i = 0; i < functions.size(); ++i) {
-				if (i != 0) {
-					stream << "\n\t";
-				}
-				stream << '[' << i << "]: " << functions[i];
+				stream << '\n' << defIndent << "\t[" << i << "]:\n" << functions[i];
 			}
+			stream << UnIndent << UnIndent;
 		} else {
 			for (const auto& func : functions) {
 				stream << func;

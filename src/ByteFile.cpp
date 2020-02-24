@@ -1,5 +1,7 @@
 #include <svm/ByteFile.hpp>
 
+#include <svm/IO.hpp>
+
 #include <utility>
 
 namespace svm {
@@ -37,5 +39,18 @@ namespace svm {
 	}
 	const Instructions& ByteFile::GetEntryPoint() const noexcept {
 		return m_EntryPoint;
+	}
+
+	std::ostream& operator<<(std::ostream& stream, const ByteFile& byteFile) {
+		const std::string defIndent = detail::MakeTabs(stream);
+		
+		stream << defIndent << "ByteFile:\n"
+			   << defIndent << "\tPath: \"" << byteFile.GetPath() << "\"\n"
+			   << Indent << byteFile.GetConstantPool() << '\n'
+						 << byteFile.GetFunctions() << '\n' << UnIndent
+			   << defIndent << "\tEntryPoint:\n"
+			   << Indent << Indent << byteFile.GetEntryPoint() << UnIndent << UnIndent;
+
+		return stream;
 	}
 }

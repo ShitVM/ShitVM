@@ -39,7 +39,7 @@ namespace svm {
 				newIndex -= GetLongOffset();
 			}
 
-			return *(reinterpret_cast<const T*>(m_Pool[GetOffset<T>()]) + newIndex);
+			return *(reinterpret_cast<const T*>(&m_Pool[GetOffset<T>()]) + newIndex);
 		}
 		const Type* GetConstantType(std::uint32_t index) const noexcept;
 		template<typename T>

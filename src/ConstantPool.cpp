@@ -60,12 +60,12 @@ namespace svm {
 
 	namespace {
 		template<typename T>
-		SVM_INLINE void PrintConstants(std::ostream& stream, const ConstantPool& constantPool, long iword, std::uint32_t i) {
+		SVM_INLINE void PrintConstants(std::ostream& stream, const ConstantPool& constantPool, long iword, const std::string& defIndent, std::uint32_t i) {
 			const auto& constant = constantPool.GetConstant<T>(i);
 			auto value = constant.Value;
 
 			if (iword == 0) {
-				stream << "\n\t[" << i << "]: " << constant.GetType()->Name << '(' << constant.Value << ')';
+				stream << '\n' << defIndent << "\t[" << i << "]: " << constant.GetType()->Name << '(' << constant.Value << ')';
 			} else {
 				if (GetEndian() != Endian::Little) {
 					value = ReverseEndian(value);
@@ -77,9 +77,10 @@ namespace svm {
 
 	std::ostream& operator<<(std::ostream& stream, const ConstantPool& constantPool) {
 		const long iword = stream.iword(detail::ByteModeIndex());
+		const std::string defIndent = detail::MakeTabs(stream);
 
 		if (iword == 0) {
-			stream << "ConstantPool:";
+			stream << defIndent << "ConstantPool:";
 		}
 
 		static constexpr std::uint32_t((ConstantPool::*types[])() const noexcept) = {
@@ -103,11 +104,11 @@ namespace svm {
 				}
 
 				if (type == &ConstantPool::GetIntCount) {
-					PrintConstants<IntObject>(stream, constantPool, iword, i);
+					PrintConstants<IntObject>(stream, constantPool, iword, defIndent, i);
 				} else if (type == &ConstantPool::GetLongCount) {
-					PrintConstants<LongObject>(stream, constantPool, iword, i);
+					PrintConstants<LongObject>(stream, constantPool, iword, defIndent, i);
 				} else if (type == &ConstantPool::GetDoubleCount) {
-					PrintConstants<DoubleObject>(stream, constantPool, iword, i);
+					PrintConstants<DoubleObject>(stream, constantPool, iword, defIndent, i);
 				}
 			}
 		}

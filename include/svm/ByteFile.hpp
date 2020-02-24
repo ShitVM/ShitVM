@@ -4,6 +4,7 @@
 #include <svm/Function.hpp>
 #include <svm/Instruction.hpp>
 
+#include <ostream>
 #include <string>
 #include <string_view>
 
@@ -35,4 +36,6 @@ namespace svm {
 		const Functions& GetFunctions() const noexcept;
 		const Instructions& GetEntryPoint() const noexcept;
 	};
+
+	std::ostream& operator<<(std::ostream& stream, const ByteFile& byteFile);
 }
