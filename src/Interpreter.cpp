@@ -182,35 +182,32 @@ namespace svm {
 
 		const Type* const type = m_Stack.GetTopType();
 		if (type == IntType) {
-			const IntObject& object = m_Stack.Get<IntObject>(m_Stack.GetUsedSize() + sizeof(IntObject));
+			const IntObject& object = m_Stack.GetTop<IntObject>();
 			if (m_LocalVariables.size() <= operand) {
 				m_LocalVariables.resize(operand + 1, std::numeric_limits<std::size_t>::max());
-			}
-			if (m_LocalVariables[operand] == std::numeric_limits<std::size_t>::max()) {
-				m_Stack.Push<IntObject>({});
 				m_LocalVariables[operand] = m_Stack.GetUsedSize();
+			} else {
+				m_Stack.Get<IntObject>(m_LocalVariables[operand]) = object;
+				m_Stack.Pop<IntObject>();
 			}
-			m_Stack.Get<IntObject>(m_LocalVariables[operand]) = object;
 		} else if (type == LongType) {
-			const LongObject& object = m_Stack.Get<LongObject>(m_Stack.GetUsedSize() + sizeof(LongObject));
+			const LongObject& object = m_Stack.GetTop<LongObject>();
 			if (m_LocalVariables.size() <= operand) {
 				m_LocalVariables.resize(operand + 1, std::numeric_limits<std::size_t>::max());
-			}
-			if (m_LocalVariables[operand] == std::numeric_limits<std::size_t>::max()) {
-				m_Stack.Push<LongObject>({});
 				m_LocalVariables[operand] = m_Stack.GetUsedSize();
+			} else {
+				m_Stack.Get<LongObject>(m_LocalVariables[operand]) = object;
+				m_Stack.Pop<LongObject>();
 			}
-			m_Stack.Get<LongObject>(m_LocalVariables[operand]) = object;
 		} else if (type == DoubleType) {
-			const DoubleObject& object = m_Stack.Get<DoubleObject>(m_Stack.GetUsedSize() + sizeof(DoubleObject));
+			const DoubleObject& object = m_Stack.GetTop<DoubleObject>();
 			if (m_LocalVariables.size() <= operand) {
 				m_LocalVariables.resize(operand + 1, std::numeric_limits<std::size_t>::max());
-			}
-			if (m_LocalVariables[operand] == std::numeric_limits<std::size_t>::max()) {
-				m_Stack.Push<DoubleObject>({});
 				m_LocalVariables[operand] = m_Stack.GetUsedSize();
+			} else {
+				m_Stack.Get<DoubleObject>(m_LocalVariables[operand]) = object;
+				m_Stack.Pop<DoubleObject>();
 			}
-			m_Stack.Get<DoubleObject>(m_LocalVariables[operand]) = object;
 		}
 	}
 
@@ -531,45 +528,135 @@ namespace svm {
 		i = m_StackFrame.Instructions->GetLabel(operand) - 1;
 	}
 	void Interpreter::InterpretJe(std::uint64_t& i, std::uint32_t operand) {
-		const IntObject& value = m_Stack.GetTop<IntObject>();
-		if (value.Value == 0) {
-			i = m_StackFrame.Instructions->GetLabel(operand) - 1;
-			m_Stack.Pop<IntObject>();
+		const Type* const type = m_Stack.GetTopType();
+		if (type == IntType) {
+			const IntObject& value = m_Stack.GetTop<IntObject>();
+			if (value.Value == 0) {
+				i = m_StackFrame.Instructions->GetLabel(operand) - 1;
+				m_Stack.Pop<IntObject>();
+			}
+		} else if (type == LongType) {
+			const LongObject& value = m_Stack.GetTop<LongObject>();
+			if (value.Value == 0) {
+				i = m_StackFrame.Instructions->GetLabel(operand) - 1;
+				m_Stack.Pop<LongObject>();
+			}
+		} else if (type == DoubleType) {
+			const DoubleObject& value = m_Stack.GetTop<DoubleObject>();
+			if (value.Value == 0) {
+				i = m_StackFrame.Instructions->GetLabel(operand) - 1;
+				m_Stack.Pop<DoubleObject>();
+			}
 		}
 	}
 	void Interpreter::InterpretJne(std::uint64_t& i, std::uint32_t operand) {
-		const IntObject& value = m_Stack.GetTop<IntObject>();
-		if (value.Value != 0) {
-			i = m_StackFrame.Instructions->GetLabel(operand) - 1;
-			m_Stack.Pop<IntObject>();
+		const Type* const type = m_Stack.GetTopType();
+		if (type == IntType) {
+			const IntObject& value = m_Stack.GetTop<IntObject>();
+			if (value.Value != 0) {
+				i = m_StackFrame.Instructions->GetLabel(operand) - 1;
+				m_Stack.Pop<IntObject>();
+			}
+		} else if (type == LongType) {
+			const LongObject& value = m_Stack.GetTop<LongObject>();
+			if (value.Value != 0) {
+				i = m_StackFrame.Instructions->GetLabel(operand) - 1;
+				m_Stack.Pop<LongObject>();
+			}
+		} else if (type == DoubleType) {
+			const DoubleObject& value = m_Stack.GetTop<DoubleObject>();
+			if (value.Value != 0) {
+				i = m_StackFrame.Instructions->GetLabel(operand) - 1;
+				m_Stack.Pop<DoubleObject>();
+			}
 		}
 	}
 	void Interpreter::InterpretJa(std::uint64_t& i, std::uint32_t operand) {
-		const IntObject& value = m_Stack.GetTop<IntObject>();
-		if (value.Value == 1) {
-			i = m_StackFrame.Instructions->GetLabel(operand) - 1;
-			m_Stack.Pop<IntObject>();
+		const Type* const type = m_Stack.GetTopType();
+		if (type == IntType) {
+			const IntObject& value = m_Stack.GetTop<IntObject>();
+			if (value.Value == 1) {
+				i = m_StackFrame.Instructions->GetLabel(operand) - 1;
+				m_Stack.Pop<IntObject>();
+			}
+		} else if (type == LongType) {
+			const LongObject& value = m_Stack.GetTop<LongObject>();
+			if (value.Value == 1) {
+				i = m_StackFrame.Instructions->GetLabel(operand) - 1;
+				m_Stack.Pop<LongObject>();
+			}
+		} else if (type == DoubleType) {
+			const DoubleObject& value = m_Stack.GetTop<DoubleObject>();
+			if (value.Value == 1) {
+				i = m_StackFrame.Instructions->GetLabel(operand) - 1;
+				m_Stack.Pop<DoubleObject>();
+			}
 		}
 	}
 	void Interpreter::InterpretJae(std::uint64_t& i, std::uint32_t operand) {
-		const IntObject& value = m_Stack.GetTop<IntObject>();
-		if (value.Value != -1) {
-			i = m_StackFrame.Instructions->GetLabel(operand) - 1;
-			m_Stack.Pop<IntObject>();
+		const Type* const type = m_Stack.GetTopType();
+		if (type == IntType) {
+			const IntObject& value = m_Stack.GetTop<IntObject>();
+			if (value.Value != -1) {
+				i = m_StackFrame.Instructions->GetLabel(operand) - 1;
+				m_Stack.Pop<IntObject>();
+			}
+		} else if (type == LongType) {
+			const LongObject& value = m_Stack.GetTop<LongObject>();
+			if (value.Value != -1) {
+				i = m_StackFrame.Instructions->GetLabel(operand) - 1;
+				m_Stack.Pop<LongObject>();
+			}
+		} else if (type == DoubleType) {
+			const DoubleObject& value = m_Stack.GetTop<DoubleObject>();
+			if (value.Value != -1) {
+				i = m_StackFrame.Instructions->GetLabel(operand) - 1;
+				m_Stack.Pop<DoubleObject>();
+			}
 		}
 	}
 	void Interpreter::InterpretJb(std::uint64_t& i, std::uint32_t operand) {
-		const IntObject& value = m_Stack.GetTop<IntObject>();
-		if (value.Value == -1) {
-			i = m_StackFrame.Instructions->GetLabel(operand) - 1;
-			m_Stack.Pop<IntObject>();
+		const Type* const type = m_Stack.GetTopType();
+		if (type == IntType) {
+			const IntObject& value = m_Stack.GetTop<IntObject>();
+			if (value.Value == -1) {
+				i = m_StackFrame.Instructions->GetLabel(operand) - 1;
+				m_Stack.Pop<IntObject>();
+			}
+		} else if (type == LongType) {
+			const LongObject& value = m_Stack.GetTop<LongObject>();
+			if (value.Value == -1) {
+				i = m_StackFrame.Instructions->GetLabel(operand) - 1;
+				m_Stack.Pop<LongObject>();
+			}
+		} else if (type == DoubleType) {
+			const DoubleObject& value = m_Stack.GetTop<DoubleObject>();
+			if (value.Value == -1) {
+				i = m_StackFrame.Instructions->GetLabel(operand) - 1;
+				m_Stack.Pop<DoubleObject>();
+			}
 		}
 	}
 	void Interpreter::InterpretJbe(std::uint64_t& i, std::uint32_t operand) {
-		const IntObject& value = m_Stack.GetTop<IntObject>();
-		if (value.Value != 1) {
-			i = m_StackFrame.Instructions->GetLabel(operand) - 1;
-			m_Stack.Pop<IntObject>();
+		const Type* const type = m_Stack.GetTopType();
+		if (type == IntType) {
+			const IntObject& value = m_Stack.GetTop<IntObject>();
+			if (value.Value != 1) {
+				i = m_StackFrame.Instructions->GetLabel(operand) - 1;
+				m_Stack.Pop<IntObject>();
+			}
+		} else if (type == LongType) {
+			const LongObject& value = m_Stack.GetTop<LongObject>();
+			if (value.Value != 1) {
+				i = m_StackFrame.Instructions->GetLabel(operand) - 1;
+				m_Stack.Pop<LongObject>();
+			}
+		} else if (type == DoubleType) {
+			const DoubleObject& value = m_Stack.GetTop<DoubleObject>();
+			if (value.Value != 1) {
+				i = m_StackFrame.Instructions->GetLabel(operand) - 1;
+				m_Stack.Pop<DoubleObject>();
+			}
 		}
 	}
 	SVM_INLINE void Interpreter::InterpretCall(std::uint64_t& i, std::uint32_t operand) {
