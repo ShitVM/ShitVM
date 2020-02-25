@@ -77,9 +77,9 @@ namespace svm {
 
 namespace svm {
 	DoubleObject::DoubleObject() noexcept
-		: Object(LongType) {}
+		: Object(DoubleType) {}
 	DoubleObject::DoubleObject(double value) noexcept
-		: Object(LongType), Value(value) {}
+		: Object(DoubleType), Value(value) {}
 	DoubleObject::DoubleObject(const DoubleObject& object) noexcept
 		: Object(object), Value(object.Value) {}
 
