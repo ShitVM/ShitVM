@@ -34,3 +34,9 @@
 #else
 #	define SVM_INLINE inline
 #endif
+
+#if defined(SVM_MSVC) && defined(SVM_PROFILING)
+#	define SVM_NOINLINE_FOR_PROFILING __declspec(noinline)
+#else
+#	define SVM_NOINLINE_FOR_PROFILING
+#endif

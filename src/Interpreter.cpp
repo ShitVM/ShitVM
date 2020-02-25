@@ -145,7 +145,7 @@ namespace svm {
 		}
 	}
 
-	void Interpreter::InterpretPush(std::uint32_t operand) {
+	SVM_NOINLINE_FOR_PROFILING void Interpreter::InterpretPush(std::uint32_t operand) {
 		const Type* const constType = ConstantPool.GetConstantType(operand);
 		if (constType == IntType) {
 			m_Stack.Push(ConstantPool.GetConstant<IntObject>(operand));
@@ -155,7 +155,7 @@ namespace svm {
 			m_Stack.Push(ConstantPool.GetConstant<DoubleObject>(operand));
 		}
 	}
-	void Interpreter::InterpretPop() {
+	SVM_NOINLINE_FOR_PROFILING void Interpreter::InterpretPop() {
 		const Type* const type = m_Stack.GetTopType();
 		if (type == IntType) {
 			m_Stack.Pop<IntObject>();
@@ -165,7 +165,7 @@ namespace svm {
 			m_Stack.Pop<DoubleObject>();
 		}
 	}
-	void Interpreter::InterpretLoad(std::uint32_t operand) {
+	SVM_NOINLINE_FOR_PROFILING void Interpreter::InterpretLoad(std::uint32_t operand) {
 		operand += static_cast<std::uint32_t>(m_StackFrame.VariableBegin);
 
 		const Type*& varType = m_Stack.Get<const Type*>(m_LocalVariables[operand]);
@@ -177,7 +177,7 @@ namespace svm {
 			m_Stack.Push(*reinterpret_cast<const DoubleObject*>(&varType));
 		}
 	}
-	void Interpreter::InterpretStore(std::uint32_t operand) {
+	SVM_NOINLINE_FOR_PROFILING void Interpreter::InterpretStore(std::uint32_t operand) {
 		operand += static_cast<std::uint32_t>(m_StackFrame.VariableBegin);
 
 		const Type* const type = m_Stack.GetTopType();
@@ -211,7 +211,7 @@ namespace svm {
 		}
 	}
 
-	void Interpreter::InterpretAdd() {
+	SVM_NOINLINE_FOR_PROFILING void Interpreter::InterpretAdd() {
 		const Type* const rhsType = m_Stack.GetTopType();
 		if (rhsType == IntType) {
 			const IntObject rhs = m_Stack.Pop<IntObject>();
@@ -230,7 +230,7 @@ namespace svm {
 			m_Stack.Push(result);
 		}
 	}
-	void Interpreter::InterpretSub() {
+	SVM_NOINLINE_FOR_PROFILING void Interpreter::InterpretSub() {
 		const Type* const rhsType = m_Stack.GetTopType();
 		if (rhsType == IntType) {
 			const IntObject rhs = m_Stack.Pop<IntObject>();
@@ -249,7 +249,7 @@ namespace svm {
 			m_Stack.Push(result);
 		}
 	}
-	void Interpreter::InterpretMul() {
+	SVM_NOINLINE_FOR_PROFILING void Interpreter::InterpretMul() {
 		const Type* const rhsType = m_Stack.GetTopType();
 		if (rhsType == IntType) {
 			const IntObject rhs = m_Stack.Pop<IntObject>();
@@ -268,7 +268,7 @@ namespace svm {
 			m_Stack.Push(result);
 		}
 	}
-	void Interpreter::InterpretIMul() {
+	SVM_NOINLINE_FOR_PROFILING void Interpreter::InterpretIMul() {
 		const Type* const rhsType = m_Stack.GetTopType();
 		if (rhsType == IntType) {
 			const std::int32_t rhs = m_Stack.Pop<IntObject>().Value;
@@ -287,7 +287,7 @@ namespace svm {
 			m_Stack.Push(result);
 		}
 	}
-	void Interpreter::InterpretDiv() {
+	SVM_NOINLINE_FOR_PROFILING void Interpreter::InterpretDiv() {
 		const Type* const rhsType = m_Stack.GetTopType();
 		if (rhsType == IntType) {
 			const IntObject rhs = m_Stack.Pop<IntObject>();
@@ -306,7 +306,7 @@ namespace svm {
 			m_Stack.Push(result);
 		}
 	}
-	void Interpreter::InterpretIDiv() {
+	SVM_NOINLINE_FOR_PROFILING void Interpreter::InterpretIDiv() {
 		const Type* const rhsType = m_Stack.GetTopType();
 		if (rhsType == IntType) {
 			const std::int32_t rhs = m_Stack.Pop<IntObject>().Value;
@@ -325,7 +325,7 @@ namespace svm {
 			m_Stack.Push(result);
 		}
 	}
-	void Interpreter::InterpretMod() {
+	SVM_NOINLINE_FOR_PROFILING void Interpreter::InterpretMod() {
 		const Type* const rhsType = m_Stack.GetTopType();
 		if (rhsType == IntType) {
 			const IntObject rhs = m_Stack.Pop<IntObject>();
@@ -344,7 +344,7 @@ namespace svm {
 			m_Stack.Push(result);
 		}
 	}
-	void Interpreter::InterpretIMod() {
+	SVM_NOINLINE_FOR_PROFILING void Interpreter::InterpretIMod() {
 		const Type* const rhsType = m_Stack.GetTopType();
 		if (rhsType == IntType) {
 			const std::int32_t rhs = m_Stack.Pop<IntObject>().Value;
@@ -363,7 +363,7 @@ namespace svm {
 			m_Stack.Push(result);
 		}
 	}
-	void Interpreter::InterpretNeg() {
+	SVM_NOINLINE_FOR_PROFILING void Interpreter::InterpretNeg() {
 		const Type* const type = m_Stack.GetTopType();
 		if (type == IntType) {
 			IntObject& top = m_Stack.GetTop<IntObject>();
@@ -377,7 +377,7 @@ namespace svm {
 		}
 	}
 
-	void Interpreter::InterpretAnd() {
+	SVM_NOINLINE_FOR_PROFILING void Interpreter::InterpretAnd() {
 		const Type* const rhsType = m_Stack.GetTopType();
 		if (rhsType == IntType) {
 			const IntObject rhs = m_Stack.Pop<IntObject>();
@@ -391,7 +391,7 @@ namespace svm {
 			m_Stack.Push(result);
 		}
 	}
-	void Interpreter::InterpretOr() {
+	SVM_NOINLINE_FOR_PROFILING void Interpreter::InterpretOr() {
 		const Type* const rhsType = m_Stack.GetTopType();
 		if (rhsType == IntType) {
 			const IntObject rhs = m_Stack.Pop<IntObject>();
@@ -405,7 +405,7 @@ namespace svm {
 			m_Stack.Push(result);
 		}
 	}
-	void Interpreter::InterpretXor() {
+	SVM_NOINLINE_FOR_PROFILING void Interpreter::InterpretXor() {
 		const Type* const rhsType = m_Stack.GetTopType();
 		if (rhsType == IntType) {
 			const IntObject rhs = m_Stack.Pop<IntObject>();
@@ -419,7 +419,7 @@ namespace svm {
 			m_Stack.Push(result);
 		}
 	}
-	void Interpreter::InterpretNot() {
+	SVM_NOINLINE_FOR_PROFILING void Interpreter::InterpretNot() {
 		const Type* const type = m_Stack.GetTopType();
 		if (type == IntType) {
 			IntObject& top = m_Stack.GetTop<IntObject>();
@@ -429,7 +429,7 @@ namespace svm {
 			top.Value = ~top.Value;
 		}
 	}
-	void Interpreter::InterpretShl() {
+	SVM_NOINLINE_FOR_PROFILING void Interpreter::InterpretShl() {
 		const Type* const rhsType = m_Stack.GetTopType();
 		if (rhsType == IntType) {
 			const IntObject rhs = m_Stack.Pop<IntObject>();
@@ -443,7 +443,7 @@ namespace svm {
 			m_Stack.Push(result);
 		}
 	}
-	void Interpreter::InterpretSal() {
+	SVM_NOINLINE_FOR_PROFILING void Interpreter::InterpretSal() {
 		const Type* const rhsType = m_Stack.GetTopType();
 		if (rhsType == IntType) {
 			const std::int32_t rhs = m_Stack.Pop<IntObject>().Value;
@@ -457,7 +457,7 @@ namespace svm {
 			m_Stack.Push(result);
 		}
 	}
-	void Interpreter::InterpretShr() {
+	SVM_NOINLINE_FOR_PROFILING void Interpreter::InterpretShr() {
 		const Type* const rhsType = m_Stack.GetTopType();
 		if (rhsType == IntType) {
 			const IntObject rhs = m_Stack.Pop<IntObject>();
@@ -471,7 +471,7 @@ namespace svm {
 			m_Stack.Push(result);
 		}
 	}
-	void Interpreter::InterpretSar() {
+	SVM_NOINLINE_FOR_PROFILING void Interpreter::InterpretSar() {
 		const Type* const rhsType = m_Stack.GetTopType();
 		if (rhsType == IntType) {
 			const std::int32_t rhs = m_Stack.Pop<IntObject>().Value;
@@ -486,7 +486,7 @@ namespace svm {
 		}
 	}
 
-	void Interpreter::InterpretCmp() {
+	SVM_NOINLINE_FOR_PROFILING void Interpreter::InterpretCmp() {
 		const Type* const rhsType = m_Stack.GetTopType();
 		if (rhsType == IntType) {
 			const IntObject rhs = m_Stack.Pop<IntObject>();
@@ -505,7 +505,7 @@ namespace svm {
 			m_Stack.Push(result);
 		}
 	}
-	void Interpreter::InterpretICmp() {
+	SVM_NOINLINE_FOR_PROFILING void Interpreter::InterpretICmp() {
 		const Type* const rhsType = m_Stack.GetTopType();
 		if (rhsType == IntType) {
 			const std::int32_t rhs = m_Stack.Pop<IntObject>().Value;
@@ -524,10 +524,10 @@ namespace svm {
 			m_Stack.Push(result);
 		}
 	}
-	void Interpreter::InterpretJmp(std::uint64_t& i, std::uint32_t operand) {
+	SVM_NOINLINE_FOR_PROFILING void Interpreter::InterpretJmp(std::uint64_t& i, std::uint32_t operand) {
 		i = m_StackFrame.Instructions->GetLabel(operand) - 1;
 	}
-	void Interpreter::InterpretJe(std::uint64_t& i, std::uint32_t operand) {
+	SVM_NOINLINE_FOR_PROFILING void Interpreter::InterpretJe(std::uint64_t& i, std::uint32_t operand) {
 		const Type* const type = m_Stack.GetTopType();
 		if (type == IntType) {
 			const IntObject& value = m_Stack.GetTop<IntObject>();
@@ -549,7 +549,7 @@ namespace svm {
 			}
 		}
 	}
-	void Interpreter::InterpretJne(std::uint64_t& i, std::uint32_t operand) {
+	SVM_NOINLINE_FOR_PROFILING void Interpreter::InterpretJne(std::uint64_t& i, std::uint32_t operand) {
 		const Type* const type = m_Stack.GetTopType();
 		if (type == IntType) {
 			const IntObject& value = m_Stack.GetTop<IntObject>();
@@ -571,7 +571,7 @@ namespace svm {
 			}
 		}
 	}
-	void Interpreter::InterpretJa(std::uint64_t& i, std::uint32_t operand) {
+	SVM_NOINLINE_FOR_PROFILING void Interpreter::InterpretJa(std::uint64_t& i, std::uint32_t operand) {
 		const Type* const type = m_Stack.GetTopType();
 		if (type == IntType) {
 			const IntObject& value = m_Stack.GetTop<IntObject>();
@@ -593,7 +593,7 @@ namespace svm {
 			}
 		}
 	}
-	void Interpreter::InterpretJae(std::uint64_t& i, std::uint32_t operand) {
+	SVM_NOINLINE_FOR_PROFILING void Interpreter::InterpretJae(std::uint64_t& i, std::uint32_t operand) {
 		const Type* const type = m_Stack.GetTopType();
 		if (type == IntType) {
 			const IntObject& value = m_Stack.GetTop<IntObject>();
@@ -615,7 +615,7 @@ namespace svm {
 			}
 		}
 	}
-	void Interpreter::InterpretJb(std::uint64_t& i, std::uint32_t operand) {
+	SVM_NOINLINE_FOR_PROFILING void Interpreter::InterpretJb(std::uint64_t& i, std::uint32_t operand) {
 		const Type* const type = m_Stack.GetTopType();
 		if (type == IntType) {
 			const IntObject& value = m_Stack.GetTop<IntObject>();
@@ -637,7 +637,7 @@ namespace svm {
 			}
 		}
 	}
-	void Interpreter::InterpretJbe(std::uint64_t& i, std::uint32_t operand) {
+	SVM_NOINLINE_FOR_PROFILING void Interpreter::InterpretJbe(std::uint64_t& i, std::uint32_t operand) {
 		const Type* const type = m_Stack.GetTopType();
 		if (type == IntType) {
 			const IntObject& value = m_Stack.GetTop<IntObject>();
@@ -659,7 +659,7 @@ namespace svm {
 			}
 		}
 	}
-	SVM_INLINE void Interpreter::InterpretCall(std::uint64_t& i, std::uint32_t operand) {
+	SVM_INLINE SVM_NOINLINE_FOR_PROFILING void Interpreter::InterpretCall(std::uint64_t& i, std::uint32_t operand) {
 		m_StackFrame.Caller = static_cast<std::size_t>(i);
 		m_CallStack.push_back(m_StackFrame);
 
@@ -682,7 +682,7 @@ namespace svm {
 
 		i = static_cast<std::uint64_t>(-1);
 	}
-	SVM_INLINE void Interpreter::InterpretRet(std::uint64_t& i) {
+	SVM_INLINE SVM_NOINLINE_FOR_PROFILING void Interpreter::InterpretRet(std::uint64_t& i) {
 		std::variant<std::monostate, IntObject, LongObject, DoubleObject> result;
 		if (m_StackFrame.Function->HasResult()) {
 			const Type* type = m_Stack.GetTopType();
@@ -724,27 +724,27 @@ namespace svm {
 		}
 	}
 
-	void Interpreter::InterpretI2L() {
+	SVM_NOINLINE_FOR_PROFILING void Interpreter::InterpretI2L() {
 		const IntObject value = m_Stack.Pop<IntObject>();
 		m_Stack.Push<LongObject>(value.Value);
 	}
-	void Interpreter::InterpretI2D() {
+	SVM_NOINLINE_FOR_PROFILING void Interpreter::InterpretI2D() {
 		const IntObject value = m_Stack.Pop<IntObject>();
 		m_Stack.Push<DoubleObject>(value.Value);
 	}
-	void Interpreter::InterpretL2I() {
+	SVM_NOINLINE_FOR_PROFILING void Interpreter::InterpretL2I() {
 		const LongObject value = m_Stack.Pop<LongObject>();
 		m_Stack.Push<IntObject>(static_cast<std::uint32_t>(value.Value));
 	}
-	void Interpreter::InterpretL2D() {
+	SVM_NOINLINE_FOR_PROFILING void Interpreter::InterpretL2D() {
 		const LongObject value = m_Stack.Pop<LongObject>();
 		m_Stack.Push<DoubleObject>(static_cast<double>(value.Value));
 	}
-	void Interpreter::InterpretD2I() {
+	SVM_NOINLINE_FOR_PROFILING void Interpreter::InterpretD2I() {
 		const DoubleObject value = m_Stack.Pop<DoubleObject>();
 		m_Stack.Push<IntObject>(static_cast<std::uint32_t>(value.Value));
 	}
-	void Interpreter::InterpretD2L() {
+	SVM_NOINLINE_FOR_PROFILING void Interpreter::InterpretD2L() {
 		const DoubleObject value = m_Stack.Pop<DoubleObject>();
 		m_Stack.Push<LongObject>(static_cast<std::uint64_t>(value.Value));
 	}
