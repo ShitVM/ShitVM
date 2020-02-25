@@ -49,7 +49,7 @@ namespace svm {
 		T& GetTop() {
 			return Get<T>(m_Used);
 		}
-		const Type* GetTopType();
+		const Type*& GetTopType();
 		std::size_t GetSize() const noexcept;
 		std::size_t GetUsedSize() const noexcept;
 		std::size_t GetFreeSize() const noexcept;
@@ -70,6 +70,8 @@ namespace svm {
 
 		Stack m_Stack;
 		StackFrame m_StackFrame;
+		std::vector<StackFrame> m_CallStack;
+
 		std::vector<std::size_t> m_LocalVariables;
 
 	public:

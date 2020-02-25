@@ -35,7 +35,7 @@ namespace svm {
 		m_Used = 0;
 	}
 
-	const Type* Stack::GetTopType() {
+	const Type*& Stack::GetTopType() {
 		return Get<const Type*>(m_Used);
 	}
 	std::size_t Stack::GetSize() const noexcept {
@@ -57,13 +57,16 @@ namespace svm {
 		: m_ByteFile(std::move(byteFile)) {}
 	Interpreter::Interpreter(Interpreter&& interpreter) noexcept
 		: m_ByteFile(std::move(interpreter.m_ByteFile)),
-		m_Stack(std::move(interpreter.m_Stack)), m_StackFrame(interpreter.m_StackFrame), m_LocalVariables(std::move(interpreter.m_LocalVariables)) {}
+		m_Stack(std::move(interpreter.m_Stack)), m_StackFrame(interpreter.m_StackFrame), m_CallStack(std::move(interpreter.m_CallStack)),
+		m_LocalVariables(std::move(interpreter.m_LocalVariables)) {}
 
 	Interpreter& Interpreter::operator=(Interpreter&& interpreter) noexcept {
 		m_ByteFile = std::move(interpreter.m_ByteFile);
 
 		m_Stack = std::move(interpreter.m_Stack);
 		m_StackFrame = interpreter.m_StackFrame;
+		m_CallStack = std::move(interpreter.m_CallStack);
+
 		m_LocalVariables = std::move(interpreter.m_LocalVariables);
 		return *this;
 	}
@@ -73,6 +76,8 @@ namespace svm {
 
 		m_Stack.Deallocate();
 		m_StackFrame = {};
+		m_CallStack.clear();
+
 		m_LocalVariables.clear();
 	}
 	void Interpreter::Load(ByteFile&& byteFile) noexcept {
@@ -89,6 +94,8 @@ namespace svm {
 
 	void Interpreter::Interpret() {
 		m_StackFrame.Instructions = &m_ByteFile.GetEntryPoint();
+		m_CallStack.reserve(128);
+
 		for (std::uint64_t i = 0; i < m_StackFrame.Instructions->GetInstructionCount(); ++i) {
 			const Instruction& inst = m_StackFrame.Instructions->GetInstruction(i);
 			switch (inst.OpCode) {
@@ -180,8 +187,8 @@ namespace svm {
 				m_LocalVariables.resize(operand + 1, std::numeric_limits<std::size_t>::max());
 			}
 			if (m_LocalVariables[operand] == std::numeric_limits<std::size_t>::max()) {
-				m_LocalVariables[operand] = m_Stack.GetUsedSize();
 				m_Stack.Push<IntObject>({});
+				m_LocalVariables[operand] = m_Stack.GetUsedSize();
 			}
 			m_Stack.Get<IntObject>(m_LocalVariables[operand]) = object;
 		} else if (type == LongType) {
@@ -190,8 +197,8 @@ namespace svm {
 				m_LocalVariables.resize(operand + 1, std::numeric_limits<std::size_t>::max());
 			}
 			if (m_LocalVariables[operand] == std::numeric_limits<std::size_t>::max()) {
-				m_LocalVariables[operand] = m_Stack.GetUsedSize();
 				m_Stack.Push<LongObject>({});
+				m_LocalVariables[operand] = m_Stack.GetUsedSize();
 			}
 			m_Stack.Get<LongObject>(m_LocalVariables[operand]) = object;
 		} else if (type == DoubleType) {
@@ -200,8 +207,8 @@ namespace svm {
 				m_LocalVariables.resize(operand + 1, std::numeric_limits<std::size_t>::max());
 			}
 			if (m_LocalVariables[operand] == std::numeric_limits<std::size_t>::max()) {
-				m_LocalVariables[operand] = m_Stack.GetUsedSize();
 				m_Stack.Push<DoubleObject>({});
+				m_LocalVariables[operand] = m_Stack.GetUsedSize();
 			}
 			m_Stack.Get<DoubleObject>(m_LocalVariables[operand]) = object;
 		}
@@ -567,22 +574,22 @@ namespace svm {
 	}
 	SVM_INLINE void Interpreter::InterpretCall(std::uint64_t& i, std::uint32_t operand) {
 		m_StackFrame.Caller = static_cast<std::size_t>(i);
-		m_Stack.Push(m_StackFrame);
+		m_CallStack.push_back(m_StackFrame);
 
 		m_StackFrame = { m_Stack.GetUsedSize(), m_LocalVariables.size() };
 		m_StackFrame.Function = &m_ByteFile.GetFunctions()[operand];
 		m_StackFrame.Instructions = &m_StackFrame.Function->GetInstructions();
 
-		std::size_t stackOffset = m_Stack.GetUsedSize() - sizeof(m_StackFrame);
+		std::size_t stackOffset = m_Stack.GetUsedSize();
 		for (std::uint16_t j = 0; j < m_StackFrame.Function->GetArity(); ++j) {
 			const Type* type = m_Stack.Get<const Type*>(stackOffset);
 			m_LocalVariables.push_back(stackOffset);
 			if (type == IntType) {
-				stackOffset += sizeof(IntObject);
+				stackOffset -= sizeof(IntObject);
 			} else if (type == LongType) {
-				stackOffset += sizeof(LongObject);
+				stackOffset -= sizeof(LongObject);
 			} else if (type == DoubleType) {
-				stackOffset += sizeof(DoubleObject);
+				stackOffset -= sizeof(DoubleObject);
 			}
 		}
 
@@ -605,7 +612,8 @@ namespace svm {
 
 		const std::uint16_t arity = m_StackFrame.Function->GetArity();
 		m_Stack.RemoveTo(m_StackFrame.StackBegin);
-		m_StackFrame = m_Stack.Pop<StackFrame>();
+		m_StackFrame = m_CallStack.back();
+		m_CallStack.pop_back();
 
 		i = m_StackFrame.Caller;
 
