@@ -27,14 +27,6 @@
 #	define SVM_CLANG
 #endif
 
-#if defined(SVM_MSVC)
-#	define SVM_INLINE __forceinline
-#elif defined(SVM_GCC) || defined(SVM_CLANG)
-#	define SVM_INLINE __attribute__((always_inline))
-#else
-#	define SVM_INLINE inline
-#endif
-
 #if defined(SVM_MSVC) && defined(SVM_PROFILING)
 #	define SVM_NOINLINE_FOR_PROFILING __declspec(noinline)
 #else

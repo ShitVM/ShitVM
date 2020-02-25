@@ -659,7 +659,7 @@ namespace svm {
 			}
 		}
 	}
-	SVM_INLINE SVM_NOINLINE_FOR_PROFILING void Interpreter::InterpretCall(std::uint64_t& i, std::uint32_t operand) {
+	SVM_NOINLINE_FOR_PROFILING void Interpreter::InterpretCall(std::uint64_t& i, std::uint32_t operand) {
 		m_StackFrame.Caller = static_cast<std::size_t>(i);
 		m_CallStack.push_back(m_StackFrame);
 
@@ -682,7 +682,7 @@ namespace svm {
 
 		i = static_cast<std::uint64_t>(-1);
 	}
-	SVM_INLINE SVM_NOINLINE_FOR_PROFILING void Interpreter::InterpretRet(std::uint64_t& i) {
+	SVM_NOINLINE_FOR_PROFILING void Interpreter::InterpretRet(std::uint64_t& i) {
 		std::variant<std::monostate, IntObject, LongObject, DoubleObject> result;
 		if (m_StackFrame.Function->HasResult()) {
 			const Type* type = m_Stack.GetTopType();

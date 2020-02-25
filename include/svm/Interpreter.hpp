@@ -131,8 +131,8 @@ namespace svm {
 		void InterpretJae(std::uint64_t& i, std::uint32_t operand);
 		void InterpretJb(std::uint64_t& i, std::uint32_t operand);
 		void InterpretJbe(std::uint64_t& i, std::uint32_t operand);
-		SVM_INLINE void InterpretCall(std::uint64_t& i, std::uint32_t operand);
-		SVM_INLINE void InterpretRet(std::uint64_t& i);
+		void InterpretCall(std::uint64_t& i, std::uint32_t operand);
+		void InterpretRet(std::uint64_t& i);
 
 		void InterpretI2L();
 		void InterpretI2D();
