@@ -22,22 +22,22 @@ namespace svm::jit::x86 {
 		const RegisterData s_R14D("r14d", RegisterType::General, RegisterSize::DWord, 0b1'110);
 		const RegisterData s_R15D("r15d", RegisterType::General, RegisterSize::DWord, 0b1'111);
 	}
-	const Register Eax = s_Eax;
-	const Register Ecx = s_Ecx;
-	const Register Edx = s_Edx;
-	const Register Ebx = s_Ebx;
-	const Register Esp = s_Esp;
-	const Register Ebp = s_Ebp;
-	const Register Esi = s_Esi;
-	const Register Edi = s_Edi;
-	const Register R8D = s_R8D;
-	const Register R9D = s_R9D;
-	const Register R10D = s_R10D;
-	const Register R11D = s_R11D;
-	const Register R12D = s_R12D;
-	const Register R13D = s_R13D;
-	const Register R14D = s_R14D;
-	const Register R15D = s_R15D;
+	const Register Eax = &s_Eax;
+	const Register Ecx = &s_Ecx;
+	const Register Edx = &s_Edx;
+	const Register Ebx = &s_Ebx;
+	const Register Esp = &s_Esp;
+	const Register Ebp = &s_Ebp;
+	const Register Esi = &s_Esi;
+	const Register Edi = &s_Edi;
+	const Register R8D = &s_R8D;
+	const Register R9D = &s_R9D;
+	const Register R10D = &s_R10D;
+	const Register R11D = &s_R11D;
+	const Register R12D = &s_R12D;
+	const Register R13D = &s_R13D;
+	const Register R14D = &s_R14D;
+	const Register R15D = &s_R15D;
 
 	// QWord GPRs
 	namespace {
@@ -58,22 +58,22 @@ namespace svm::jit::x86 {
 		const RegisterData s_R14("r14", RegisterType::General, RegisterSize::QWord, 0b1'110);
 		const RegisterData s_R15("r15", RegisterType::General, RegisterSize::QWord, 0b1'111);
 	}
-	const Register Rax = s_Rax;
-	const Register Rcx = s_Rcx;
-	const Register Rdx = s_Rdx;
-	const Register Rbx = s_Rbx;
-	const Register Rsp = s_Rsp;
-	const Register Rbp = s_Rbp;
-	const Register Rsi = s_Rsi;
-	const Register Rdi = s_Rdi;
-	const Register R8 = s_R8;
-	const Register R9 = s_R9;
-	const Register R10 = s_R10;
-	const Register R11 = s_R11;
-	const Register R12 = s_R12;
-	const Register R13 = s_R13;
-	const Register R14 = s_R14;
-	const Register R15 = s_R15;
+	const Register Rax = &s_Rax;
+	const Register Rcx = &s_Rcx;
+	const Register Rdx = &s_Rdx;
+	const Register Rbx = &s_Rbx;
+	const Register Rsp = &s_Rsp;
+	const Register Rbp = &s_Rbp;
+	const Register Rsi = &s_Rsi;
+	const Register Rdi = &s_Rdi;
+	const Register R8 = &s_R8;
+	const Register R9 = &s_R9;
+	const Register R10 = &s_R10;
+	const Register R11 = &s_R11;
+	const Register R12 = &s_R12;
+	const Register R13 = &s_R13;
+	const Register R14 = &s_R14;
+	const Register R15 = &s_R15;
 }
 
 #endif

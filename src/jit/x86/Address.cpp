@@ -54,7 +54,7 @@ namespace svm::jit::x86 {
 		m_Base = newBase;
 	}
 
-	bool Address::HasSBI() const noexcept {
+	bool Address::HasSIB() const noexcept {
 		return m_Scale != 0;
 	}
 	void Address::RemoveSBI() noexcept {
@@ -74,7 +74,7 @@ namespace svm::jit::x86 {
 		m_Index = newIndex;
 	}
 	bool Address::HasDisplacement() const noexcept {
-		return !std::holds_alternative<std::monostate>(m_Base);
+		return !std::holds_alternative<std::monostate>(m_Displacement);
 	}
 	void Address::RemoveDisplacement() noexcept {
 		m_Displacement = std::monostate();
@@ -181,7 +181,7 @@ namespace svm::jit::x86 {
 	}
 	detail::IncompleteAddress operator+(detail::IncompleteAddress&& a, detail::IncompleteAddress&& b) noexcept {
 		assert(a.Address.GetMode() == AddressingMode::None || b.Address.GetMode() == AddressingMode::None);
-		assert(!a.Address.HasSBI() || !b.Address.HasSBI());
+		assert(!a.Address.HasSIB() || !b.Address.HasSIB());
 		assert(!a.Address.HasDisplacement() || !b.Address.HasDisplacement());
 
 		if (a.Address.GetMode() == AddressingMode::None) {
@@ -192,7 +192,7 @@ namespace svm::jit::x86 {
 			}
 		}
 
-		if (!a.Address.HasSBI()) {
+		if (!a.Address.HasSIB()) {
 			a.Address.SetScale(b.Address.GetScale());
 			a.Address.SetIndex(b.Address.GetIndex());
 		}

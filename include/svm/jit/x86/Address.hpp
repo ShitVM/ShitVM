@@ -55,7 +55,7 @@ namespace svm::jit::x86 {
 		void SetBase(Register newBase) noexcept;
 		void SetBase(std::uint32_t newBase) noexcept;
 
-		bool HasSBI() const noexcept;
+		bool HasSIB() const noexcept;
 		void RemoveSBI() noexcept;
 		std::uint8_t GetScale() const noexcept;
 		void SetScale(std::uint8_t newScale) noexcept;
@@ -96,6 +96,10 @@ namespace svm::jit::x86 {
 	detail::IncompleteAddress operator+(detail::IncompleteAddress&& other, std::uint8_t disp) noexcept;
 	detail::IncompleteAddress operator+(detail::IncompleteAddress&& other, std::uint32_t disp) noexcept;
 	detail::IncompleteAddress operator+(detail::IncompleteAddress&& a, detail::IncompleteAddress&& b) noexcept;
+
+	constexpr std::uint8_t operator""_b(unsigned long long value) noexcept {
+		return static_cast<std::uint8_t>(value);
+	}
 }
 
 namespace svm::jit::x86 {

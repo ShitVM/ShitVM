@@ -1,55 +1,27 @@
 #include <svm/Interpreter.hpp>
 #include <svm/IO.hpp>
 #include <svm/Parser.hpp>
+#include <svm/jit/Native.hpp>
 
 #include <chrono>
 #include <cstdlib>
 #include <iomanip>
 #include <iostream>
 
+using namespace svm;
+using namespace svm::jit::native;
+
 int main(int argc, char* argv[]) {
-	if (argc <= 1) {
-		std::cout << "Usage: ./ShitVM <File>\n";
-		return EXIT_FAILURE;
-	}
+	Builder b;
+	b.Add(QWordPtr[Rax], R8);
+	b.Add(QWordPtr[Rax * 4 + Rbx], R8);
+	b.Add(QWordPtr[10], R8);
 
-	const auto defaultPrecision = std::cout.precision();
+	b.Add(R8, 0);
+	b.Add(R8, 1000);
 
-	const auto startParsing = std::chrono::system_clock::now();
-
-	svm::Parser parser;
-	parser.Load(argv[1]);
-	parser.Parse();
-
-	const auto endParsing = std::chrono::system_clock::now();
-	const std::chrono::duration<double> parsing = endParsing - startParsing;
-
-	svm::ByteFile byteFile = parser.GetResult();
-	std::cout << "Parsed in " << std::fixed << std::setprecision(6) << parsing.count() << "s!\n"
-			  << "Result:\n" << std::defaultfloat << svm::Indent << byteFile << "\n----------------------------------------\n";
-
-	const auto startInterpreting = std::chrono::system_clock::now();
-
-	svm::Interpreter i(std::move(byteFile));
-	i.AllocateStack();
-	i.Interpret();
-
-	const auto endInterpreting = std::chrono::system_clock::now();
-	const std::chrono::duration<double> interpreting = endInterpreting - startInterpreting;
-	std::cout << "Interpreted in " << std::fixed << std::setprecision(6) << interpreting.count() << "s!\n"
-			  << "Result: ";
-
-	const auto resultType = i.GetResult<const svm::Type*>();
-	if (resultType == svm::IntType) {
-		std::cout << i.GetResult<svm::IntObject>().Value;
-	} else if (resultType == svm::LongType) {
-		std::cout << i.GetResult<svm::LongObject>().Value;
-	} else if (resultType == svm::DoubleType) {
-		std::cout << std::setprecision(defaultPrecision) << i.GetResult<svm::DoubleObject>().Value;
-	}
-
-	std::cout << "\n----------------------------------------\n"
-			  << "Total used: " << std::fixed << std::setprecision(6) << parsing.count() + interpreting.count() << "s\n";
+	std::uint8_t buffer[10000];
+	std::size_t size = b.GetResult(buffer);
 
 	return EXIT_SUCCESS;
 }
