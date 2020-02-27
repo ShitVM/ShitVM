@@ -5,6 +5,33 @@
 #include <cassert>
 
 namespace svm::jit::x86 {
+	RM::RM(Register reg) noexcept
+		: m_Data(reg) {}
+	RM::RM(const Address& addr) noexcept
+		: m_Data(addr) {}
+
+	bool RM::IsRegister() const noexcept {
+		return std::holds_alternative<Register>(m_Data);
+	}
+	bool RM::IsAddress() const noexcept {
+		return std::holds_alternative<std::reference_wrapper<const Address>>(m_Data);
+	}
+	Register RM::GetRegister() const noexcept {
+		return std::get<Register>(m_Data);
+	}
+	const Address& RM::GetAddress() const noexcept {
+		return std::get<std::reference_wrapper<const Address>>(m_Data);
+	}
+	MemorySize RM::GetSize() const noexcept {
+		if (IsRegister()) {
+			return GetRegister()->Size;
+		} else {
+			return GetAddress().GetSize();
+		}
+	}
+}
+
+namespace svm::jit::x86 {
 	Builder::Builder(Builder&& builder) noexcept
 		: m_Instructions(std::move(builder.m_Instructions)) {}
 
@@ -85,6 +112,13 @@ namespace svm::jit::x86 {
 		return byte - static_cast<std::uint8_t*>(buffer);
 	}
 
+	void Builder::GenerateModRM(const RM& rm, REX& rex, ModRM& modRM) noexcept {
+		if (rm.IsRegister()) {
+			GenerateModRM(rm.GetRegister(), rex, modRM);
+		} else {
+			GenerateModRM(rm.GetAddress(), rex, modRM);
+		}
+	}
 	void Builder::GenerateModRM(Register reg, REX& rex, ModRM& modRM) noexcept {
 		modRM.Fields.Mod = 0b11;
 
@@ -112,6 +146,13 @@ namespace svm::jit::x86 {
 		case AddressingMode::DirectMemory:
 			modRM.Fields.RM = 0b100;
 			break;
+		}
+	}
+	void Builder::GenerateModRM(Register reg, const RM& rm, REX& rex, ModRM& modRM) noexcept {
+		if (rm.IsRegister()) {
+			GenerateModRM(rm.GetRegister(), reg, rex, modRM);
+		} else {
+			GenerateModRM(reg, rm.GetAddress(), rex, modRM);
 		}
 	}
 	void Builder::GenerateModRM(Register reg1, Register reg2, REX& rex, ModRM& modRM) noexcept {
