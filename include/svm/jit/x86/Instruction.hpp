@@ -13,7 +13,7 @@ namespace svm::jit::x86 {
 			std::uint8_t Mod : 2;
 			std::uint8_t Reg : 3;
 			std::uint8_t RM : 3;
-		};
+		} Fields;
 	};
 
 	union SIB final {
@@ -22,14 +22,14 @@ namespace svm::jit::x86 {
 			std::uint8_t Scale : 2;
 			std::uint8_t Index : 3;
 			std::uint8_t Base : 3;
-		};
+		} Fields;
 	};
 
 	union DispImm final {
 		struct {
 			std::uint32_t Displacement;
 			std::uint32_t Immediate;
-		};
+		} Fields;
 		std::uint64_t Displacement64;
 		std::uint64_t Immediate64;
 	};
