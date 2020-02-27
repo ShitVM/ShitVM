@@ -3,6 +3,7 @@
 
 #ifdef SVM_X86
 
+#include <cstdint>
 #include <optional>
 
 namespace svm::jit::x86 {

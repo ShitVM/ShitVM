@@ -4,6 +4,7 @@
 #ifdef SVM_X86
 
 #include <cstdint>
+#include <functional>
 
 namespace svm::jit::x86 {
 	enum class RegisterType : std::uint8_t {
@@ -38,7 +39,7 @@ namespace svm::jit::x86 {
 		bool operator!=(const RegisterData&) = delete;
 	};
 
-	using Register = const RegisterData*;
+	using Register = std::reference_wrapper<const RegisterData>;
 }
 
 #include <svm/jit/x86/Registers.hpp>
