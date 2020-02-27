@@ -24,6 +24,15 @@ namespace svm::jit::x86 {
 		};
 	};
 
+	union DispImm final {
+		struct {
+			std::uint32_t Displacement;
+			std::uint32_t Immediate;
+		};
+		std::uint64_t Displacement64;
+		std::uint64_t Immediate64;
+	};
+
 	struct Instruction final {
 		std::optional<std::uint8_t> LegacyPrefixGroup1;
 		std::optional<std::uint8_t> LegacyPrefixGroup2;
@@ -37,8 +46,7 @@ namespace svm::jit::x86 {
 		std::optional<x86::ModRM> ModRM;
 		std::optional<x86::SIB> SIB;
 
-		std::optional<std::uint32_t> Displacement;
-		std::optional<std::uint32_t> Immediate;
+		std::optional<x86::DispImm> DispImm;
 	};
 }
 
