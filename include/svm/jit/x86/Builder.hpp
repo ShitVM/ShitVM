@@ -14,7 +14,7 @@
 
 namespace svm::jit::x86 {
 	using RMSize = RegisterSize;
-	
+
 	class RM final {
 	private:
 		std::variant<Register, std::reference_wrapper<const Address>> m_Data;
@@ -35,7 +35,7 @@ namespace svm::jit::x86 {
 		bool IsAddress() const noexcept;
 		Register GetRegister() const noexcept;
 		const Address& GetAddress() const noexcept;
-		
+
 		RMSize GetSize() const noexcept;
 	};
 }
@@ -59,6 +59,20 @@ namespace svm::jit::x86 {
 		std::size_t GetResult(void* buffer) noexcept;
 		std::size_t GetResultLength() const noexcept;
 
+		void Mov(Register a, const RM& b);
+		void Mov(const Address& a, Register b);
+#ifdef SVM_X64
+		void Mov(Register a, std::uint64_t b);
+#endif
+		void Mov(Register a, std::uint32_t b);
+		void Mov(const Address& a, std::uint32_t b);
+
+		void Push(Register a);
+		void Push(const Address& a);
+		void Push(std::uint32_t a);
+		void Pop(Register a);
+		void Pop(const Address& a);
+
 		void Add(Register a, const RM& b);
 		void Add(const Address& a, Register b);
 		void Add(const RM& a, std::uint32_t b);
@@ -69,6 +83,7 @@ namespace svm::jit::x86 {
 		void IMul(const RM& a);
 		void Div(const RM& a);
 		void IDiv(const RM& a);
+		void Neg(const RM& a);
 
 		void And(Register a, const RM& b);
 		void And(const Address& a, Register b);
@@ -103,6 +118,9 @@ namespace svm::jit::x86 {
 		void GenerateModRM(Register reg, const Address& addr, REX& rex, ModRM& modRM) noexcept;
 		bool GenerateSIB(const Address& addr, REX& rex, SIB& sib) noexcept;
 		void GenerateDisplacement(const Address& addr, DispImm& disp, std::uint8_t& dispSize) noexcept;
+
+		void PushPopInternal(std::uint8_t opCode, Register a);
+		void PushPopInternal(std::uint8_t opCode, std::uint8_t opCodeExt, const Address& a);
 
 		void AddSubInternal(std::uint8_t opCode, Register a, const RM& b);
 		void AddSubInternal(std::uint8_t opCode, const Address& a, Register b);

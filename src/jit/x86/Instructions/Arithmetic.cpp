@@ -155,6 +155,9 @@ namespace svm::jit::x86 {
 	void Builder::IDiv(const RM& a) {
 		MulDivInternal(0b111, a);
 	}
+	void Builder::Neg(const RM& a) {
+		MulDivInternal(0b011, a);
+	}
 }
 
 #endif
