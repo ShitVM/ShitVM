@@ -64,6 +64,9 @@ namespace svm::jit::x86 {
 		void Sub(const Address& a, Register b);
 		void Sub(const RM& a, std::uint32_t b);
 
+		void Mul(const RM& a);
+		void Div(const RM& a);
+
 	private:
 		void GenerateModRM(const RM& rm, REX& rex, ModRM& modRM) noexcept;
 		void GenerateModRM(Register reg, REX& rex, ModRM& modRM) noexcept;
@@ -74,9 +77,11 @@ namespace svm::jit::x86 {
 		bool GenerateSIB(const Address& addr, REX& rex, SIB& sib) noexcept;
 		void GenerateDisplacement(const Address& addr, DispImm& disp, std::uint8_t& dispSize) noexcept;
 
-		void Arithmetic(std::uint8_t opCode, Register a, const RM& b);
-		void Arithmetic(std::uint8_t opCode, const Address& a, Register b);
-		void Arithmetic(std::uint8_t opCode, const RM& a, std::uint32_t b);
+		void AddSubInternal(std::uint8_t opCode, Register a, const RM& b);
+		void AddSubInternal(std::uint8_t opCode, const Address& a, Register b);
+		void AddSubInternal(std::uint8_t opCode, const RM& a, std::uint32_t b);
+
+		void MulDivInternal(std::uint8_t opCode, const RM& a);
 	};
 }
 

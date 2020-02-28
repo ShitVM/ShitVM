@@ -6,7 +6,7 @@
 #include <limits>
 
 namespace svm::jit::x86 {
-	void Builder::Arithmetic(std::uint8_t opCode, Register a, const RM& b) {
+	void Builder::AddSubInternal(std::uint8_t opCode, Register a, const RM& b) {
 		assert(a->Size == b.GetSize());
 
 		Instruction& instruction = m_Instructions.emplace_back();
@@ -30,7 +30,7 @@ namespace svm::jit::x86 {
 		instruction.REXPrefix = rex;
 		instruction.ModRM = modRM;
 	}
-	void Builder::Arithmetic(std::uint8_t opCode, const Address& a, Register b) {
+	void Builder::AddSubInternal(std::uint8_t opCode, const Address& a, Register b) {
 		assert(a.GetSize() == b->Size);
 
 		Instruction& instruction = m_Instructions.emplace_back();
@@ -53,7 +53,7 @@ namespace svm::jit::x86 {
 			instruction.SIB = sib;
 		}
 	}
-	void Builder::Arithmetic(std::uint8_t opCode, const RM& a, std::uint32_t b) {
+	void Builder::AddSubInternal(std::uint8_t opCode, const RM& a, std::uint32_t b) {
 		Instruction& instruction = m_Instructions.emplace_back();
 
 		REX rex;
@@ -82,23 +82,58 @@ namespace svm::jit::x86 {
 
 namespace svm::jit::x86 {
 	void Builder::Add(Register a, const RM& b) {
-		Arithmetic(0x03, a, b);
+		AddSubInternal(0x03, a, b);
 	}
 	void Builder::Add(const Address& a, Register b) {
-		Arithmetic(0x01, a, b);
+		AddSubInternal(0x01, a, b);
 	}
 	void Builder::Add(const RM& a, std::uint32_t b) {
-		Arithmetic(0b000, a, b);
+		AddSubInternal(0b000, a, b);
 	}
 
 	void Builder::Sub(Register a, const RM& b) {
-		Arithmetic(0x2B, a, b);
+		AddSubInternal(0x2B, a, b);
 	}
 	void Builder::Sub(const Address& a, Register b) {
-		Arithmetic(0x29, a, b);
+		AddSubInternal(0x29, a, b);
 	}
 	void Builder::Sub(const RM& a, std::uint32_t b) {
-		Arithmetic(0b101, a, b);
+		AddSubInternal(0b101, a, b);
+	}
+}
+
+namespace svm::jit::x86 {
+	void Builder::MulDivInternal(std::uint8_t opCode, const RM& a) {
+		Instruction& instruction = m_Instructions.emplace_back();
+		instruction.OpCode = 0xF7_b;
+
+		REX rex;
+		rex.Fields.W = a.GetSize() == MemorySize::QWord;
+
+		ModRM modRM;
+		GenerateModRM(a, rex, modRM);
+		modRM.Fields.Reg = opCode;
+
+		if (a.IsAddress()) {
+			SIB sib;
+			if (GenerateSIB(a.GetAddress(), rex, sib)) {
+				instruction.SIB = sib;
+			}
+
+			GenerateDisplacement(a.GetAddress(), instruction.DispImm, instruction.DisplacementSize);
+		}
+
+		instruction.REXPrefix = rex;
+		instruction.ModRM = modRM;
+	}
+}
+
+namespace svm::jit::x86 {
+	void Builder::Mul(const RM& a) {
+		MulDivInternal(0b100, a);
+	}
+	void Builder::Div(const RM& a) {
+		MulDivInternal(0b110, a);
 	}
 }
 
