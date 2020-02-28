@@ -72,6 +72,19 @@ namespace svm::jit::x86 {
 		void Div(const RM& a);
 		void IDiv(const RM& a);
 
+		void Shl(const RM& a);
+		void Shl(const RM& a, std::uint8_t b);
+		void Shl(const RM& a, Register b);
+		void Sal(const RM& a);
+		void Sal(const RM& a, std::uint8_t b);
+		void Sal(const RM& a, Register b);
+		void Shr(const RM& a);
+		void Shr(const RM& a, std::uint8_t b);
+		void Shr(const RM& a, Register b);
+		void Sar(const RM& a);
+		void Sar(const RM& a, std::uint8_t b);
+		void Sar(const RM& a, Register b);
+
 	private:
 		void GenerateModRM(const RM& rm, REX& rex, ModRM& modRM) noexcept;
 		void GenerateModRM(Register reg, REX& rex, ModRM& modRM) noexcept;
@@ -87,6 +100,11 @@ namespace svm::jit::x86 {
 		void AddSubInternal(std::uint8_t opCode, const RM& a, std::uint32_t b);
 
 		void MulDivInternal(std::uint8_t opCode, const RM& a);
+
+		void BitShiftInternal(std::uint8_t opCode, std::uint8_t opCodeExt, const RM& a);
+		void BitShiftInternal(std::uint8_t opCode, const RM& a);
+		void BitShiftInternal(std::uint8_t opCode, const RM& a, std::uint8_t b);
+		void BitShiftInternal(std::uint8_t opCode, const RM& a, Register b);
 	};
 }
 
