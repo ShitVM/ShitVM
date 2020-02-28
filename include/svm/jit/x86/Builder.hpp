@@ -62,15 +62,24 @@ namespace svm::jit::x86 {
 		void Add(Register a, const RM& b);
 		void Add(const Address& a, Register b);
 		void Add(const RM& a, std::uint32_t b);
-
 		void Sub(Register a, const RM& b);
 		void Sub(const Address& a, Register b);
 		void Sub(const RM& a, std::uint32_t b);
-
 		void Mul(const RM& a);
 		void IMul(const RM& a);
 		void Div(const RM& a);
 		void IDiv(const RM& a);
+
+		void And(Register a, const RM& b);
+		void And(const Address& a, Register b);
+		void And(const RM& a, std::uint32_t b);
+		void Or(Register a, const RM& b);
+		void Or(const Address& a, Register b);
+		void Or(const RM& a, std::uint32_t b);
+		void Xor(Register a, const RM& b);
+		void Xor(const Address& a, Register b);
+		void Xor(const RM& a, std::uint32_t b);
+		void Not(const RM& a);
 
 		void Shl(const RM& a);
 		void Shl(const RM& a, std::uint8_t b);
