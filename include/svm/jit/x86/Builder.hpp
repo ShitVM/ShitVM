@@ -13,6 +13,8 @@
 #include <vector>
 
 namespace svm::jit::x86 {
+	using RMSize = RegisterSize;
+	
 	class RM final {
 	private:
 		std::variant<Register, std::reference_wrapper<const Address>> m_Data;
@@ -34,7 +36,7 @@ namespace svm::jit::x86 {
 		Register GetRegister() const noexcept;
 		const Address& GetAddress() const noexcept;
 		
-		MemorySize GetSize() const noexcept;
+		RMSize GetSize() const noexcept;
 	};
 }
 
@@ -55,6 +57,7 @@ namespace svm::jit::x86 {
 
 	public:
 		std::size_t GetResult(void* buffer) noexcept;
+		std::size_t GetResultLength() const noexcept;
 
 		void Add(Register a, const RM& b);
 		void Add(const Address& a, Register b);
@@ -65,7 +68,9 @@ namespace svm::jit::x86 {
 		void Sub(const RM& a, std::uint32_t b);
 
 		void Mul(const RM& a);
+		void IMul(const RM& a);
 		void Div(const RM& a);
+		void IDiv(const RM& a);
 
 	private:
 		void GenerateModRM(const RM& rm, REX& rex, ModRM& modRM) noexcept;

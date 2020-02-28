@@ -11,6 +11,9 @@ namespace svm::jit::x86 {
 
 		Instruction& instruction = m_Instructions.emplace_back();
 		instruction.OpCode = opCode;
+		if (a->Size != RegisterSize::Byte) {
+			instruction.OpCode |= 0b1; //s=1
+		}
 
 		REX rex;
 		rex.Fields.W = a->Size == RegisterSize::QWord;
@@ -35,9 +38,12 @@ namespace svm::jit::x86 {
 
 		Instruction& instruction = m_Instructions.emplace_back();
 		instruction.OpCode = opCode;
+		if (a.GetSize() != MemorySize::Byte) {
+			instruction.OpCode |= 0b1; //s=1
+		}
 
 		REX rex;
-		rex.Fields.W = a.GetSize() == RegisterSize::QWord;
+		rex.Fields.W = a.GetSize() == MemorySize::QWord;
 
 		ModRM modRM;
 		GenerateModRM(b, a, rex, modRM);
@@ -57,7 +63,7 @@ namespace svm::jit::x86 {
 		Instruction& instruction = m_Instructions.emplace_back();
 
 		REX rex;
-		rex.Fields.W = a.GetSize() == RegisterSize::QWord;
+		rex.Fields.W = a.GetSize() == RMSize::QWord;
 
 		ModRM modRM;
 		GenerateModRM(a, rex, modRM);
@@ -67,12 +73,17 @@ namespace svm::jit::x86 {
 		instruction.ModRM = modRM;
 
 		if (b <= std::numeric_limits<std::uint8_t>::max()) {
+			assert(a.GetSize() != RMSize::Byte);
+
 			instruction.OpCode = 0x83;
 
 			instruction.DispImm.Fields.Displacement = static_cast<std::uint8_t>(b);
 			instruction.DisplacementSize = sizeof(std::uint8_t);
 		} else {
-			instruction.OpCode = 0x81;
+			instruction.OpCode = 0x80;
+			if (a.GetSize() != RegisterSize::Byte) {
+				instruction.OpCode |= 0b1; //s=1
+			}
 
 			instruction.DispImm.Fields.Displacement = b;
 			instruction.DisplacementSize = sizeof(std::uint32_t);
@@ -82,20 +93,20 @@ namespace svm::jit::x86 {
 
 namespace svm::jit::x86 {
 	void Builder::Add(Register a, const RM& b) {
-		AddSubInternal(0x03, a, b);
+		AddSubInternal(0x02, a, b);
 	}
 	void Builder::Add(const Address& a, Register b) {
-		AddSubInternal(0x01, a, b);
+		AddSubInternal(0x00, a, b);
 	}
 	void Builder::Add(const RM& a, std::uint32_t b) {
 		AddSubInternal(0b000, a, b);
 	}
 
 	void Builder::Sub(Register a, const RM& b) {
-		AddSubInternal(0x2B, a, b);
+		AddSubInternal(0x2A, a, b);
 	}
 	void Builder::Sub(const Address& a, Register b) {
-		AddSubInternal(0x29, a, b);
+		AddSubInternal(0x28, a, b);
 	}
 	void Builder::Sub(const RM& a, std::uint32_t b) {
 		AddSubInternal(0b101, a, b);
@@ -105,7 +116,10 @@ namespace svm::jit::x86 {
 namespace svm::jit::x86 {
 	void Builder::MulDivInternal(std::uint8_t opCode, const RM& a) {
 		Instruction& instruction = m_Instructions.emplace_back();
-		instruction.OpCode = 0xF7_b;
+		instruction.OpCode = 0xF6_b;
+		if (a.GetSize() != RMSize::Byte) {
+			instruction.OpCode |= 0b1; //s=1
+		}
 
 		REX rex;
 		rex.Fields.W = a.GetSize() == MemorySize::QWord;
@@ -132,8 +146,14 @@ namespace svm::jit::x86 {
 	void Builder::Mul(const RM& a) {
 		MulDivInternal(0b100, a);
 	}
+	void Builder::IMul(const RM& a) {
+		MulDivInternal(0b101, a);
+	}
 	void Builder::Div(const RM& a) {
 		MulDivInternal(0b110, a);
+	}
+	void Builder::IDiv(const RM& a) {
+		MulDivInternal(0b111, a);
 	}
 }
 

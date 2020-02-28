@@ -104,19 +104,29 @@ namespace svm::jit::x86 {
 
 namespace svm::jit::x86 {
 	namespace detail {
-		struct DWordPtr final {
+		struct Byte final {
 			Address operator[](Register reg) const noexcept;
 			Address operator[](std::uint32_t addr) const noexcept;
 			Address operator[](IncompleteAddress&& addr) const noexcept;
 		};
-		struct QWordPtr final {
+		struct DWord final {
 			Address operator[](Register reg) const noexcept;
 			Address operator[](std::uint32_t addr) const noexcept;
 			Address operator[](IncompleteAddress&& addr) const noexcept;
 		};
+#ifdef SVM_X64
+		struct QWord final {
+			Address operator[](Register reg) const noexcept;
+			Address operator[](std::uint32_t addr) const noexcept;
+			Address operator[](IncompleteAddress&& addr) const noexcept;
+		};
+#endif
 	}
-	extern const detail::DWordPtr DWordPtr;
-	extern const detail::QWordPtr QWordPtr;
+	extern const detail::Byte Byte;
+	extern const detail::DWord DWord;
+#ifdef SVM_X64
+	extern const detail::QWord QWord;
+#endif
 }
 
 #endif

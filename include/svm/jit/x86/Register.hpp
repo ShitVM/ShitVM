@@ -15,8 +15,11 @@ namespace svm::jit::x86 {
 	enum class RegisterSize : std::uint8_t {
 		None,
 
+		Byte,
 		DWord,
+#ifdef SVM_X64
 		QWord,
+#endif
 	};
 
 	class RegisterData final {

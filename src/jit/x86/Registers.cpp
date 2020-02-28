@@ -3,6 +3,12 @@
 #ifdef SVM_X86
 
 namespace svm::jit::x86 {
+	// Byte GPRs
+	namespace {
+		const RegisterData s_Cl("cl", RegisterType::General, RegisterSize::Byte, 0b0'001);
+	}
+	const Register Cl = &s_Cl;
+
 	// DWord GPRs
 	namespace {
 		const RegisterData s_Eax("eax", RegisterType::General, RegisterSize::DWord, 0b0'000);
@@ -13,6 +19,7 @@ namespace svm::jit::x86 {
 		const RegisterData s_Ebp("ebp", RegisterType::General, RegisterSize::DWord, 0b0'101);
 		const RegisterData s_Esi("esi", RegisterType::General, RegisterSize::DWord, 0b0'110);
 		const RegisterData s_Edi("edi", RegisterType::General, RegisterSize::DWord, 0b0'111);
+#ifdef SVM_X64
 		const RegisterData s_R8D("r8d", RegisterType::General, RegisterSize::DWord, 0b1'000);
 		const RegisterData s_R9D("r9d", RegisterType::General, RegisterSize::DWord, 0b1'001);
 		const RegisterData s_R10D("r10d", RegisterType::General, RegisterSize::DWord, 0b1'010);
@@ -21,6 +28,7 @@ namespace svm::jit::x86 {
 		const RegisterData s_R13D("r13d", RegisterType::General, RegisterSize::DWord, 0b1'101);
 		const RegisterData s_R14D("r14d", RegisterType::General, RegisterSize::DWord, 0b1'110);
 		const RegisterData s_R15D("r15d", RegisterType::General, RegisterSize::DWord, 0b1'111);
+#endif
 	}
 	const Register Eax = &s_Eax;
 	const Register Ecx = &s_Ecx;
@@ -30,6 +38,7 @@ namespace svm::jit::x86 {
 	const Register Ebp = &s_Ebp;
 	const Register Esi = &s_Esi;
 	const Register Edi = &s_Edi;
+#ifdef SVM_X64
 	const Register R8D = &s_R8D;
 	const Register R9D = &s_R9D;
 	const Register R10D = &s_R10D;
@@ -38,9 +47,11 @@ namespace svm::jit::x86 {
 	const Register R13D = &s_R13D;
 	const Register R14D = &s_R14D;
 	const Register R15D = &s_R15D;
+#endif
 
 	// QWord GPRs
 	namespace {
+#ifdef SVM_X64
 		const RegisterData s_Rax("rax", RegisterType::General, RegisterSize::QWord, 0b0'000);
 		const RegisterData s_Rcx("rcx", RegisterType::General, RegisterSize::QWord, 0b0'001);
 		const RegisterData s_Rdx("rdx", RegisterType::General, RegisterSize::QWord, 0b0'010);
@@ -57,7 +68,9 @@ namespace svm::jit::x86 {
 		const RegisterData s_R13("r13", RegisterType::General, RegisterSize::QWord, 0b1'101);
 		const RegisterData s_R14("r14", RegisterType::General, RegisterSize::QWord, 0b1'110);
 		const RegisterData s_R15("r15", RegisterType::General, RegisterSize::QWord, 0b1'111);
+#endif
 	}
+#ifdef SVM_X64
 	const Register Rax = &s_Rax;
 	const Register Rcx = &s_Rcx;
 	const Register Rdx = &s_Rdx;
@@ -74,6 +87,7 @@ namespace svm::jit::x86 {
 	const Register R13 = &s_R13;
 	const Register R14 = &s_R14;
 	const Register R15 = &s_R15;
+#endif
 }
 
 #endif

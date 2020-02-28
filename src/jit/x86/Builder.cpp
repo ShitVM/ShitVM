@@ -57,7 +57,7 @@ namespace svm::jit::x86 {
 			}
 
 #ifdef SVM_X64
-			if (inst.REXPrefix.has_value()) {
+			if (inst.REXPrefix.has_value() && inst.REXPrefix.value().Byte != 0b0100'0000) {
 				*byte++ = inst.REXPrefix.value().Byte;
 			}
 #endif
@@ -110,6 +110,9 @@ namespace svm::jit::x86 {
 
 		m_Instructions.clear();
 		return byte - static_cast<std::uint8_t*>(buffer);
+	}
+	std::size_t Builder::GetResultLength() const noexcept {
+		return m_Instructions.size() * 15;
 	}
 
 	void Builder::GenerateModRM(const RM& rm, REX& rex, ModRM& modRM) noexcept {

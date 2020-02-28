@@ -6,6 +6,9 @@
 #include <svm/jit/x86/Register.hpp>
 
 namespace svm::jit::x86 {
+	// Byte GPRs
+	extern const Register Cl;
+
 	// DWord GPRs
 	extern const Register Eax;
 	extern const Register Ecx;
@@ -15,6 +18,7 @@ namespace svm::jit::x86 {
 	extern const Register Ebp;
 	extern const Register Esi;
 	extern const Register Edi;
+#ifdef SVM_X64
 	extern const Register R8D;
 	extern const Register R9D;
 	extern const Register R10D;
@@ -23,8 +27,10 @@ namespace svm::jit::x86 {
 	extern const Register R13D;
 	extern const Register R14D;
 	extern const Register R15D;
+#endif
 
 	// QWord GPRs
+#ifdef SVM_X64
 	extern const Register Rax;
 	extern const Register Rcx;
 	extern const Register Rdx;
@@ -41,6 +47,7 @@ namespace svm::jit::x86 {
 	extern const Register R13;
 	extern const Register R14;
 	extern const Register R15;
+#endif
 }
 
 #endif

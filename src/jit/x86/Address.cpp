@@ -211,27 +211,41 @@ namespace svm::jit::x86 {
 
 namespace svm::jit::x86 {
 	namespace detail {
-		Address DWordPtr::operator[](Register reg) const noexcept {
+		Address Byte::operator[](Register reg) const noexcept {
+			return Address(reg, MemorySize::Byte);
+		}
+		Address Byte::operator[](std::uint32_t addr) const noexcept {
+			return Address(addr, MemorySize::Byte);
+		}
+		Address Byte::operator[](IncompleteAddress&& addr) const noexcept {
+			return { addr.Address, MemorySize::Byte };
+		}
+		Address DWord::operator[](Register reg) const noexcept {
 			return Address(reg, MemorySize::DWord);
 		}
-		Address DWordPtr::operator[](std::uint32_t addr) const noexcept {
+		Address DWord::operator[](std::uint32_t addr) const noexcept {
 			return Address(addr, MemorySize::DWord);
 		}
-		Address DWordPtr::operator[](IncompleteAddress&& addr) const noexcept {
+		Address DWord::operator[](IncompleteAddress&& addr) const noexcept {
 			return { addr.Address, MemorySize::DWord };
 		}
-		Address QWordPtr::operator[](Register reg) const noexcept {
+#ifdef SVM_X64
+		Address QWord::operator[](Register reg) const noexcept {
 			return Address(reg, MemorySize::QWord);
 		}
-		Address QWordPtr::operator[](std::uint32_t addr) const noexcept {
+		Address QWord::operator[](std::uint32_t addr) const noexcept {
 			return Address(addr, MemorySize::QWord);
 		}
-		Address QWordPtr::operator[](IncompleteAddress&& addr) const noexcept {
+		Address QWord::operator[](IncompleteAddress&& addr) const noexcept {
 			return { addr.Address, MemorySize::QWord };
 		}
+#endif
 	}
-	const detail::DWordPtr DWordPtr;
-	const detail::QWordPtr QWordPtr;
+	const detail::Byte Byte;
+	const detail::DWord DWord;
+#ifdef SVM_X64
+	const detail::QWord QWord;
+#endif
 }
 
 #endif
