@@ -113,6 +113,8 @@ namespace svm {
 			case OpCode::Mod: InterpretMod(); break;
 			case OpCode::IMod: InterpretIMod(); break;
 			case OpCode::Neg: InterpretNeg(); break;
+			case OpCode::Inc: InterpretIncDec(1); break;
+			case OpCode::Dec: InterpretIncDec(-1); break;
 
 			case OpCode::And: InterpretAnd(); break;
 			case OpCode::Or: InterpretOr(); break;
@@ -374,6 +376,16 @@ namespace svm {
 		} else if (type == DoubleType) {
 			DoubleObject& top = m_Stack.GetTop<DoubleObject>();
 			top.Value = -top.Value;
+		}
+	}
+	SVM_NOINLINE_FOR_PROFILING void Interpreter::InterpretIncDec(int delta) {
+		const Type* const type = m_Stack.GetTopType();
+		if (type == IntType) {
+			m_Stack.GetTop<IntObject>().Value += delta;
+		} else if (type == LongType) {
+			m_Stack.GetTop<LongObject>().Value += delta;
+		} else if (type == DoubleType) {
+			m_Stack.GetTop<DoubleObject>().Value += delta;
 		}
 	}
 

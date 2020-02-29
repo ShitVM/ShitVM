@@ -112,6 +112,7 @@ namespace svm {
 		void InterpretMod();
 		void InterpretIMod();
 		void InterpretNeg();
+		void InterpretIncDec(int delta);
 
 		void InterpretAnd();
 		void InterpretOr();
