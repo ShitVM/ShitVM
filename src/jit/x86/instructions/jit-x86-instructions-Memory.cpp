@@ -9,7 +9,7 @@ namespace svm::jit::x86 {
 	void Builder::Mov(Register a, const RM& b) {
 		AddSubInternal(0x8A, a, b);
 	}
-	void Builder::Mov(const Address& a, Register b) {
+	void Builder::Mov(const Memory& a, Register b) {
 		AddSubInternal(0x88, a, b);
 	}
 #ifdef SVM_X64
@@ -40,7 +40,7 @@ namespace svm::jit::x86 {
 		instruction.REXPrefix = rex;
 		instruction.DispImm.Fields.Immediate = b;
 	}
-	void Builder::Mov(const Address& a, std::uint32_t b) {
+	void Builder::Mov(const Memory& a, std::uint32_t b) {
 		Instruction& instruction = m_Instructions.emplace_back();
 		instruction.OpCode = 0xC6_b;
 		if (a.GetSize() != MemorySize::Byte) {
@@ -88,7 +88,7 @@ namespace svm::jit::x86 {
 
 		instruction.REXPrefix = rex;
 	}
-	void Builder::PushPopInternal(std::uint8_t opCode, std::uint8_t opCodeExt, const Address& a) {
+	void Builder::PushPopInternal(std::uint8_t opCode, std::uint8_t opCodeExt, const Memory& a) {
 #ifdef SVM_X64
 		assert(a.GetSize() == RegisterSize::QWord);
 #else
@@ -120,7 +120,7 @@ namespace svm::jit::x86 {
 	void Builder::Push(Register a) {
 		PushPopInternal(0x50, a);
 	}
-	void Builder::Push(const Address& a) {
+	void Builder::Push(const Memory& a) {
 		PushPopInternal(0xFF, 0b110, a);
 	}
 	void Builder::Push(std::uint32_t a) {
@@ -139,7 +139,7 @@ namespace svm::jit::x86 {
 	void Builder::Pop(Register a) {
 		PushPopInternal(0x58, a);
 	}
-	void Builder::Pop(const Address& a) {
+	void Builder::Pop(const Memory& a) {
 		PushPopInternal(0x8F, 0b000, a);
 	}
 }

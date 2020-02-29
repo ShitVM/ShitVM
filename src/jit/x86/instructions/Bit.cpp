@@ -8,7 +8,7 @@ namespace svm::jit::x86 {
 	void Builder::And(Register a, const RM& b) {
 		AddSubInternal(0x22, a, b);
 	}
-	void Builder::And(const Address& a, Register b) {
+	void Builder::And(const Memory& a, Register b) {
 		AddSubInternal(0x20, a, b);
 	}
 	void Builder::And(const RM& a, std::uint32_t b) {
@@ -17,7 +17,7 @@ namespace svm::jit::x86 {
 	void Builder::Or(Register a, const RM& b) {
 		AddSubInternal(0x0A, a, b);
 	}
-	void Builder::Or(const Address& a, Register b) {
+	void Builder::Or(const Memory& a, Register b) {
 		AddSubInternal(0x08, a, b);
 	}
 	void Builder::Or(const RM& a, std::uint32_t b) {
@@ -26,7 +26,7 @@ namespace svm::jit::x86 {
 	void Builder::Xor(Register a, const RM& b) {
 		AddSubInternal(0x32, a, b);
 	}
-	void Builder::Xor(const Address& a, Register b) {
+	void Builder::Xor(const Memory& a, Register b) {
 		AddSubInternal(0x30, a, b);
 	}
 	void Builder::Xor(const RM& a, std::uint32_t b) {

@@ -7,20 +7,20 @@
 namespace svm::jit::x86 {
 	RM::RM(Register reg) noexcept
 		: m_Data(reg) {}
-	RM::RM(const Address& addr) noexcept
+	RM::RM(const Memory& addr) noexcept
 		: m_Data(addr) {}
 
 	bool RM::IsRegister() const noexcept {
 		return std::holds_alternative<Register>(m_Data);
 	}
 	bool RM::IsAddress() const noexcept {
-		return std::holds_alternative<std::reference_wrapper<const Address>>(m_Data);
+		return std::holds_alternative<std::reference_wrapper<const Memory>>(m_Data);
 	}
 	Register RM::GetRegister() const noexcept {
 		return std::get<Register>(m_Data);
 	}
-	const Address& RM::GetAddress() const noexcept {
-		return std::get<std::reference_wrapper<const Address>>(m_Data);
+	const Memory& RM::GetAddress() const noexcept {
+		return std::get<std::reference_wrapper<const Memory>>(m_Data);
 	}
 	MemorySize RM::GetSize() const noexcept {
 		if (IsRegister()) {
@@ -128,7 +128,7 @@ namespace svm::jit::x86 {
 		rex.Fields.B = reg->Code >> 3;
 		modRM.Fields.RM = reg->Code & 0b111;
 	}
-	void Builder::GenerateModRM(const Address& addr, REX& rex, ModRM& modRM) noexcept {
+	void Builder::GenerateModRM(const Memory& addr, REX& rex, ModRM& modRM) noexcept {
 		switch (addr.GetMode()) {
 		case AddressingMode::RegisterIndirect:
 			if (addr.HasDisplacement()) {
@@ -163,13 +163,13 @@ namespace svm::jit::x86 {
 		rex.Fields.R = reg1->Code >> 3;
 		modRM.Fields.Reg = reg1->Code & 0b111;
 	}
-	void Builder::GenerateModRM(Register reg, const Address& addr, REX& rex, ModRM& modRM) noexcept {
+	void Builder::GenerateModRM(Register reg, const Memory& addr, REX& rex, ModRM& modRM) noexcept {
 		rex.Fields.R = reg->Code >> 3;
 		modRM.Fields.Reg = reg->Code & 0b111;
 
 		GenerateModRM(addr, rex, modRM);
 	}
-	bool Builder::GenerateSIB(const Address& addr, REX& rex, SIB& sib) noexcept {
+	bool Builder::GenerateSIB(const Memory& addr, REX& rex, SIB& sib) noexcept {
 		if (addr.HasSIB()) {
 			switch (addr.GetScale()) {
 			case 1: sib.Fields.Scale = 0; break;
@@ -193,13 +193,13 @@ namespace svm::jit::x86 {
 
 		return false;
 	}
-	void Builder::GenerateDisplacement(const Address& addr, DispImm& disp, std::uint8_t& dispSize) noexcept {
+	void Builder::GenerateDisplacement(const Memory& addr, DispImm& disp, std::uint8_t& dispSize) noexcept {
 		if (addr.HasDisplacement()) {
 			if (addr.IsDisplacementByte()) {
-				disp.Fields.Displacement = addr.GetDisplacement8();
+				disp.Fields.Displacement = addr.GetDisplacementByte();
 				dispSize = sizeof(std::uint8_t);
 			} else if (addr.IsDisplacementDWord()) {
-				disp.Fields.Displacement = addr.GetDisplacement32();
+				disp.Fields.Displacement = addr.GetDisplacementDWord();
 				dispSize = sizeof(std::uint32_t);
 			}
 		} else if (addr.IsBaseAddress()) {

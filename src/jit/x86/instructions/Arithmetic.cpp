@@ -33,7 +33,7 @@ namespace svm::jit::x86 {
 		instruction.REXPrefix = rex;
 		instruction.ModRM = modRM;
 	}
-	void Builder::AddSubInternal(std::uint8_t opCode, const Address& a, Register b) {
+	void Builder::AddSubInternal(std::uint8_t opCode, const Memory& a, Register b) {
 		assert(a.GetSize() == b->Size);
 
 		Instruction& instruction = m_Instructions.emplace_back();
@@ -95,7 +95,7 @@ namespace svm::jit::x86 {
 	void Builder::Add(Register a, const RM& b) {
 		AddSubInternal(0x02, a, b);
 	}
-	void Builder::Add(const Address& a, Register b) {
+	void Builder::Add(const Memory& a, Register b) {
 		AddSubInternal(0x00, a, b);
 	}
 	void Builder::Add(const RM& a, std::uint32_t b) {
@@ -105,7 +105,7 @@ namespace svm::jit::x86 {
 	void Builder::Sub(Register a, const RM& b) {
 		AddSubInternal(0x2A, a, b);
 	}
-	void Builder::Sub(const Address& a, Register b) {
+	void Builder::Sub(const Memory& a, Register b) {
 		AddSubInternal(0x28, a, b);
 	}
 	void Builder::Sub(const RM& a, std::uint32_t b) {
