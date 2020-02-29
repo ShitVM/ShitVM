@@ -4,6 +4,21 @@
 #	define SVM_WINDOWS
 #endif
 
+#if defined(__gnu_linux__) || defined(__linux__)
+#	define SVM_LINUX
+#	define SVM_POSIX
+#endif
+
+#if defined(macintosh) || defined(__APPLE__ ) && defined(__MACH__)
+#	define SVM_MACOS
+#	define SVM_POSIX
+#endif
+
+#if defined(__unix__)
+#	define SVM_UNIX
+#	define SVM_POSIX
+#endif
+
 #if defined(_M_IX86) || defined(__i386) || defined(_X86_) || defined(__X86__) || defined(__THW_INTEL__) || defined(__I86__) || defined(__INTEL__) || defined(__386)
 #	define SVM_X86
 #endif
@@ -31,4 +46,8 @@
 #	define SVM_NOINLINE_FOR_PROFILING __declspec(noinline)
 #else
 #	define SVM_NOINLINE_FOR_PROFILING
+#endif
+
+#if (defined(SVM_WINDOWS) || defined(SVM_POSIX)) && defined(SVM_X86)
+#	define SVM_JIT
 #endif

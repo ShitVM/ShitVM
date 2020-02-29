@@ -17,9 +17,7 @@ namespace svm::jit::x86 {
 
 		Byte,
 		DWord,
-#ifdef SVM_X64
 		QWord,
-#endif
 	};
 
 	class RegisterData final {

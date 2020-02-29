@@ -1,6 +1,7 @@
 #pragma once
 
 #include <svm/Macro.hpp>
+#include <svm/jit/Engine.hpp>
 #include <svm/jit/x86.hpp>
 
 namespace svm::jit {
