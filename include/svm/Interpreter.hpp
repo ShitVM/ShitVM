@@ -70,7 +70,6 @@ namespace svm {
 
 		Stack m_Stack;
 		StackFrame m_StackFrame;
-		std::vector<StackFrame> m_CallStack;
 
 		std::vector<std::size_t> m_LocalVariables;
 

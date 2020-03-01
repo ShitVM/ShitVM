@@ -57,7 +57,7 @@ namespace svm {
 		: m_ByteFile(std::move(byteFile)) {}
 	Interpreter::Interpreter(Interpreter&& interpreter) noexcept
 		: m_ByteFile(std::move(interpreter.m_ByteFile)),
-		m_Stack(std::move(interpreter.m_Stack)), m_StackFrame(interpreter.m_StackFrame), m_CallStack(std::move(interpreter.m_CallStack)),
+		m_Stack(std::move(interpreter.m_Stack)), m_StackFrame(interpreter.m_StackFrame),
 		m_LocalVariables(std::move(interpreter.m_LocalVariables)) {}
 
 	Interpreter& Interpreter::operator=(Interpreter&& interpreter) noexcept {
@@ -65,7 +65,6 @@ namespace svm {
 
 		m_Stack = std::move(interpreter.m_Stack);
 		m_StackFrame = interpreter.m_StackFrame;
-		m_CallStack = std::move(interpreter.m_CallStack);
 
 		m_LocalVariables = std::move(interpreter.m_LocalVariables);
 		return *this;
@@ -76,7 +75,6 @@ namespace svm {
 
 		m_Stack.Deallocate();
 		m_StackFrame = {};
-		m_CallStack.clear();
 
 		m_LocalVariables.clear();
 	}
@@ -94,7 +92,6 @@ namespace svm {
 
 	void Interpreter::Interpret() {
 		m_StackFrame.Instructions = &m_ByteFile.GetEntryPoint();
-		m_CallStack.reserve(128);
 
 		for (std::uint64_t i = 0; i < m_StackFrame.Instructions->GetInstructionCount(); ++i) {
 			const Instruction& inst = m_StackFrame.Instructions->GetInstruction(i);
@@ -673,13 +670,13 @@ namespace svm {
 	}
 	SVM_NOINLINE_FOR_PROFILING void Interpreter::InterpretCall(std::uint64_t& i, std::uint32_t operand) {
 		m_StackFrame.Caller = static_cast<std::size_t>(i);
-		m_CallStack.push_back(m_StackFrame);
+		m_Stack.Push(m_StackFrame);
 
 		m_StackFrame = { m_Stack.GetUsedSize(), m_LocalVariables.size() };
 		m_StackFrame.Function = &m_ByteFile.GetFunctions()[operand];
 		m_StackFrame.Instructions = &m_StackFrame.Function->GetInstructions();
 
-		std::size_t stackOffset = m_Stack.GetUsedSize();
+		std::size_t stackOffset = m_Stack.GetUsedSize() - sizeof(m_StackFrame);
 		for (std::uint16_t j = 0; j < m_StackFrame.Function->GetArity(); ++j) {
 			const Type* type = m_Stack.Get<const Type*>(stackOffset);
 			m_LocalVariables.push_back(stackOffset);
@@ -711,8 +708,7 @@ namespace svm {
 
 		const std::uint16_t arity = m_StackFrame.Function->GetArity();
 		m_Stack.RemoveTo(m_StackFrame.StackBegin);
-		m_StackFrame = m_CallStack.back();
-		m_CallStack.pop_back();
+		m_StackFrame = m_Stack.Pop<StackFrame>();
 
 		i = m_StackFrame.Caller;
 
