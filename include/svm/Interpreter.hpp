@@ -134,11 +134,8 @@ namespace svm {
 		void InterpretCall(std::uint64_t& i, std::uint32_t operand);
 		void InterpretRet(std::uint64_t& i);
 
-		void InterpretI2L();
-		void InterpretI2D();
-		void InterpretL2I();
-		void InterpretL2D();
-		void InterpretD2I();
-		void InterpretD2L();
+		void InterpretToI();
+		void InterpretToL();
+		void InterpretToD();
 	};
 }

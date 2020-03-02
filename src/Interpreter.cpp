@@ -134,12 +134,9 @@ namespace svm {
 			case OpCode::Call: InterpretCall(i, inst.Operand); break;
 			case OpCode::Ret: InterpretRet(i); break;
 
-			case OpCode::I2L: InterpretI2L(); break;
-			case OpCode::I2D: InterpretI2D(); break;
-			case OpCode::L2I: InterpretL2I(); break;
-			case OpCode::L2D: InterpretL2D(); break;
-			case OpCode::D2I: InterpretD2I(); break;
-			case OpCode::D2L: InterpretD2L(); break;
+			case OpCode::ToI: InterpretToI(); break;
+			case OpCode::ToL: InterpretToL(); break;
+			case OpCode::ToD: InterpretToD(); break;
 			}
 		}
 	}
@@ -732,28 +729,40 @@ namespace svm {
 		}
 	}
 
-	SVM_NOINLINE_FOR_PROFILING void Interpreter::InterpretI2L() {
-		const IntObject value = m_Stack.Pop<IntObject>();
-		m_Stack.Push<LongObject>(value.Value);
+	SVM_NOINLINE_FOR_PROFILING void Interpreter::InterpretToI() {
+		const Type* const type = m_Stack.GetTopType();
+		if (type == IntType) {
+			return;
+		} else if (type == LongType) {
+			const LongObject value = m_Stack.Pop<LongObject>();
+			m_Stack.Push<IntObject>(static_cast<std::uint32_t>(value.Value));
+		} else if (type == DoubleType) {
+			const DoubleObject value = m_Stack.Pop<DoubleObject>();
+			m_Stack.Push<IntObject>(static_cast<std::uint32_t>(value.Value));
+		}
 	}
-	SVM_NOINLINE_FOR_PROFILING void Interpreter::InterpretI2D() {
-		const IntObject value = m_Stack.Pop<IntObject>();
-		m_Stack.Push<DoubleObject>(value.Value);
+	SVM_NOINLINE_FOR_PROFILING void Interpreter::InterpretToL() {
+		const Type* const type = m_Stack.GetTopType();
+		if (type == IntType) {
+			const IntObject value = m_Stack.Pop<IntObject>();
+			m_Stack.Push<LongObject>(value.Value);
+		} else if (type == LongType) {
+			return;
+		} else if (type == DoubleType) {
+			const DoubleObject value = m_Stack.Pop<DoubleObject>();
+			m_Stack.Push<LongObject>(static_cast<std::uint64_t>(value.Value));
+		}
 	}
-	SVM_NOINLINE_FOR_PROFILING void Interpreter::InterpretL2I() {
-		const LongObject value = m_Stack.Pop<LongObject>();
-		m_Stack.Push<IntObject>(static_cast<std::uint32_t>(value.Value));
-	}
-	SVM_NOINLINE_FOR_PROFILING void Interpreter::InterpretL2D() {
-		const LongObject value = m_Stack.Pop<LongObject>();
-		m_Stack.Push<DoubleObject>(static_cast<double>(value.Value));
-	}
-	SVM_NOINLINE_FOR_PROFILING void Interpreter::InterpretD2I() {
-		const DoubleObject value = m_Stack.Pop<DoubleObject>();
-		m_Stack.Push<IntObject>(static_cast<std::uint32_t>(value.Value));
-	}
-	SVM_NOINLINE_FOR_PROFILING void Interpreter::InterpretD2L() {
-		const DoubleObject value = m_Stack.Pop<DoubleObject>();
-		m_Stack.Push<LongObject>(static_cast<std::uint64_t>(value.Value));
+	SVM_NOINLINE_FOR_PROFILING void Interpreter::InterpretToD() {
+		const Type* const type = m_Stack.GetTopType();
+		if (type == IntType) {
+			const IntObject value = m_Stack.Pop<IntObject>();
+			m_Stack.Push<DoubleObject>(value.Value);
+		} else if (type == LongType) {
+			const LongObject value = m_Stack.Pop<LongObject>();
+			m_Stack.Push<DoubleObject>(static_cast<double>(value.Value));
+		} else if (type == DoubleType) {
+			return;
+		}
 	}
 }
