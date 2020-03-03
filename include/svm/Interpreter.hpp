@@ -1,11 +1,13 @@
 #pragma once
 
 #include <svm/ByteFile.hpp>
+#include <svm/Exception.hpp>
 #include <svm/Macro.hpp>
 
 #include <cstddef>
 #include <cstdint>
 #include <limits>
+#include <optional>
 #include <utility>
 #include <variant>
 #include <vector>
@@ -31,36 +33,40 @@ namespace svm {
 		void Deallocate() noexcept;
 
 		template<typename T>
-		void Push(const T& value) {
-			if (GetFreeSize() < sizeof(T)) throw std::runtime_error("Failed to push the value to the stack. Stack overflow.");
+		bool Push(const T& value) noexcept {
+			if (GetFreeSize() < sizeof(T)) return false;
+
 			*reinterpret_cast<T*>(&*(m_Data.rbegin() + (m_Used += sizeof(T)) - 1)) = value;
+			return true;
 		}
 		template<typename T>
-		T Pop() {
-			T result = GetTop<T>();
+		std::optional<T> Pop() noexcept {
+			T* result = GetTop<T>();
+			if (!result) return std::nullopt;
+
 			m_Used -= sizeof(T);
-			return std::move(result);
+			return *result;
 		}
 		template<typename T>
-		const T& Get(std::size_t offset) const {
-			if (m_Used < offset - sizeof(T)) throw std::runtime_error("Failed to get the value from the stack. No enough space.");
-			return *reinterpret_cast<const T*>(&*(m_Data.rbegin() + offset - 1));
+		const T* Get(std::size_t offset) const noexcept {
+			if (m_Used < offset - sizeof(T)) return nullptr;
+			else return reinterpret_cast<const T*>(&*(m_Data.rbegin() + offset - 1));
 		}
 		template<typename T>
-		T& Get(std::size_t offset) {
-			if (m_Used < offset - sizeof(T)) throw std::runtime_error("Failed to get the value from the stack. No enough space.");
-			return *reinterpret_cast<T*>(&*(m_Data.rbegin() + offset - 1));
+		T* Get(std::size_t offset) noexcept {
+			if (m_Used < offset - sizeof(T)) return nullptr;
+			else return reinterpret_cast<T*>(&*(m_Data.rbegin() + offset - 1));
 		}
 		template<typename T>
-		const T& GetTop() const {
+		const T* GetTop() const noexcept {
 			return Get<T>(m_Used);
 		}
 		template<typename T>
-		T& GetTop() {
+		T* GetTop() noexcept {
 			return Get<T>(m_Used);
 		}
-		const Type* const& GetTopType() const;
-		const Type*& GetTopType();
+		const Type* const* GetTopType() const noexcept;
+		const Type** GetTopType() noexcept;
 		std::size_t GetSize() const noexcept;
 		std::size_t GetUsedSize() const noexcept;
 		std::size_t GetFreeSize() const noexcept;
@@ -74,7 +80,9 @@ namespace svm {
 		const svm::Function* Function = nullptr;
 		const svm::Instructions* Instructions = nullptr;
 	};
+}
 
+namespace svm {
 	class Interpreter final {
 	public:
 		using Result = std::variant<std::monostate, std::uint32_t, std::uint64_t, double>;
@@ -84,8 +92,12 @@ namespace svm {
 
 		Stack m_Stack;
 		StackFrame m_StackFrame;
+		std::size_t m_Depth = 0;
+		std::uint64_t m_InstructionIndex = 0;
 
 		std::vector<std::size_t> m_LocalVariables;
+
+		std::optional<InterpreterException> m_Exception;
 
 	public:
 		Interpreter() noexcept = default;
@@ -104,10 +116,20 @@ namespace svm {
 		void AllocateStack(std::size_t size = 1 * 1024 * 1024);
 		void ReallocateStack(std::size_t newSize);
 
-		void Interpret();
+		bool Interpret();
+		const InterpreterException& GetException() const noexcept;
 		Result GetResult() const noexcept;
 
 	private:
+		void OccurException(std::uint32_t code) noexcept;
+
+		template<typename T>
+		void PopTwoSameType(const Type*& rhsType, T& lhs, T& rhs) noexcept;
+		template<typename T>
+		IntObject CompareTwoSameType(T lhs, T rhs) noexcept;
+		template<typename T>
+		void JumpCondition(std::uint32_t operand);
+
 		void InterpretPush(std::uint32_t operand);
 		void InterpretPop();
 		void InterpretLoad(std::uint32_t operand);
@@ -137,15 +159,15 @@ namespace svm {
 
 		void InterpretCmp();
 		void InterpretICmp();
-		void InterpretJmp(std::uint64_t& i, std::uint32_t operand);
-		void InterpretJe(std::uint64_t& i, std::uint32_t operand);
-		void InterpretJne(std::uint64_t& i, std::uint32_t operand);
-		void InterpretJa(std::uint64_t& i, std::uint32_t operand);
-		void InterpretJae(std::uint64_t& i, std::uint32_t operand);
-		void InterpretJb(std::uint64_t& i, std::uint32_t operand);
-		void InterpretJbe(std::uint64_t& i, std::uint32_t operand);
-		void InterpretCall(std::uint64_t& i, std::uint32_t operand);
-		void InterpretRet(std::uint64_t& i);
+		void InterpretJmp(std::uint32_t operand);
+		void InterpretJe(std::uint32_t operand);
+		void InterpretJne(std::uint32_t operand);
+		void InterpretJa(std::uint32_t operand);
+		void InterpretJae(std::uint32_t operand);
+		void InterpretJb(std::uint32_t operand);
+		void InterpretJbe(std::uint32_t operand);
+		void InterpretCall(std::uint32_t operand);
+		void InterpretRet();
 
 		void InterpretToI();
 		void InterpretToL();

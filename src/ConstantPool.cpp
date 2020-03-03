@@ -55,6 +55,9 @@ namespace svm {
 	std::uint32_t ConstantPool::GetDoubleCount() const noexcept {
 		return static_cast<std::uint32_t>(m_DoublePool.size());
 	}
+	std::uint32_t ConstantPool::GetAllCount() const noexcept {
+		return GetIntCount() + GetLongCount() + GetDoubleCount();
+	}
 
 	namespace {
 		template<typename T>

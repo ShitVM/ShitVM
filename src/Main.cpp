@@ -32,10 +32,17 @@ int main(int argc, char* argv[]) {
 
 	svm::Interpreter i(std::move(byteFile));
 	i.AllocateStack();
-	i.Interpret();
+	const bool success = i.Interpret();
 
 	const auto endInterpreting = std::chrono::system_clock::now();
 	const std::chrono::duration<double> interpreting = endInterpreting - startInterpreting;
+
+	if (!success) {
+		std::cout << "Occured exception!\n"
+				  << "Code: " << i.GetException().Code << '\n';
+		return EXIT_FAILURE;
+	}
+
 	std::cout << "Interpreted in " << std::fixed << std::setprecision(6) << interpreting.count() << "s!\n"
 			  << "Result: ";
 
