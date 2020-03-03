@@ -64,9 +64,10 @@ namespace svm {
 	}
 	Interpreter::Interpreter(Interpreter&& interpreter) noexcept
 		: m_ByteFile(std::move(interpreter.m_ByteFile)),
-		m_Stack(std::move(interpreter.m_Stack)), m_StackFrame(interpreter.m_StackFrame), m_InstructionIndex(interpreter.m_InstructionIndex),
+		m_Stack(std::move(interpreter.m_Stack)), m_StackFrame(interpreter.m_StackFrame), m_Depth(interpreter.m_Depth), m_InstructionIndex(interpreter.m_InstructionIndex),
 		m_LocalVariables(std::move(interpreter.m_LocalVariables)),
 		m_Exception(std::move(interpreter.m_Exception)) {
+		interpreter.m_Depth = 0;
 		interpreter.m_InstructionIndex = 0;
 	}
 
@@ -75,6 +76,7 @@ namespace svm {
 
 		m_Stack = std::move(interpreter.m_Stack);
 		m_StackFrame = interpreter.m_StackFrame;
+		m_Depth = interpreter.m_Depth;
 		m_InstructionIndex = interpreter.m_InstructionIndex;
 
 		m_LocalVariables = std::move(interpreter.m_LocalVariables);
@@ -82,6 +84,7 @@ namespace svm {
 		m_Exception = std::move(interpreter.m_Exception);
 
 		interpreter.m_StackFrame = {};
+		interpreter.m_Depth = 0;
 		interpreter.m_InstructionIndex = 0;
 		return *this;
 	}
@@ -91,6 +94,7 @@ namespace svm {
 
 		m_Stack.Deallocate();
 		m_StackFrame = {};
+		m_Depth = 0;
 		m_InstructionIndex = 0;
 
 		m_LocalVariables.clear();
@@ -1107,6 +1111,8 @@ struct n final {										\
 		} else if (std::holds_alternative<DoubleObject>(result)) {
 			m_Stack.Push(std::get<DoubleObject>(result));
 		}
+
+		--m_Depth;
 	}
 
 	SVM_NOINLINE_FOR_PROFILING void Interpreter::InterpretToI() {
