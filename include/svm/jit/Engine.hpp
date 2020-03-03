@@ -3,8 +3,9 @@
 
 #ifdef SVM_JIT
 
+#include <svm/Function.hpp>
+
 #include <unordered_map>
-#include <vector>
 
 namespace svm {
 	class Instructions;
@@ -13,11 +14,7 @@ namespace svm {
 namespace svm::jit {
 	class Engine final {
 	private:
-#if defined(SVM_WINDOWS)
-		std::unordered_map<const Instructions*, void*> m_Memory;
-#elif defined(SVM_POSIX)
-		std::unordered_map<const Instructions*, std::pair<void*, std::size_t>> m_Memory;
-#endif
+		std::unordered_map<const Instructions*, Function> m_Functions;
 
 	public:
 		Engine() = default;
@@ -28,13 +25,12 @@ namespace svm::jit {
 		Engine& operator=(Engine&& engine) noexcept;
 		bool operator==(const Engine&) = delete;
 		bool operator!=(const Engine&) = delete;
-		void(*operator[](const Instructions* inst) const)();
+		const Function& operator[](const Instructions* instructions) const noexcept;
+		Function& operator[](const Instructions* instructions) noexcept;
 
 	public:
 		void Clear() noexcept;
 		bool IsEmpty() const noexcept;
-
-		void Allocate(const Instructions* inst, const std::vector<std::uint8_t>& instructions);
 	};
 }
 
