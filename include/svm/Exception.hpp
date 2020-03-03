@@ -4,7 +4,7 @@
 #include <svm/Instruction.hpp>
 
 #include <cstdint>
-#include <string>
+#include <string_view>
 
 namespace svm {
 	struct InterpreterException final {
@@ -14,4 +14,6 @@ namespace svm {
 
 		std::uint32_t Code = 0;
 	};
+
+	std::string_view GetInterpreterExceptionMessage(std::uint32_t code) noexcept;
 }

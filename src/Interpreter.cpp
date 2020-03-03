@@ -111,6 +111,9 @@ namespace svm {
 	void Interpreter::ReallocateStack(std::size_t newSize) {
 		m_Stack.Reallocate(newSize);
 	}
+	const ByteFile& Interpreter::GetByteFile() const noexcept {
+		return m_ByteFile;
+	}
 
 	bool Interpreter::Interpret() {
 		for (; m_InstructionIndex < m_StackFrame.Instructions->GetInstructionCount(); ++m_InstructionIndex) {
@@ -164,7 +167,10 @@ namespace svm {
 			if (m_Exception.has_value()) return false;
 		}
 
-		return true;
+		if (m_Depth != 0) {
+			OccurException(SVM_IEC_FUNCTION_NORETINSTRUCTION);
+			return false;
+		} else return true;
 	}
 	const InterpreterException& Interpreter::GetException() const noexcept {
 		return *m_Exception;
@@ -181,6 +187,30 @@ namespace svm {
 		} else if (type == DoubleType) {
 			return m_Stack.GetTop<DoubleObject>()->Value;
 		} else return std::monostate();
+	}
+	std::vector<StackFrame> Interpreter::GetCallStacks() const {
+		std::vector<StackFrame> result(m_Depth + 1);
+		result[0] = m_StackFrame;
+
+		const StackFrame* frame = &m_StackFrame;
+		std::size_t stackOffset;
+		for (std::size_t i = 0; i < m_Depth; ++i) {
+			stackOffset = frame->StackBegin;
+			for (std::uint16_t j = 0; j < frame->Function->GetArity(); ++j) {
+				const Type* const type = *m_Stack.Get<const Type*>(stackOffset);
+				if (type == IntType) {
+					stackOffset -= sizeof(IntObject);
+				} else if (type == LongType) {
+					stackOffset -= sizeof(LongObject);
+				} else if (type == DoubleType) {
+					stackOffset -= sizeof(DoubleObject);
+				}
+			}
+			frame = m_Stack.Get<StackFrame>(stackOffset);
+			result[i + 1] = *frame;
+		}
+
+		return result;
 	}
 
 	void Interpreter::OccurException(std::uint32_t code) noexcept {

@@ -2,6 +2,7 @@
 #include <svm/IO.hpp>
 #include <svm/Parser.hpp>
 
+#include <algorithm>
 #include <chrono>
 #include <cstdlib>
 #include <iomanip>
@@ -31,15 +32,41 @@ int main(int argc, char* argv[]) {
 	const auto startInterpreting = std::chrono::system_clock::now();
 
 	svm::Interpreter i(std::move(byteFile));
-	i.AllocateStack();
+	i.AllocateStack(256);
 	const bool success = i.Interpret();
 
 	const auto endInterpreting = std::chrono::system_clock::now();
 	const std::chrono::duration<double> interpreting = endInterpreting - startInterpreting;
 
 	if (!success) {
+		const auto& exception = i.GetException();
+		auto callStacks = i.GetCallStacks();
+		callStacks.erase(callStacks.end() - 1);
+		const auto& funcs = i.GetByteFile().GetFunctions();
+
 		std::cout << "Occured exception!\n"
-				  << "Code: " << i.GetException().Code << '\n';
+				  << "Message: \"" << svm::GetInterpreterExceptionMessage(exception.Code) << "\"\n"
+				  << "Function: ";
+		if (exception.Function == nullptr) {
+			std::cout << "entrypoint";
+		} else {
+			const auto iter = std::find_if(funcs.begin(), funcs.end(), [&](const auto& func) {
+				return &func == exception.Function;
+			});
+			const auto dis = std::distance(funcs.begin(), iter);
+			std::cout << '[' << dis << ']';
+		}
+		std::cout << "\n"
+				  << "CallStacks:\n";
+		for (const auto& frame : callStacks) {
+			const auto iter = std::find_if(funcs.begin(), funcs.end(), [&](const auto& func) {
+				return &func == frame.Function;
+			});
+			const auto dis = std::distance(funcs.begin(), iter);
+			std::cout << "\t[" << dis << "] at\n";
+		}
+		std::cout << "\tentrypoint\n";
+
 		return EXIT_FAILURE;
 	}
 

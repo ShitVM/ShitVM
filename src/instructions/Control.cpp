@@ -145,7 +145,11 @@ namespace svm {
 	}
 	SVM_NOINLINE_FOR_PROFILING void Interpreter::InterpretCall(std::uint32_t operand) {
 		m_StackFrame.Caller = static_cast<std::size_t>(m_InstructionIndex);
-		m_Stack.Push(m_StackFrame);
+		bool success = m_Stack.Push(m_StackFrame);
+		if (!success) {
+			OccurException(SVM_IEC_STACK_OVERFLOW);
+			return;
+		}
 
 		m_StackFrame = { m_Stack.GetUsedSize(), m_LocalVariables.size() };
 		m_StackFrame.Function = &m_ByteFile.GetFunctions()[operand];
@@ -181,7 +185,12 @@ namespace svm {
 		++m_Depth;
 	}
 	SVM_NOINLINE_FOR_PROFILING void Interpreter::InterpretRet() {
-		std::variant<std::monostate, IntObject, LongObject, DoubleObject> result;
+		if (m_Depth == 0) {
+			OccurException(SVM_IEC_FUNCTION_TOPOFCALLSTACK);
+			return;
+		}
+
+		Result result;
 		if (m_StackFrame.Function->HasResult()) {
 			const Type** typePtr = m_Stack.GetTopType();
 			if (!typePtr) {
@@ -191,11 +200,11 @@ namespace svm {
 
 			const Type* const type = *typePtr;
 			if (type == IntType) {
-				result = m_Stack.Pop<IntObject>().value();
+				result = m_Stack.Pop<IntObject>()->Value;
 			} else if (type == LongType) {
-				result = m_Stack.Pop<LongObject>().value();
+				result = m_Stack.Pop<LongObject>()->Value;
 			} else if (type == DoubleType) {
-				result = m_Stack.Pop<DoubleObject>().value();
+				result = m_Stack.Pop<DoubleObject>()->Value;
 			} else {
 				OccurException(SVM_IEC_STACK_EMPTY);
 				return;
@@ -223,12 +232,12 @@ namespace svm {
 
 		if (std::holds_alternative<std::monostate>(result)) {
 			return;
-		} else if (std::holds_alternative<IntObject>(result)) {
-			m_Stack.Push(std::get<IntObject>(result));
-		} else if (std::holds_alternative<LongObject>(result)) {
-			m_Stack.Push(std::get<LongObject>(result));
-		} else if (std::holds_alternative<DoubleObject>(result)) {
-			m_Stack.Push(std::get<DoubleObject>(result));
+		} else if (std::holds_alternative<std::uint32_t>(result)) {
+			m_Stack.Push<IntObject>(std::get<std::uint32_t>(result));
+		} else if (std::holds_alternative<std::uint64_t>(result)) {
+			m_Stack.Push<LongObject>(std::get<std::uint64_t>(result));
+		} else if (std::holds_alternative<double>(result)) {
+			m_Stack.Push<DoubleObject>(std::get<double>(result));
 		}
 
 		--m_Depth;

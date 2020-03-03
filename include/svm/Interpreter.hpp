@@ -115,10 +115,12 @@ namespace svm {
 		void Load(ByteFile&& byteFile) noexcept;
 		void AllocateStack(std::size_t size = 1 * 1024 * 1024);
 		void ReallocateStack(std::size_t newSize);
+		const ByteFile& GetByteFile() const noexcept;
 
 		bool Interpret();
 		const InterpreterException& GetException() const noexcept;
 		Result GetResult() const noexcept;
+		std::vector<StackFrame> GetCallStacks() const;
 
 	private:
 		void OccurException(std::uint32_t code) noexcept;
