@@ -133,19 +133,20 @@ namespace svm {
 			OccurException(SVM_IEC_STACK_OVERFLOW);
 		}
 	}
-	SVM_NOINLINE_FOR_PROFILING void Interpreter::InterpretDRef() {
+	SVM_NOINLINE_FOR_PROFILING void Interpreter::InterpretTLoad() {
 		const auto ptr = m_Stack.Pop<PointerObject>();
 		if (!ptr) {
 			OccurException(SVM_IEC_STACK_EMPTY);
 			return;
 		} else if (ptr->GetType() != PointerType) {
+			m_Stack.Push(*ptr);
 			OccurException(SVM_IEC_POINTER_NOTPOINTER);
 			return;
 		}
 
 		const Type** const varTypePtr = static_cast<const Type**>(ptr->Value);
 		if (!varTypePtr) {
-			m_Stack.Push<PointerObject>(*ptr);
+			m_Stack.Push(*ptr);
 			OccurException(SVM_IEC_POINTER_NULLPOINTER);
 			return;
 		}
@@ -163,7 +164,53 @@ namespace svm {
 		}
 
 		if (!isSuccess) {
+			m_Stack.Push(*ptr);
 			OccurException(SVM_IEC_STACK_OVERFLOW);
+		}
+	}
+	SVM_NOINLINE_FOR_PROFILING void Interpreter::InterpretTStore() {
+		const auto ptr = m_Stack.Pop<PointerObject>();
+		if (!ptr) {
+			OccurException(SVM_IEC_STACK_EMPTY);
+			return;
+		} else if (ptr->GetType() != PointerType) {
+			m_Stack.Push(*ptr);
+			OccurException(SVM_IEC_POINTER_NOTPOINTER);
+			return;
+		}
+
+		const Type** const varTypePtr = static_cast<const Type**>(ptr->Value);
+		if (!varTypePtr) {
+			m_Stack.Push(*ptr);
+			OccurException(SVM_IEC_POINTER_NULLPOINTER);
+			return;
+		}
+
+		const auto typePtr = m_Stack.GetTopType();
+		if (!typePtr) {
+			m_Stack.Push(*ptr);
+			OccurException(SVM_IEC_STACK_EMPTY);
+			return;
+		}
+
+		const Type* const type = *typePtr;
+		if (type != *varTypePtr) {
+			m_Stack.Push(*ptr);
+			OccurException(SVM_IEC_STACK_DIFFERENTTYPE);
+			return;
+		}
+
+		if (type == IntType) {
+			reinterpret_cast<IntObject*>(varTypePtr)->Value = m_Stack.Pop<IntObject>()->Value;
+		} else if (type == LongType) {
+			reinterpret_cast<LongObject*>(varTypePtr)->Value = m_Stack.Pop<LongObject>()->Value;
+		} else if (type == DoubleType) {
+			reinterpret_cast<DoubleObject*>(varTypePtr)->Value = m_Stack.Pop<DoubleObject>()->Value;
+		} else if (type == PointerType) {
+			reinterpret_cast<PointerObject*>(varTypePtr)->Value = m_Stack.Pop<PointerObject>()->Value;
+		} else {
+			m_Stack.Push(*ptr);
+			OccurException(SVM_IEC_STACK_EMPTY);
 		}
 	}
 	SVM_NOINLINE_FOR_PROFILING void Interpreter::InterpretCopy() {

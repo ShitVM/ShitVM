@@ -171,7 +171,7 @@ namespace svm {
 		if (m_ByteCodeVersion >= ByteCodeVersion::v0_2_0) return result;
 
 		if (result >= OpCode::Lea) {
-			result = static_cast<OpCode>(static_cast<std::uint8_t>(result) + 4);
+			result = static_cast<OpCode>(static_cast<std::uint8_t>(result) + 5);
 		}
 
 		return result;

@@ -119,6 +119,8 @@ namespace svm {
 			case OpCode::Pop: InterpretPop(); break;
 			case OpCode::Load: InterpretLoad(inst.Operand); break;
 			case OpCode::Store: InterpretStore(inst.Operand); break;
+			case OpCode::TLoad: InterpretTLoad(); break;
+			case OpCode::TStore: InterpretTStore(); break;
 			case OpCode::Copy: InterpretCopy(); break;
 			case OpCode::Swap: InterpretSwap(); break;
 
