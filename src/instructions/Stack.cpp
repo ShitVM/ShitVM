@@ -134,20 +134,18 @@ namespace svm {
 		}
 	}
 	SVM_NOINLINE_FOR_PROFILING void Interpreter::InterpretDRef() {
-		const Type** const typePtr = m_Stack.GetTopType();
-		if (!typePtr) {
+		const auto ptr = m_Stack.Pop<PointerObject>();
+		if (!ptr) {
 			OccurException(SVM_IEC_STACK_EMPTY);
 			return;
-		}
-
-		const Type* const type = *typePtr;
-		if (type != PointerType) {
+		} else if (ptr->GetType() != PointerType) {
 			OccurException(SVM_IEC_POINTER_NOTPOINTER);
 			return;
 		}
 
-		const Type** const varTypePtr = static_cast<const Type**>(reinterpret_cast<PointerObject*>(typePtr)->Value);
+		const Type** const varTypePtr = static_cast<const Type**>(ptr->Value);
 		if (!varTypePtr) {
+			m_Stack.Push<PointerObject>(*ptr);
 			OccurException(SVM_IEC_POINTER_NULLPOINTER);
 			return;
 		}
@@ -269,6 +267,9 @@ namespace svm {
 		if (!typePtr) {
 			OccurException(SVM_IEC_STACK_EMPTY);
 			return;
+		} else if (!m_LocalVariables.empty() && m_Stack.Get<const Type*>(m_LocalVariables.back()) == typePtr) {
+			OccurException(SVM_IEC_STACK_EMPTY);
+			return;
 		}
 
 		const Type* const type = *typePtr;
@@ -290,6 +291,9 @@ namespace svm {
 	SVM_NOINLINE_FOR_PROFILING void Interpreter::InterpretToL() {
 		const Type** const typePtr = m_Stack.GetTopType();
 		if (!typePtr) {
+			OccurException(SVM_IEC_STACK_EMPTY);
+			return;
+		} else if (!m_LocalVariables.empty() && m_Stack.Get<const Type*>(m_LocalVariables.back()) == typePtr) {
 			OccurException(SVM_IEC_STACK_EMPTY);
 			return;
 		}
@@ -315,6 +319,9 @@ namespace svm {
 		if (!typePtr) {
 			OccurException(SVM_IEC_STACK_EMPTY);
 			return;
+		} else if (!m_LocalVariables.empty() && m_Stack.Get<const Type*>(m_LocalVariables.back()) == typePtr) {
+			OccurException(SVM_IEC_STACK_EMPTY);
+			return;
 		}
 
 		const Type* const type = *typePtr;
@@ -336,6 +343,9 @@ namespace svm {
 	SVM_NOINLINE_FOR_PROFILING void Interpreter::InterpretToP() {
 		const Type** const typePtr = m_Stack.GetTopType();
 		if (!typePtr) {
+			OccurException(SVM_IEC_STACK_EMPTY);
+			return;
+		} else if (!m_LocalVariables.empty() && m_Stack.Get<const Type*>(m_LocalVariables.back()) == typePtr) {
 			OccurException(SVM_IEC_STACK_EMPTY);
 			return;
 		}
