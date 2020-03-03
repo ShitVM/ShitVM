@@ -100,6 +100,8 @@ namespace svm {
 			case OpCode::Pop: InterpretPop(); break;
 			case OpCode::Load: InterpretLoad(inst.Operand); break;
 			case OpCode::Store: InterpretStore(inst.Operand); break;
+			case OpCode::Copy: InterpretCopy(); break;
+			case OpCode::Swap: InterpretSwap(); break;
 
 			case OpCode::Add: InterpretAdd(); break;
 			case OpCode::Sub: InterpretSub(); break;
@@ -204,6 +206,26 @@ namespace svm {
 				m_Stack.Get<DoubleObject>(m_LocalVariables[operand]) = object;
 				m_Stack.Pop<DoubleObject>();
 			}
+		}
+	}
+	SVM_NOINLINE_FOR_PROFILING void Interpreter::InterpretCopy() {
+		const Type* const type = m_Stack.GetTopType();
+		if (type == IntType) {
+			m_Stack.Push(m_Stack.GetTop<IntObject>());
+		} else if (type == LongType) {
+			m_Stack.Push(m_Stack.GetTop<LongObject>());
+		} else if (type == DoubleType) {
+			m_Stack.Push(m_Stack.GetTop<DoubleObject>());
+		}
+	}
+	SVM_NOINLINE_FOR_PROFILING void Interpreter::InterpretSwap() {
+		const Type* const type = m_Stack.GetTopType();
+		if (type == IntType) {
+			std::swap(m_Stack.GetTop<IntObject>(), m_Stack.Get<IntObject>(m_Stack.GetUsedSize() - sizeof(IntObject)));
+		} else if (type == LongType) {
+			std::swap(m_Stack.GetTop<LongObject>(), m_Stack.Get<LongObject>(m_Stack.GetUsedSize() - sizeof(LongObject)));
+		} else if (type == DoubleType) {
+			std::swap(m_Stack.GetTop<DoubleObject>(), m_Stack.Get<DoubleObject>(m_Stack.GetUsedSize() - sizeof(DoubleObject)));
 		}
 	}
 

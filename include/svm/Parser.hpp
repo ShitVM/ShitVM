@@ -13,6 +13,19 @@
 #include <vector>
 
 namespace svm {
+	enum class ByteFileVersion : std::uint16_t {
+		v0_1_0,
+
+		Latest = v0_1_0,
+	};
+
+	enum class ByteCodeVersion : std::uint16_t {
+		v0_1_0,
+		v0_2_0,
+
+		Latest = v0_2_0,
+	};
+
 	class Parser final {
 	private:
 		std::vector<std::uint8_t> m_File;
@@ -22,6 +35,9 @@ namespace svm {
 		ConstantPool m_ConstantPool;
 		Functions m_Functions;
 		Instructions m_EntryPoint;
+
+		ByteFileVersion m_ByteFileVersion = ByteFileVersion::Latest;
+		ByteCodeVersion m_ByteCodeVersion = ByteCodeVersion::Latest;
 
 	public:
 		Parser() noexcept = default;
@@ -63,8 +79,6 @@ namespace svm {
 			return std::make_pair(begin, end);
 		}
 
-		void ParseVer0000();
-
 		void ParseConstantPool();
 		template<typename T>
 		void ParseConstants(std::vector<T>& pool) {
@@ -75,5 +89,7 @@ namespace svm {
 		}
 		void ParseFunctions();
 		Instructions ParseInstructions();
+
+		OpCode ReadOpCode() noexcept;
 	};
 }

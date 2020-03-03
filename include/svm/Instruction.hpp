@@ -7,13 +7,15 @@
 #include <vector>
 
 namespace svm {
-	enum class OpCode {
+	enum class OpCode : std::uint8_t {
 		Nop,
 
 		Push,
 		Pop,
 		Load,
 		Store,
+		Copy,
+		Swap,
 
 		Add,
 		Sub,
@@ -55,7 +57,7 @@ namespace svm {
 
 	static constexpr const char* Mnemonics[] = {
 		"nop",
-		"push", "pop", "load", "store",
+		"push", "pop", "load", "store", "copy", "swap",
 		"add", "sub", "mul", "imul", "div", "idiv", "mod", "imod", "neg", "inc", "dec",
 		"and", "or", "xor", "not", "shl", "shr", "sal", "sar",
 		"cmp", "icmp", "jmp", "je", "jne", "ja", "jae", "jb", "jbe", "call", "ret",

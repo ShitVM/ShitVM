@@ -10,7 +10,8 @@ namespace svm {
 	Parser::Parser(Parser&& parser) noexcept
 		: m_File(std::move(parser.m_File)), m_Pos(parser.m_Pos),
 		m_Path(std::move(parser.m_Path)), m_ConstantPool(std::move(parser.m_ConstantPool)),
-		m_Functions(std::move(parser.m_Functions)), m_EntryPoint(std::move(parser.m_EntryPoint)) {}
+		m_Functions(std::move(parser.m_Functions)), m_EntryPoint(std::move(parser.m_EntryPoint)),
+		m_ByteFileVersion(parser.m_ByteFileVersion), m_ByteCodeVersion(parser.m_ByteCodeVersion) {}
 
 	Parser& Parser::operator=(Parser&& parser) noexcept {
 		m_File = std::move(parser.m_File);
@@ -20,6 +21,9 @@ namespace svm {
 		m_ConstantPool = std::move(parser.m_ConstantPool);
 		m_Functions = std::move(parser.m_Functions);
 		m_EntryPoint = std::move(parser.m_EntryPoint);
+
+		m_ByteFileVersion = parser.m_ByteFileVersion;
+		m_ByteCodeVersion = parser.m_ByteCodeVersion;
 		return *this;
 	}
 
@@ -31,6 +35,9 @@ namespace svm {
 		m_ConstantPool.Clear();
 		m_Functions.clear();
 		m_EntryPoint.Clear();
+
+		m_ByteFileVersion = ByteFileVersion::Latest;
+		m_ByteCodeVersion = ByteCodeVersion::Latest;
 	}
 	void Parser::Load(const std::string& path) {
 		std::ifstream stream(path, std::ifstream::binary);
@@ -68,14 +75,15 @@ namespace svm {
 		const auto [magicBegin, magicEnd] = ReadFile(4);
 		if (!std::equal(magicBegin, magicEnd, magic)) throw std::runtime_error("Failed to parse the file. Invalid format.");
 
-		const auto version = ReadFile<std::uint32_t>();
-		switch (version) {
-		case 0x0000:
-			ParseVer0000();
-			break;
+		m_ByteFileVersion = ReadFile<ByteFileVersion>();
+		m_ByteCodeVersion = ReadFile<ByteCodeVersion>();
 
-		default: throw std::runtime_error("Failed to parse the file. Incompatible version.");
-		}
+		if (m_ByteFileVersion > ByteFileVersion::Latest) throw std::runtime_error("Failed to parse the file. Incompatible ShitVM Byte File version.");
+		if (m_ByteCodeVersion > ByteCodeVersion::Latest) throw std::runtime_error("Failed to parse the file. Incompatible ShitBC version.");
+
+		ParseConstantPool();
+		ParseFunctions();
+		m_EntryPoint = ParseInstructions();
 	}
 	bool Parser::IsParsed() const noexcept {
 		return !m_Functions.empty() || !m_EntryPoint.IsEmpty();
@@ -99,12 +107,6 @@ namespace svm {
 	}
 	const Instructions& Parser::GetEntryPoint() const noexcept {
 		return m_EntryPoint;
-	}
-
-	void Parser::ParseVer0000() {
-		ParseConstantPool();
-		ParseFunctions();
-		m_EntryPoint = ParseInstructions();
 	}
 
 	void Parser::ParseConstantPool() {
@@ -147,7 +149,7 @@ namespace svm {
 
 		std::uint64_t nextOffset = 0;
 		for (std::uint64_t i = 0; i < instCount; ++i) {
-			const OpCode opCode = static_cast<OpCode>(ReadFile<std::uint8_t>());
+			const OpCode opCode = ReadOpCode();
 			std::uint32_t operand = Instruction::NoOperand;
 			const std::uint64_t offset = nextOffset;
 
@@ -162,5 +164,16 @@ namespace svm {
 		}
 
 		return { std::move(labels), std::move(insts) };
+	}
+
+	OpCode Parser::ReadOpCode() noexcept {
+		OpCode result = ReadFile<OpCode>();
+		if (m_ByteCodeVersion >= ByteCodeVersion::v0_2_0) return result;
+
+		if (result >= OpCode::Copy) {
+			result = static_cast<OpCode>(static_cast<std::uint8_t>(result) + 2);
+		}
+
+		return result;
 	}
 }
