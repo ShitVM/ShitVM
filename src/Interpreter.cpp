@@ -119,6 +119,7 @@ namespace svm {
 			case OpCode::Pop: InterpretPop(); break;
 			case OpCode::Load: InterpretLoad(inst.Operand); break;
 			case OpCode::Store: InterpretStore(inst.Operand); break;
+			case OpCode::Lea: InterpretLea(inst.Operand); break;
 			case OpCode::TLoad: InterpretTLoad(); break;
 			case OpCode::TStore: InterpretTStore(); break;
 			case OpCode::Copy: InterpretCopy(); break;
@@ -184,6 +185,8 @@ namespace svm {
 			return m_Stack.GetTop<LongObject>()->Value;
 		} else if (type == DoubleType) {
 			return m_Stack.GetTop<DoubleObject>()->Value;
+		} else if (type == PointerType) {
+			return m_Stack.GetTop<PointerObject>()->Value;
 		} else return std::monostate();
 	}
 	std::vector<StackFrame> Interpreter::GetCallStacks() const {

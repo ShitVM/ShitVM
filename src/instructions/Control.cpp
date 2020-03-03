@@ -126,6 +126,8 @@ namespace svm {
 				stackOffset -= sizeof(LongObject);
 			} else if (type == DoubleType) {
 				stackOffset -= sizeof(DoubleObject);
+			} else if (type == PointerType) {
+				stackOffset -= sizeof(PointerObject);
 			} else {
 				OccurException(SVM_IEC_STACK_EMPTY);
 				m_StackFrame = m_Stack.Pop<StackFrame>().value();
@@ -158,6 +160,8 @@ namespace svm {
 				result = m_Stack.Pop<LongObject>()->Value;
 			} else if (type == DoubleType) {
 				result = m_Stack.Pop<DoubleObject>()->Value;
+			} else if (type == PointerType) {
+				result = m_Stack.Pop<PointerObject>()->Value;
 			} else {
 				OccurException(SVM_IEC_STACK_EMPTY);
 				return;
@@ -180,9 +184,12 @@ namespace svm {
 				m_Stack.Pop<LongObject>();
 			} else if (type == DoubleType) {
 				m_Stack.Pop<DoubleObject>();
+			} else if (type == PointerType) {
+				m_Stack.Pop<PointerObject>();
 			}
 		}
 
+		--m_Depth;
 		if (std::holds_alternative<std::monostate>(result)) {
 			return;
 		} else if (std::holds_alternative<std::uint32_t>(result)) {
@@ -191,8 +198,8 @@ namespace svm {
 			m_Stack.Push<LongObject>(std::get<std::uint64_t>(result));
 		} else if (std::holds_alternative<double>(result)) {
 			m_Stack.Push<DoubleObject>(std::get<double>(result));
+		} else if (std::holds_alternative<void*>(result)) {
+			m_Stack.Push<PointerObject>(std::get<void*>(result));
 		}
-
-		--m_Depth;
 	}
 }

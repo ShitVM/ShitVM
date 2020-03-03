@@ -95,9 +95,9 @@ namespace svm {
 
 namespace svm {
 	PointerObject::PointerObject() noexcept
-		: Object(DoubleType) {}
+		: Object(PointerType) {}
 	PointerObject::PointerObject(void* value) noexcept
-		: Object(DoubleType), Value(value) {}
+		: Object(PointerType), Value(value) {}
 	PointerObject::PointerObject(const PointerObject& object) noexcept
 		: Object(object), Value(object.Value) {}
 

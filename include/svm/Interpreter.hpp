@@ -85,7 +85,7 @@ namespace svm {
 namespace svm {
 	class Interpreter final {
 	public:
-		using Result = std::variant<std::monostate, std::uint32_t, std::uint64_t, double>;
+		using Result = std::variant<std::monostate, std::uint32_t, std::uint64_t, double, void*>;
 
 	private:
 		ByteFile m_ByteFile;
@@ -125,6 +125,8 @@ namespace svm {
 	private:
 		void OccurException(std::uint32_t code) noexcept;
 
+		template<typename T>
+		void DRefAndAssign(const Type** rhsTypePtr) noexcept;
 		template<typename T>
 		void PopTwoSameType(const Type*& rhsType, T& lhs, T& rhs) noexcept;
 		template<typename T>
