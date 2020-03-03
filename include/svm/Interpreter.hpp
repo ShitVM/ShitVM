@@ -1,12 +1,15 @@
 #pragma once
 
 #include <svm/ByteFile.hpp>
+#include <svm/Exception.hpp>
 #include <svm/Macro.hpp>
 
 #include <cstddef>
 #include <cstdint>
 #include <limits>
+#include <optional>
 #include <utility>
+#include <variant>
 #include <vector>
 
 namespace svm {
@@ -63,15 +66,20 @@ namespace svm {
 		const svm::Function* Function = nullptr;
 		const svm::Instructions* Instructions = nullptr;
 	};
+}
 
+namespace svm {
 	class Interpreter final {
 	private:
 		ByteFile m_ByteFile;
 
 		Stack m_Stack;
 		StackFrame m_StackFrame;
+		std::uint64_t m_InstructionIndex = 0;
 
 		std::vector<std::size_t> m_LocalVariables;
+
+		std::optional<InterpreterException> m_Exception;
 
 	public:
 		Interpreter() noexcept = default;
@@ -126,15 +134,15 @@ namespace svm {
 
 		void InterpretCmp();
 		void InterpretICmp();
-		void InterpretJmp(std::uint64_t& i, std::uint32_t operand);
-		void InterpretJe(std::uint64_t& i, std::uint32_t operand);
-		void InterpretJne(std::uint64_t& i, std::uint32_t operand);
-		void InterpretJa(std::uint64_t& i, std::uint32_t operand);
-		void InterpretJae(std::uint64_t& i, std::uint32_t operand);
-		void InterpretJb(std::uint64_t& i, std::uint32_t operand);
-		void InterpretJbe(std::uint64_t& i, std::uint32_t operand);
-		void InterpretCall(std::uint64_t& i, std::uint32_t operand);
-		void InterpretRet(std::uint64_t& i);
+		void InterpretJmp(std::uint32_t operand);
+		void InterpretJe(std::uint32_t operand);
+		void InterpretJne(std::uint32_t operand);
+		void InterpretJa(std::uint32_t operand);
+		void InterpretJae(std::uint32_t operand);
+		void InterpretJb(std::uint32_t operand);
+		void InterpretJbe(std::uint32_t operand);
+		void InterpretCall(std::uint32_t operand);
+		void InterpretRet();
 
 		void InterpretToI();
 		void InterpretToL();
