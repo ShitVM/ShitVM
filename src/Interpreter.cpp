@@ -3,10 +3,6 @@
 #include <svm/Object.hpp>
 #include <svm/detail/InterpreterExceptionCode.hpp>
 
-#include <cmath>
-#include <type_traits>
-#include <variant>
-
 namespace svm {
 	Stack::Stack(std::size_t size) {
 		Allocate(size);

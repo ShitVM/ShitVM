@@ -2,6 +2,9 @@
 
 #include <svm/detail/InterpreterExceptionCode.hpp>
 
+#include <cmath>
+#include <type_traits>
+
 namespace svm {
 	template<typename T>
 	void Interpreter::PopTwoSameType(const Type*& rhsType, T& lhs, T& rhs) noexcept {
@@ -17,7 +20,7 @@ namespace svm {
 
 			lhs = *reinterpret_cast<IntObject*>(lhsTypePtr);
 			rhs = reinterpret_cast<IntObject&>(rhsType);
-		} else if constexpr (std::is_same_v<IntObject, T>) {
+		} else if constexpr (std::is_same_v<LongObject, T>) {
 			const Type** const lhsTypePtr = m_Stack.Get<const Type*>(m_Stack.GetUsedSize() - sizeof(LongObject));
 			if (!lhsTypePtr) {
 				OccurException(SVM_IEC_STACK_EMPTY);
@@ -29,7 +32,7 @@ namespace svm {
 
 			lhs = *reinterpret_cast<LongObject*>(lhsTypePtr);
 			rhs = reinterpret_cast<LongObject&>(rhsType);
-		} else if constexpr (std::is_same_v<IntObject, T>) {
+		} else if constexpr (std::is_same_v<DoubleObject, T>) {
 			const Type** const lhsTypePtr = m_Stack.Get<const Type*>(m_Stack.GetUsedSize() - sizeof(DoubleObject));
 			if (!lhsTypePtr) {
 				OccurException(SVM_IEC_STACK_EMPTY);
@@ -41,6 +44,18 @@ namespace svm {
 
 			lhs = *reinterpret_cast<DoubleObject*>(lhsTypePtr);
 			rhs = reinterpret_cast<DoubleObject&>(rhsType);
+		} else if constexpr (std::is_same_v<PointerObject, T>) {
+			const Type** const lhsTypePtr = m_Stack.Get<const Type*>(m_Stack.GetUsedSize() - sizeof(PointerObject));
+			if (!lhsTypePtr) {
+				OccurException(SVM_IEC_STACK_EMPTY);
+				return;
+			} else if (rhsType != *lhsTypePtr) {
+				OccurException(SVM_IEC_STACK_DIFFERENTTYPE);
+				return;
+			}
+
+			lhs = *reinterpret_cast<PointerObject*>(lhsTypePtr);
+			rhs = reinterpret_cast<PointerObject&>(rhsType);
 		}
 
 		m_Stack.Pop<T>();
@@ -69,6 +84,8 @@ namespace svm {
 			DoubleObject lhs, rhs;
 			PopTwoSameType(rhsType, lhs, rhs);
 			m_Stack.Push<DoubleObject>(lhs.Value + rhs.Value);
+		} else if (rhsType == PointerType) {
+			OccurException(SVM_IEC_POINTER_INVALIDFORPOINTER);
 		} else {
 			OccurException(SVM_IEC_STACK_EMPTY);
 		}
@@ -93,6 +110,8 @@ namespace svm {
 			DoubleObject lhs, rhs;
 			PopTwoSameType(rhsType, lhs, rhs);
 			m_Stack.Push<DoubleObject>(lhs.Value - rhs.Value);
+		} else if (rhsType == PointerType) {
+			OccurException(SVM_IEC_POINTER_INVALIDFORPOINTER);
 		} else {
 			OccurException(SVM_IEC_STACK_EMPTY);
 		}
@@ -117,6 +136,8 @@ namespace svm {
 			DoubleObject lhs, rhs;
 			PopTwoSameType(rhsType, lhs, rhs);
 			m_Stack.Push<DoubleObject>(lhs.Value * rhs.Value);
+		} else if (rhsType == PointerType) {
+			OccurException(SVM_IEC_POINTER_INVALIDFORPOINTER);
 		} else {
 			OccurException(SVM_IEC_STACK_EMPTY);
 		}
@@ -141,6 +162,8 @@ namespace svm {
 			DoubleObject lhs, rhs;
 			PopTwoSameType(rhsType, lhs, rhs);
 			m_Stack.Push<DoubleObject>(lhs.Value * rhs.Value);
+		} else if (rhsType == PointerType) {
+			OccurException(SVM_IEC_POINTER_INVALIDFORPOINTER);
 		} else {
 			OccurException(SVM_IEC_STACK_EMPTY);
 		}
@@ -177,6 +200,8 @@ namespace svm {
 				return;
 			}
 			m_Stack.Push<DoubleObject>(lhs.Value / rhs.Value);
+		} else if (rhsType == PointerType) {
+			OccurException(SVM_IEC_POINTER_INVALIDFORPOINTER);
 		} else {
 			OccurException(SVM_IEC_STACK_EMPTY);
 		}
@@ -213,6 +238,8 @@ namespace svm {
 				return;
 			}
 			m_Stack.Push<DoubleObject>(lhs.Value / rhs.Value);
+		} else if (rhsType == PointerType) {
+			OccurException(SVM_IEC_POINTER_INVALIDFORPOINTER);
 		} else {
 			OccurException(SVM_IEC_STACK_EMPTY);
 		}
@@ -249,6 +276,8 @@ namespace svm {
 				return;
 			}
 			m_Stack.Push<DoubleObject>(std::fmod(lhs.Value, rhs.Value));
+		} else if (rhsType == PointerType) {
+			OccurException(SVM_IEC_POINTER_INVALIDFORPOINTER);
 		} else {
 			OccurException(SVM_IEC_STACK_EMPTY);
 		}
@@ -285,6 +314,8 @@ namespace svm {
 				return;
 			}
 			m_Stack.Push<DoubleObject>(std::fmod(lhs.Value, rhs.Value));
+		} else if (rhsType == PointerType) {
+			OccurException(SVM_IEC_POINTER_INVALIDFORPOINTER);
 		} else {
 			OccurException(SVM_IEC_STACK_EMPTY);
 		}
@@ -306,6 +337,8 @@ namespace svm {
 		} else if (type == DoubleType) {
 			DoubleObject& top = reinterpret_cast<DoubleObject&>(type);
 			top.Value = -top.Value;
+		} else if (type == PointerType) {
+			OccurException(SVM_IEC_POINTER_INVALIDFORPOINTER);
 		} else {
 			OccurException(SVM_IEC_STACK_EMPTY);
 		}
@@ -324,6 +357,8 @@ namespace svm {
 			reinterpret_cast<LongObject&>(type).Value += delta;
 		} else if (type == DoubleType) {
 			reinterpret_cast<DoubleObject&>(type).Value += delta;
+		} else if (type == PointerType) {
+			OccurException(SVM_IEC_POINTER_INVALIDFORPOINTER);
 		} else {
 			OccurException(SVM_IEC_STACK_EMPTY);
 		}
@@ -350,6 +385,8 @@ namespace svm {
 			if (rhsType == DoubleType) {
 				*m_Stack.GetTopType() = DoubleType;
 			}
+		} else if (rhsType == PointerType) {
+			OccurException(SVM_IEC_POINTER_INVALIDFORPOINTER);
 		} else {
 			OccurException(SVM_IEC_STACK_EMPTY);
 		}
@@ -373,6 +410,8 @@ namespace svm {
 			if (rhsType == DoubleType) {
 				*m_Stack.GetTopType() = DoubleType;
 			}
+		} else if (rhsType == PointerType) {
+			OccurException(SVM_IEC_POINTER_INVALIDFORPOINTER);
 		} else {
 			OccurException(SVM_IEC_STACK_EMPTY);
 		}
@@ -396,6 +435,8 @@ namespace svm {
 			if (rhsType == DoubleType) {
 				*m_Stack.GetTopType() = DoubleType;
 			}
+		} else if (rhsType == PointerType) {
+			OccurException(SVM_IEC_POINTER_INVALIDFORPOINTER);
 		} else {
 			OccurException(SVM_IEC_STACK_EMPTY);
 		}
@@ -414,6 +455,8 @@ namespace svm {
 		} else if (type == LongType || type == DoubleType) {
 			LongObject& top = reinterpret_cast<LongObject&>(type);
 			top.Value = ~top.Value;
+		} else if (type == PointerType) {
+			OccurException(SVM_IEC_POINTER_INVALIDFORPOINTER);
 		} else {
 			OccurException(SVM_IEC_STACK_EMPTY);
 		}
@@ -437,6 +480,8 @@ namespace svm {
 			if (rhsType == DoubleType) {
 				*m_Stack.GetTopType() = DoubleType;
 			}
+		} else if (rhsType == PointerType) {
+			OccurException(SVM_IEC_POINTER_INVALIDFORPOINTER);
 		} else {
 			OccurException(SVM_IEC_STACK_EMPTY);
 		}
@@ -460,6 +505,8 @@ namespace svm {
 			if (rhsType == DoubleType) {
 				*m_Stack.GetTopType() = DoubleType;
 			}
+		} else if (rhsType == PointerType) {
+			OccurException(SVM_IEC_POINTER_INVALIDFORPOINTER);
 		} else {
 			OccurException(SVM_IEC_STACK_EMPTY);
 		}
@@ -483,6 +530,8 @@ namespace svm {
 			if (rhsType == DoubleType) {
 				*m_Stack.GetTopType() = DoubleType;
 			}
+		} else if (rhsType == PointerType) {
+			OccurException(SVM_IEC_POINTER_INVALIDFORPOINTER);
 		} else {
 			OccurException(SVM_IEC_STACK_EMPTY);
 		}
@@ -506,6 +555,80 @@ namespace svm {
 			if (rhsType == DoubleType) {
 				*m_Stack.GetTopType() = DoubleType;
 			}
+		} else if (rhsType == PointerType) {
+			OccurException(SVM_IEC_POINTER_INVALIDFORPOINTER);
+		} else {
+			OccurException(SVM_IEC_STACK_EMPTY);
+		}
+	}
+}
+
+namespace svm {
+	template<typename T>
+	IntObject Interpreter::CompareTwoSameType(T lhs, T rhs) noexcept {
+		if (lhs > rhs) {
+			return 1;
+		} else if (lhs == rhs) {
+			return 0;
+		} else {
+			return static_cast<std::uint32_t>(-1);
+		}
+	}
+}
+
+namespace svm {
+	SVM_NOINLINE_FOR_PROFILING void Interpreter::InterpretCmp() {
+		const Type** const rhsTypePtr = m_Stack.GetTopType();
+		if (!rhsTypePtr) {
+			OccurException(SVM_IEC_STACK_EMPTY);
+			return;
+		}
+
+		const Type*& rhsType = *rhsTypePtr;
+		if (rhsType == IntType) {
+			IntObject lhs, rhs;
+			PopTwoSameType(rhsType, lhs, rhs);
+			m_Stack.Push(CompareTwoSameType(lhs.Value, rhs.Value));
+		} else if (rhsType == LongType) {
+			LongObject lhs, rhs;
+			PopTwoSameType(rhsType, lhs, rhs);
+			m_Stack.Push(CompareTwoSameType(lhs.Value, rhs.Value));
+		} else if (rhsType == DoubleType) {
+			DoubleObject lhs, rhs;
+			PopTwoSameType(rhsType, lhs, rhs);
+			m_Stack.Push(CompareTwoSameType(lhs.Value, rhs.Value));
+		} else if (rhsType == PointerType) {
+			PointerObject lhs, rhs;
+			PopTwoSameType(rhsType, lhs, rhs);
+			m_Stack.Push(CompareTwoSameType(lhs.Value, rhs.Value));
+		} else {
+			OccurException(SVM_IEC_STACK_EMPTY);
+		}
+	}
+	SVM_NOINLINE_FOR_PROFILING void Interpreter::InterpretICmp() {
+		const Type** const rhsTypePtr = m_Stack.GetTopType();
+		if (!rhsTypePtr) {
+			OccurException(SVM_IEC_STACK_EMPTY);
+			return;
+		}
+
+		const Type*& rhsType = *rhsTypePtr;
+		if (rhsType == IntType) {
+			IntObject lhs, rhs;
+			PopTwoSameType(rhsType, lhs, rhs);
+			m_Stack.Push(CompareTwoSameType<std::int32_t>(lhs.Value, rhs.Value));
+		} else if (rhsType == LongType) {
+			LongObject lhs, rhs;
+			PopTwoSameType(rhsType, lhs, rhs);
+			m_Stack.Push(CompareTwoSameType<std::int64_t>(lhs.Value, rhs.Value));
+		} else if (rhsType == DoubleType) {
+			DoubleObject lhs, rhs;
+			PopTwoSameType(rhsType, lhs, rhs);
+			m_Stack.Push(CompareTwoSameType(lhs.Value, rhs.Value));
+		} else if (rhsType == PointerType) {
+			PointerObject lhs, rhs;
+			PopTwoSameType(rhsType, lhs, rhs);
+			m_Stack.Push(CompareTwoSameType(lhs.Value, rhs.Value));
 		} else {
 			OccurException(SVM_IEC_STACK_EMPTY);
 		}

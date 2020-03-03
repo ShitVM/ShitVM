@@ -153,7 +153,7 @@ namespace svm {
 			std::uint32_t operand = Instruction::NoOperand;
 			const std::uint64_t offset = nextOffset;
 
-			if (OpCode::Push <= opCode && opCode <= OpCode::Store && opCode != OpCode::Pop ||
+			if (OpCode::Push <= opCode && opCode <= OpCode::Lea && opCode != OpCode::Pop ||
 				OpCode::Jmp <= opCode && opCode <= OpCode::Call) {
 				operand = ReadFile<std::uint32_t>();
 				nextOffset += 4;
@@ -170,8 +170,8 @@ namespace svm {
 		OpCode result = ReadFile<OpCode>();
 		if (m_ByteCodeVersion >= ByteCodeVersion::v0_2_0) return result;
 
-		if (result >= OpCode::Copy) {
-			result = static_cast<OpCode>(static_cast<std::uint8_t>(result) + 2);
+		if (result >= OpCode::Lea) {
+			result = static_cast<OpCode>(static_cast<std::uint8_t>(result) + 4);
 		}
 
 		return result;

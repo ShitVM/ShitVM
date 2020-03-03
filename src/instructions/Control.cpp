@@ -4,16 +4,6 @@
 
 namespace svm {
 	template<typename T>
-	IntObject Interpreter::CompareTwoSameType(T lhs, T rhs) noexcept {
-		if (lhs > rhs) {
-			return 1;
-		} else if (lhs == rhs) {
-			return 0;
-		} else {
-			return static_cast<std::uint32_t>(-1);
-		}
-	}
-	template<typename T>
 	void Interpreter::JumpCondition(std::uint32_t operand) {
 		if (operand >= m_StackFrame.Instructions->GetLabelCount()) {
 			OccurException(SVM_IEC_LABEL_OUTOFRANGE);
@@ -45,78 +35,41 @@ namespace svm {
 				m_InstructionIndex = m_StackFrame.Instructions->GetLabel(operand) - 1;
 				m_Stack.Pop<DoubleObject>();
 			}
+		} else if (type == PointerType) {
+			const PointerObject& value = *m_Stack.GetTop<PointerObject>();
+			if (T::Compare(value.Value)) {
+				m_InstructionIndex = m_StackFrame.Instructions->GetLabel(operand) - 1;
+				m_Stack.Pop<PointerObject>();
+			}
+		} else {
+			OccurException(SVM_IEC_STACK_EMPTY);
 		}
 	}
 }
 
 namespace {
-#define CompareClass(n, o)								\
-struct n final {										\
-	template<typename T>								\
-	static constexpr bool Compare(T value) noexcept	{	\
-		return value o;									\
-	}													\
+#define CompareClass(n, o, v)								\
+struct n final {											\
+	template<typename T>									\
+	static constexpr bool Compare(T value) noexcept	{		\
+		return value o v;									\
+	}														\
+	static constexpr bool Compare(void* value) noexcept {	\
+		return value o reinterpret_cast<void*>(v);			\
+	}														\
 };
 
-	CompareClass(EqualZero, == 0);
-	CompareClass(NotEqualZero, != 0);
-	CompareClass(EqualOne, == 1);
-	CompareClass(NotEqualOne, != 0);
-	CompareClass(EqualMinusOne, == -1);
-	CompareClass(NotEqualMinusOne, != -1);
+	CompareClass(EqualZero, ==, 0);
+	CompareClass(NotEqualZero, !=, 0);
+	CompareClass(EqualOne, ==, 1);
+	CompareClass(NotEqualOne, !=, 1);
+	CompareClass(EqualMinusOne, ==, -1);
+	CompareClass(NotEqualMinusOne, !=, -1);
 
 #undef CompareClass
 }
 
 namespace svm {
-	SVM_NOINLINE_FOR_PROFILING void Interpreter::InterpretCmp() {
-		const Type** const rhsTypePtr = m_Stack.GetTopType();
-		if (!rhsTypePtr) {
-			OccurException(SVM_IEC_STACK_EMPTY);
-			return;
-		}
-
-		const Type*& rhsType = *rhsTypePtr;
-		if (rhsType == IntType) {
-			IntObject lhs, rhs;
-			PopTwoSameType(rhsType, lhs, rhs);
-			m_Stack.Push(CompareTwoSameType(lhs.Value, rhs.Value));
-		} else if (rhsType == LongType) {
-			LongObject lhs, rhs;
-			PopTwoSameType(rhsType, lhs, rhs);
-			m_Stack.Push(CompareTwoSameType(lhs.Value, rhs.Value));
-		} else if (rhsType == DoubleType) {
-			DoubleObject lhs, rhs;
-			PopTwoSameType(rhsType, lhs, rhs);
-			m_Stack.Push(CompareTwoSameType(lhs.Value, rhs.Value));
-		} else {
-			OccurException(SVM_IEC_STACK_EMPTY);
-		}
-	}
-	SVM_NOINLINE_FOR_PROFILING void Interpreter::InterpretICmp() {
-		const Type** const rhsTypePtr = m_Stack.GetTopType();
-		if (!rhsTypePtr) {
-			OccurException(SVM_IEC_STACK_EMPTY);
-			return;
-		}
-
-		const Type*& rhsType = *rhsTypePtr;
-		if (rhsType == IntType) {
-			IntObject lhs, rhs;
-			PopTwoSameType(rhsType, lhs, rhs);
-			m_Stack.Push(CompareTwoSameType<std::int32_t>(lhs.Value, rhs.Value));
-		} else if (rhsType == LongType) {
-			LongObject lhs, rhs;
-			PopTwoSameType(rhsType, lhs, rhs);
-			m_Stack.Push(CompareTwoSameType<std::int64_t>(lhs.Value, rhs.Value));
-		} else if (rhsType == DoubleType) {
-			DoubleObject lhs, rhs;
-			PopTwoSameType(rhsType, lhs, rhs);
-			m_Stack.Push(CompareTwoSameType(lhs.Value, rhs.Value));
-		} else {
-			OccurException(SVM_IEC_STACK_EMPTY);
-		}
-	}
 	SVM_NOINLINE_FOR_PROFILING void Interpreter::InterpretJmp(std::uint32_t operand) {
 		if (operand >= m_StackFrame.Instructions->GetLabelCount()) {
 			OccurException(SVM_IEC_LABEL_OUTOFRANGE);

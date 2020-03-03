@@ -136,6 +136,8 @@ namespace svm {
 		void InterpretPop();
 		void InterpretLoad(std::uint32_t operand);
 		void InterpretStore(std::uint32_t operand);
+		void InterpretLea(std::uint32_t operand);
+		void InterpretDRef();
 		void InterpretCopy();
 		void InterpretSwap();
 
@@ -174,5 +176,6 @@ namespace svm {
 		void InterpretToI();
 		void InterpretToL();
 		void InterpretToD();
+		void InterpretToP();
 	};
 }

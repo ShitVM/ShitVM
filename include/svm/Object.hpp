@@ -9,6 +9,7 @@ namespace svm {
 		Int,
 		Long,
 		Double,
+		Pointer,
 	};
 
 	class Type final {
@@ -31,7 +32,10 @@ namespace svm {
 	extern const Type* IntType;
 	extern const Type* LongType;
 	extern const Type* DoubleType;
+	extern const Type* PointerType;
+}
 
+namespace svm {
 	class Object {
 	private:
 		const Type* m_Type = nullptr;
@@ -95,5 +99,19 @@ namespace svm {
 
 	public:
 		DoubleObject& operator=(const DoubleObject& object) noexcept;
+	};
+
+	class PointerObject final : public Object {
+	public:
+		void* Value = nullptr;
+
+	public:
+		PointerObject() noexcept;
+		PointerObject(void* value) noexcept;
+		PointerObject(const PointerObject& object) noexcept;
+		~PointerObject() = default;
+
+	public:
+		PointerObject& operator=(const PointerObject& object) noexcept;
 	};
 }

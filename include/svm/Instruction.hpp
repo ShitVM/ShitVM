@@ -14,6 +14,8 @@ namespace svm {
 		Pop,
 		Load,
 		Store,
+		Lea,
+		DRef,
 		Copy,
 		Swap,
 
@@ -53,15 +55,16 @@ namespace svm {
 		ToI,
 		ToL,
 		ToD,
+		ToP,
 	};
 
 	static constexpr const char* Mnemonics[] = {
 		"nop",
-		"push", "pop", "load", "store", "copy", "swap",
+		"push", "pop", "load", "store", "lea", "dref", "copy", "swap",
 		"add", "sub", "mul", "imul", "div", "idiv", "mod", "imod", "neg", "inc", "dec",
 		"and", "or", "xor", "not", "shl", "shr", "sal", "sar",
 		"cmp", "icmp", "jmp", "je", "jne", "ja", "jae", "jb", "jbe", "call", "ret",
-		"toi", "tol", "tod",
+		"toi", "tol", "tod", "top",
 	};
 }
 

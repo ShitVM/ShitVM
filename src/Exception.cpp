@@ -22,6 +22,10 @@ namespace svm {
 		case SVM_IEC_FUNCTION_TOPOFCALLSTACK: return "Already at the top of the call stack";
 		case SVM_IEC_FUNCTION_NORETINSTRUCTION: return "Function exited without 'ret' instruction";
 
+		case SVM_IEC_POINTER_NULLPOINTER: return "Can't dereference null pointer";
+		case SVM_IEC_POINTER_NOTPOINTER: return "Not a pointer";
+		case SVM_IEC_POINTER_INVALIDFORPOINTER: return "Can't operate on pointers";
+
 		default: return "";
 		}
 	}

@@ -8,11 +8,13 @@ namespace svm {
 		static const Type s_IntType(TypeCode::Int, "int");
 		static const Type s_LongType(TypeCode::Long, "long");
 		static const Type s_DoubleType(TypeCode::Double, "double");
+		static const Type s_PointerType(TypeCode::Pointer, "pointer");
 	}
 
 	const Type* IntType = &s_IntType;
 	const Type* LongType = &s_LongType;
 	const Type* DoubleType = &s_DoubleType;
+	const Type* PointerType = &s_PointerType;
 }
 
 namespace svm {
@@ -84,6 +86,22 @@ namespace svm {
 		: Object(object), Value(object.Value) {}
 
 	DoubleObject& DoubleObject::operator=(const DoubleObject& object) noexcept {
+		Object::operator=(object);
+
+		Value = object.Value;
+		return *this;
+	}
+}
+
+namespace svm {
+	PointerObject::PointerObject() noexcept
+		: Object(DoubleType) {}
+	PointerObject::PointerObject(void* value) noexcept
+		: Object(DoubleType), Value(value) {}
+	PointerObject::PointerObject(const PointerObject& object) noexcept
+		: Object(object), Value(object.Value) {}
+
+	PointerObject& PointerObject::operator=(const PointerObject& object) noexcept {
 		Object::operator=(object);
 
 		Value = object.Value;
