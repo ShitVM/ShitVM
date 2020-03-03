@@ -35,6 +35,9 @@ namespace svm {
 		m_Used = 0;
 	}
 
+	const Type* const& Stack::GetTopType() const {
+		return Get<const Type*>(m_Used);
+	}
 	const Type*& Stack::GetTopType() {
 		return Get<const Type*>(m_Used);
 	}
@@ -140,6 +143,18 @@ namespace svm {
 			case OpCode::ToL: InterpretToL(); break;
 			case OpCode::ToD: InterpretToD(); break;
 			}
+		}
+	}
+	Interpreter::Result Interpreter::GetResult() const noexcept {
+		if (m_Stack.GetUsedSize() == 0) return std::monostate();
+
+		const Type* const type = m_Stack.GetTopType();
+		if (type == IntType) {
+			return m_Stack.GetTop<IntObject>().Value;
+		} else if (type == LongType) {
+			return m_Stack.GetTop<LongObject>().Value;
+		} else if (type == DoubleType) {
+			return m_Stack.GetTop<DoubleObject>().Value;
 		}
 	}
 

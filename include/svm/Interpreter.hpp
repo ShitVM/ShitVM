@@ -7,6 +7,7 @@
 #include <cstdint>
 #include <limits>
 #include <utility>
+#include <variant>
 #include <vector>
 
 namespace svm {
@@ -41,14 +42,24 @@ namespace svm {
 			return std::move(result);
 		}
 		template<typename T>
+		const T& Get(std::size_t offset) const {
+			if (m_Used < offset - sizeof(T)) throw std::runtime_error("Failed to get the value from the stack. No enough space.");
+			return *reinterpret_cast<const T*>(&*(m_Data.rbegin() + offset - 1));
+		}
+		template<typename T>
 		T& Get(std::size_t offset) {
 			if (m_Used < offset - sizeof(T)) throw std::runtime_error("Failed to get the value from the stack. No enough space.");
 			return *reinterpret_cast<T*>(&*(m_Data.rbegin() + offset - 1));
 		}
 		template<typename T>
+		const T& GetTop() const {
+			return Get<T>(m_Used);
+		}
+		template<typename T>
 		T& GetTop() {
 			return Get<T>(m_Used);
 		}
+		const Type* const& GetTopType() const;
 		const Type*& GetTopType();
 		std::size_t GetSize() const noexcept;
 		std::size_t GetUsedSize() const noexcept;
@@ -65,6 +76,9 @@ namespace svm {
 	};
 
 	class Interpreter final {
+	public:
+		using Result = std::variant<std::monostate, std::uint32_t, std::uint64_t, double>;
+
 	private:
 		ByteFile m_ByteFile;
 
@@ -91,10 +105,7 @@ namespace svm {
 		void ReallocateStack(std::size_t newSize);
 
 		void Interpret();
-		template<typename T>
-		const T& GetResult() {
-			return m_Stack.GetTop<T>();
-		}
+		Result GetResult() const noexcept;
 
 	private:
 		void InterpretPush(std::uint32_t operand);
