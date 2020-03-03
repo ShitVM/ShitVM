@@ -64,6 +64,7 @@ namespace svm {
 		std::uint32_t GetIntCount() const noexcept;
 		std::uint32_t GetLongCount() const noexcept;
 		std::uint32_t GetDoubleCount() const noexcept;
+		std::uint32_t GetAllCount() const noexcept;
 	};
 
 	std::ostream& operator<<(std::ostream& stream, const ConstantPool& constantPool);

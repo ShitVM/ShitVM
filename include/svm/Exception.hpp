@@ -8,8 +8,8 @@
 
 namespace svm {
 	struct InterpreterException final {
-		svm::Function* Function = nullptr;
-		svm::Instructions* Instructions = nullptr;
+		const svm::Function* Function = nullptr;
+		const svm::Instructions* Instructions = nullptr;
 		std::uint64_t InstructionIndex = 0;
 
 		std::uint32_t Code = 0;
