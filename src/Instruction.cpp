@@ -42,7 +42,7 @@ namespace svm {
 	std::ostream& operator<<(std::ostream& stream, const Instruction& instruction) {
 		if (instruction.HasOffset()) {
 			stream << std::hex << std::uppercase << std::setw(16) << std::setfill('0') << instruction.Offset << ": "
-				<< std::dec << std::nouppercase;
+				   << std::dec << std::nouppercase;
 		}
 		stream << Mnemonics[static_cast<int>(instruction.OpCode)];
 		if (instruction.HasOperand()) {

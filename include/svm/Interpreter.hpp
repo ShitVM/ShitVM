@@ -3,6 +3,7 @@
 #include <svm/ByteFile.hpp>
 #include <svm/Exception.hpp>
 #include <svm/Macro.hpp>
+#include <svm/Type.hpp>
 
 #include <cstddef>
 #include <cstdint>

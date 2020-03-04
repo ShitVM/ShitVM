@@ -1,5 +1,6 @@
 #include <svm/Interpreter.hpp>
 
+#include <svm/Type.hpp>
 #include <svm/detail/InterpreterExceptionCode.hpp>
 
 #include <algorithm>

@@ -1,6 +1,7 @@
 #include <svm/Interpreter.hpp>
 
 #include <svm/Object.hpp>
+#include <svm/Type.hpp>
 #include <svm/detail/InterpreterExceptionCode.hpp>
 
 namespace svm {
