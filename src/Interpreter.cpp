@@ -33,11 +33,11 @@ namespace svm {
 		m_Used = 0;
 	}
 
-	const Type* const* Stack::GetTopType() const noexcept {
-		return Get<const Type*>(m_Used);
+	const Type* Stack::GetTopType() const noexcept {
+		return Get<Type>(m_Used);
 	}
-	const Type** Stack::GetTopType() noexcept {
-		return Get<const Type*>(m_Used);
+	Type* Stack::GetTopType() noexcept {
+		return Get<Type>(m_Used);
 	}
 	std::size_t Stack::GetSize() const noexcept {
 		return m_Data.size();
@@ -50,6 +50,9 @@ namespace svm {
 	}
 	void Stack::RemoveTo(std::size_t newSize) noexcept {
 		m_Used = newSize;
+	}
+	void Stack::Remove(std::size_t delta) noexcept {
+		m_Used -= delta;
 	}
 }
 
@@ -175,10 +178,10 @@ namespace svm {
 		return *m_Exception;
 	}
 	Interpreter::Result Interpreter::GetResult() const noexcept {
-		const Type* const* const typePtr = m_Stack.GetTopType();
+		const Type* const typePtr = m_Stack.GetTopType();
 		if (!typePtr) return std::monostate();
 
-		const Type* const type = *typePtr;
+		const Type type = *typePtr;
 		if (type == IntType) {
 			return m_Stack.GetTop<IntObject>()->Value;
 		} else if (type == LongType) {
@@ -197,14 +200,18 @@ namespace svm {
 		std::size_t stackOffset;
 		for (std::size_t i = 0; i < m_Depth; ++i) {
 			stackOffset = frame->StackBegin;
-			for (std::uint16_t j = 0; j < frame->Function->GetArity(); ++j) {
-				const Type* const type = *m_Stack.Get<const Type*>(stackOffset);
+			while (true) {
+				const Type type = *m_Stack.Get<Type>(stackOffset);
 				if (type == IntType) {
 					stackOffset -= sizeof(IntObject);
 				} else if (type == LongType) {
 					stackOffset -= sizeof(LongObject);
 				} else if (type == DoubleType) {
 					stackOffset -= sizeof(DoubleObject);
+				} else if (type == PointerType) {
+					stackOffset -= sizeof(PointerObject);
+				} else {
+					break;
 				}
 			}
 			frame = m_Stack.Get<StackFrame>(stackOffset);

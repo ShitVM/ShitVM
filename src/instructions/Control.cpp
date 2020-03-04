@@ -10,36 +10,36 @@ namespace svm {
 			return;
 		}
 
-		const Type** const typePtr = m_Stack.GetTopType();
+		Type* const typePtr = m_Stack.GetTopType();
 		if (!typePtr) {
 			OccurException(SVM_IEC_STACK_EMPTY);
 			return;
 		}
 
-		const Type* const type = *typePtr;
+		const Type type = *typePtr;
 		if (type == IntType) {
-			const IntObject& value = *m_Stack.GetTop<IntObject>();
-			if (T::Compare(value.Value)) {
+			const IntObject* value = reinterpret_cast<IntObject*>(typePtr);
+			if (T::Compare(value->Value)) {
 				m_InstructionIndex = m_StackFrame.Instructions->GetLabel(operand) - 1;
-				m_Stack.Pop<IntObject>();
+				m_Stack.Remove(sizeof(IntObject));
 			}
 		} else if (type == LongType) {
-			const LongObject& value = *m_Stack.GetTop<LongObject>();
-			if (T::Compare(value.Value)) {
+			const LongObject* value = reinterpret_cast<LongObject*>(typePtr);
+			if (T::Compare(value->Value)) {
 				m_InstructionIndex = m_StackFrame.Instructions->GetLabel(operand) - 1;
-				m_Stack.Pop<LongObject>();
+				m_Stack.Remove(sizeof(LongObject));
 			}
 		} else if (type == DoubleType) {
-			const DoubleObject& value = *m_Stack.GetTop<DoubleObject>();
-			if (T::Compare(value.Value)) {
+			const DoubleObject* value = reinterpret_cast<DoubleObject*>(typePtr);
+			if (T::Compare(value->Value)) {
 				m_InstructionIndex = m_StackFrame.Instructions->GetLabel(operand) - 1;
-				m_Stack.Pop<DoubleObject>();
+				m_Stack.Remove(sizeof(DoubleObject));
 			}
 		} else if (type == PointerType) {
-			const PointerObject& value = *m_Stack.GetTop<PointerObject>();
-			if (T::Compare(value.Value)) {
+			const PointerObject* value = reinterpret_cast<PointerObject*>(typePtr);
+			if (T::Compare(value->Value)) {
 				m_InstructionIndex = m_StackFrame.Instructions->GetLabel(operand) - 1;
-				m_Stack.Pop<PointerObject>();
+				m_Stack.Remove(sizeof(PointerObject));
 			}
 		} else {
 			OccurException(SVM_IEC_STACK_EMPTY);
@@ -65,7 +65,6 @@ struct n final {											\
 	CompareClass(NotEqualOne, !=, 1);
 	CompareClass(EqualMinusOne, ==, -1);
 	CompareClass(NotEqualMinusOne, !=, -1);
-
 #undef CompareClass
 }
 
@@ -98,8 +97,7 @@ namespace svm {
 	}
 	SVM_NOINLINE_FOR_PROFILING void Interpreter::InterpretCall(std::uint32_t operand) {
 		m_StackFrame.Caller = static_cast<std::size_t>(m_InstructionIndex);
-		bool success = m_Stack.Push(m_StackFrame);
-		if (!success) {
+		if (!m_Stack.Push(m_StackFrame)) {
 			OccurException(SVM_IEC_STACK_OVERFLOW);
 			return;
 		}
@@ -110,16 +108,16 @@ namespace svm {
 
 		std::size_t stackOffset = m_Stack.GetUsedSize() - sizeof(m_StackFrame);
 		for (std::uint16_t j = 0; j < m_StackFrame.Function->GetArity(); ++j) {
-			const Type** typePtr = m_Stack.Get<const Type*>(stackOffset);
+			Type* const typePtr = m_Stack.Get<Type>(stackOffset);
 			if (!typePtr) {
 				OccurException(SVM_IEC_STACK_EMPTY);
-				m_StackFrame = m_Stack.Pop<StackFrame>().value();
+				m_StackFrame = *m_Stack.Pop<StackFrame>();
 				return;
 			}
 
 			m_LocalVariables.push_back(stackOffset);
 
-			const Type* const type = *typePtr;
+			const Type type = *typePtr;
 			if (type == IntType) {
 				stackOffset -= sizeof(IntObject);
 			} else if (type == LongType) {
@@ -131,7 +129,7 @@ namespace svm {
 			} else {
 				OccurException(SVM_IEC_STACK_EMPTY);
 				m_StackFrame = m_Stack.Pop<StackFrame>().value();
-				m_LocalVariables.erase(m_LocalVariables.end() - 1);
+				m_LocalVariables.erase(m_LocalVariables.end() - j - 1, m_LocalVariables.end());
 				return;
 			}
 		}
@@ -147,13 +145,13 @@ namespace svm {
 
 		Result result;
 		if (m_StackFrame.Function->HasResult()) {
-			const Type** typePtr = m_Stack.GetTopType();
+			Type* const typePtr = m_Stack.GetTopType();
 			if (!typePtr) {
 				OccurException(SVM_IEC_STACK_EMPTY);
 				return;
 			}
 
-			const Type* const type = *typePtr;
+			const Type type = *typePtr;
 			if (type == IntType) {
 				result = m_Stack.Pop<IntObject>()->Value;
 			} else if (type == LongType) {
@@ -177,15 +175,15 @@ namespace svm {
 		m_InstructionIndex = m_StackFrame.Caller;
 
 		for (std::uint16_t j = 0; j < arity; ++j) {
-			const Type* const type = *m_Stack.GetTopType();
+			const Type type = *m_Stack.GetTopType();
 			if (type == IntType) {
-				m_Stack.Pop<IntObject>();
+				m_Stack.Remove(sizeof(IntObject));
 			} else if (type == LongType) {
-				m_Stack.Pop<LongObject>();
+				m_Stack.Remove(sizeof(LongObject));
 			} else if (type == DoubleType) {
-				m_Stack.Pop<DoubleObject>();
+				m_Stack.Remove(sizeof(DoubleObject));
 			} else if (type == PointerType) {
-				m_Stack.Pop<PointerObject>();
+				m_Stack.Remove(sizeof(PointerObject));
 			}
 		}
 

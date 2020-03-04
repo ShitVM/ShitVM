@@ -2,24 +2,34 @@
 
 #include <svm/detail/InterpreterExceptionCode.hpp>
 
-#include <utility>
+#include <algorithm>
 
 namespace svm {
 	template<typename T>
-	void Interpreter::DRefAndAssign(const Type** rhsTypePtr) noexcept {
-		const Type** const lhsTypePtr = m_Stack.Get<const Type*>(m_Stack.GetUsedSize() - sizeof(T));
+	void Interpreter::GetTwoSameType(Type rhsType, T*& lhs) noexcept {
+		Type* const lhsTypePtr = m_Stack.Get<Type>(m_Stack.GetUsedSize() - sizeof(T));
 		if (!lhsTypePtr) {
 			OccurException(SVM_IEC_STACK_EMPTY);
 			return;
+		} else if (rhsType != *lhsTypePtr) {
+			OccurException(SVM_IEC_STACK_DIFFERENTTYPE);
+			return;
 		}
 
-		const Type* const lhsType = *lhsTypePtr;
-		if (lhsType != PointerType) {
+		lhs = reinterpret_cast<T*>(lhsTypePtr);
+	}
+	template<typename T>
+	void Interpreter::DRefAndAssign(Type* rhsTypePtr) noexcept {
+		Type* const lhsTypePtr = m_Stack.Get<Type>(m_Stack.GetUsedSize() - sizeof(T));
+		if (!lhsTypePtr) {
+			OccurException(SVM_IEC_STACK_EMPTY);
+			return;
+		} else if (*lhsTypePtr != PointerType) {
 			OccurException(SVM_IEC_POINTER_NOTPOINTER);
 			return;
 		}
 
-		const Type** const targetType = static_cast<const Type**>(reinterpret_cast<PointerObject*>(lhsTypePtr)->Value);
+		Type* const targetType = static_cast<Type*>(reinterpret_cast<PointerObject*>(lhsTypePtr)->Value);
 		if (*targetType != *rhsTypePtr) {
 			OccurException(SVM_IEC_STACK_DIFFERENTTYPE);
 			return;
@@ -39,7 +49,7 @@ namespace svm {
 			return;
 		}
 
-		const Type* const constType = ConstantPool.GetConstantType(operand);
+		const Type constType = ConstantPool.GetConstantType(operand);
 		bool isSuccess = false;
 		if (constType == IntType) {
 			isSuccess = m_Stack.Push(ConstantPool.GetConstant<IntObject>(operand));
@@ -60,13 +70,13 @@ namespace svm {
 			return;
 		}
 
-		const Type** const typePtr = m_Stack.GetTopType();
+		Type* const typePtr = m_Stack.GetTopType();
 		if (!typePtr) {
 			OccurException(SVM_IEC_STACK_EMPTY);
 			return;
 		}
 
-		const Type* const type = *typePtr;
+		const Type type = *typePtr;
 		if (type == IntType) {
 			m_Stack.Pop<IntObject>();
 		} else if (type == LongType) {
@@ -86,16 +96,16 @@ namespace svm {
 			return;
 		}
 
-		const Type* const& type = *m_Stack.Get<const Type*>(m_LocalVariables[operand]);
+		const Type& type = *m_Stack.Get<Type>(m_LocalVariables[operand]);
 		bool isSuccess = false;
 		if (type == IntType) {
-			isSuccess = m_Stack.Push(*reinterpret_cast<const IntObject*>(&type));
+			isSuccess = m_Stack.Push(reinterpret_cast<const IntObject&>(type));
 		} else if (type == LongType) {
-			isSuccess = m_Stack.Push(*reinterpret_cast<const LongObject*>(&type));
+			isSuccess = m_Stack.Push(reinterpret_cast<const LongObject&>(type));
 		} else if (type == DoubleType) {
-			isSuccess = m_Stack.Push(*reinterpret_cast<const DoubleObject*>(&type));
+			isSuccess = m_Stack.Push(reinterpret_cast<const DoubleObject&>(type));
 		} else if (type == PointerType) {
-			isSuccess = m_Stack.Push(*reinterpret_cast<const PointerObject*>(&type));
+			isSuccess = m_Stack.Push(reinterpret_cast<const PointerObject&>(type));
 		}
 
 		if (!isSuccess) {
@@ -108,14 +118,11 @@ namespace svm {
 			OccurException(SVM_IEC_LOCALVARIABLE_INVALIDINDEX);
 			return;
 		} else if (operand == m_LocalVariables.size()) {
-			const Type** const typePtr = m_Stack.GetTopType();
+			Type* const typePtr = m_Stack.GetTopType();
 			if (!typePtr) {
 				OccurException(SVM_IEC_STACK_EMPTY);
 				return;
-			}
-
-			const Type* const type = *typePtr;
-			if (type != IntType && type != LongType && type != DoubleType && type != PointerType) {
+			} else if (!typePtr->IsValidType()) {
 				OccurException(SVM_IEC_STACK_EMPTY);
 				return;
 			}
@@ -124,27 +131,27 @@ namespace svm {
 			return;
 		}
 
-		const Type** const typePtr = m_Stack.GetTopType();
+		Type* const typePtr = m_Stack.GetTopType();
 		if (!typePtr) {
 			OccurException(SVM_IEC_STACK_EMPTY);
 			return;
 		}
 
-		const Type* const type = *typePtr;
-		const Type*& varType = *m_Stack.Get<const Type*>(m_LocalVariables[operand]);
+		const Type type = *typePtr;
+		Type& varType = *m_Stack.Get<Type>(m_LocalVariables[operand]);
 		if (type != varType) {
 			OccurException(SVM_IEC_STACK_DIFFERENTTYPE);
 			return;
 		}
 
 		if (type == IntType) {
-			reinterpret_cast<IntObject&>(varType) = m_Stack.Pop<IntObject>().value();
+			reinterpret_cast<IntObject&>(varType) = *m_Stack.Pop<IntObject>();
 		} else if (type == LongType) {
-			reinterpret_cast<LongObject&>(varType) = m_Stack.Pop<LongObject>().value();
+			reinterpret_cast<LongObject&>(varType) = *m_Stack.Pop<LongObject>();
 		} else if (type == DoubleType) {
-			reinterpret_cast<DoubleObject&>(varType) = m_Stack.Pop<DoubleObject>().value();
+			reinterpret_cast<DoubleObject&>(varType) = *m_Stack.Pop<DoubleObject>();
 		} else if (type == PointerType) {
-			reinterpret_cast<PointerObject&>(varType) = m_Stack.Pop<PointerObject>().value();
+			reinterpret_cast<PointerObject&>(varType) = *m_Stack.Pop<PointerObject>();
 		} else {
 			OccurException(SVM_IEC_STACK_EMPTY);
 		}
@@ -156,7 +163,7 @@ namespace svm {
 			return;
 		}
 
-		if (!m_Stack.Push<PointerObject>(m_Stack.Get<const Type*>(m_LocalVariables[operand]))) {
+		if (!m_Stack.Push<PointerObject>(m_Stack.Get<Type>(m_LocalVariables[operand]))) {
 			OccurException(SVM_IEC_STACK_OVERFLOW);
 		}
 	}
@@ -171,23 +178,23 @@ namespace svm {
 			return;
 		}
 
-		const Type** const varTypePtr = static_cast<const Type**>(ptr->Value);
+		Type* const varTypePtr = static_cast<Type*>(ptr->Value);
 		if (!varTypePtr) {
 			m_Stack.Push(*ptr);
 			OccurException(SVM_IEC_POINTER_NULLPOINTER);
 			return;
 		}
 
-		const Type* const varType = *varTypePtr;
+		const Type varType = *varTypePtr;
 		bool isSuccess = false;
 		if (varType == IntType) {
-			isSuccess = m_Stack.Push<IntObject>(*reinterpret_cast<IntObject*>(varTypePtr));
+			isSuccess = m_Stack.Push(*reinterpret_cast<IntObject*>(varTypePtr));
 		} else if (varType == LongType) {
-			isSuccess = m_Stack.Push<LongObject>(*reinterpret_cast<LongObject*>(varTypePtr));
+			isSuccess = m_Stack.Push(*reinterpret_cast<LongObject*>(varTypePtr));
 		} else if (varType == DoubleType) {
-			isSuccess = m_Stack.Push<DoubleObject>(*reinterpret_cast<DoubleObject*>(varTypePtr));
+			isSuccess = m_Stack.Push(*reinterpret_cast<DoubleObject*>(varTypePtr));
 		} else if (varType == PointerType) {
-			isSuccess = m_Stack.Push<PointerObject>(*reinterpret_cast<PointerObject*>(varTypePtr));
+			isSuccess = m_Stack.Push(*reinterpret_cast<PointerObject*>(varTypePtr));
 		}
 
 		if (!isSuccess) {
@@ -196,13 +203,13 @@ namespace svm {
 		}
 	}
 	SVM_NOINLINE_FOR_PROFILING void Interpreter::InterpretTStore() {
-		const Type** const rhsTypePtr = m_Stack.GetTopType();
+		Type* const rhsTypePtr = m_Stack.GetTopType();
 		if (!rhsTypePtr) {
 			OccurException(SVM_IEC_STACK_EMPTY);
 			return;
 		}
 
-		const Type* const rhsType = *rhsTypePtr;
+		const Type rhsType = *rhsTypePtr;
 		if (rhsType == IntType) {
 			DRefAndAssign<IntObject>(rhsTypePtr);
 		} else if (rhsType == LongType) {
@@ -213,17 +220,16 @@ namespace svm {
 			DRefAndAssign<PointerObject>(rhsTypePtr);
 		} else {
 			OccurException(SVM_IEC_STACK_EMPTY);
-			return;
 		}
 	}
 	SVM_NOINLINE_FOR_PROFILING void Interpreter::InterpretCopy() {
-		const Type** const typePtr = m_Stack.GetTopType();
+		Type* const typePtr = m_Stack.GetTopType();
 		if (!typePtr) {
 			OccurException(SVM_IEC_STACK_EMPTY);
 			return;
 		}
 
-		const Type* const& type = *typePtr;
+		const Type& type = *typePtr;
 		bool isSuccess = false;
 		if (type == IntType) {
 			isSuccess = m_Stack.Push(reinterpret_cast<const IntObject&>(type));
@@ -242,69 +248,29 @@ namespace svm {
 		}
 	}
 	SVM_NOINLINE_FOR_PROFILING void Interpreter::InterpretSwap() {
-		const Type** const firstTypePtr = m_Stack.GetTopType();
+		Type* const firstTypePtr = m_Stack.GetTopType();
 		if (!firstTypePtr) {
 			OccurException(SVM_IEC_STACK_EMPTY);
 			return;
 		}
 
-		const Type*& firstType = *firstTypePtr;
+		const Type firstType = *firstTypePtr;
 		if (firstType == IntType) {
-			const Type** secondTypePtr = m_Stack.Get<const Type*>(m_Stack.GetUsedSize() - sizeof(IntObject));
-			if (!secondTypePtr) {
-				OccurException(SVM_IEC_STACK_EMPTY);
-				return;
-			}
-
-			const Type*& secondType = *secondTypePtr;
-			if (firstType != secondType) {
-				OccurException(SVM_IEC_STACK_DIFFERENTTYPE);
-				return;
-			}
-
-			std::swap(reinterpret_cast<IntObject&>(firstType), reinterpret_cast<IntObject&>(secondType));
+			IntObject* second = nullptr;
+			GetTwoSameType(firstType, second);
+			std::iter_swap(reinterpret_cast<IntObject*>(firstTypePtr), second);
 		} else if (firstType == LongType) {
-			const Type** secondTypePtr = m_Stack.Get<const Type*>(m_Stack.GetUsedSize() - sizeof(LongObject));
-			if (!secondTypePtr) {
-				OccurException(SVM_IEC_STACK_EMPTY);
-				return;
-			}
-
-			const Type*& secondType = *secondTypePtr;
-			if (firstType != secondType) {
-				OccurException(SVM_IEC_STACK_DIFFERENTTYPE);
-				return;
-			}
-
-			std::swap(reinterpret_cast<LongObject&>(firstType), reinterpret_cast<LongObject&>(secondType));
+			LongObject* second = nullptr;
+			GetTwoSameType(firstType, second);
+			std::iter_swap(reinterpret_cast<LongObject*>(firstTypePtr), second);
 		} else if (firstType == DoubleType) {
-			const Type** secondTypePtr = m_Stack.Get<const Type*>(m_Stack.GetUsedSize() - sizeof(DoubleObject));
-			if (!secondTypePtr) {
-				OccurException(SVM_IEC_STACK_EMPTY);
-				return;
-			}
-
-			const Type*& secondType = *secondTypePtr;
-			if (firstType != secondType) {
-				OccurException(SVM_IEC_STACK_DIFFERENTTYPE);
-				return;
-			}
-
-			std::swap(reinterpret_cast<DoubleObject&>(firstType), reinterpret_cast<DoubleObject&>(secondType));
+			DoubleObject* second = nullptr;
+			GetTwoSameType(firstType, second);
+			std::iter_swap(reinterpret_cast<DoubleObject*>(firstTypePtr), second);
 		} else if (firstType == PointerType) {
-			const Type** secondTypePtr = m_Stack.Get<const Type*>(m_Stack.GetUsedSize() - sizeof(PointerObject));
-			if (!secondTypePtr) {
-				OccurException(SVM_IEC_STACK_EMPTY);
-				return;
-			}
-
-			const Type*& secondType = *secondTypePtr;
-			if (firstType != secondType) {
-				OccurException(SVM_IEC_STACK_DIFFERENTTYPE);
-				return;
-			}
-
-			std::swap(reinterpret_cast<PointerObject&>(firstType), reinterpret_cast<PointerObject&>(secondType));
+			PointerObject* second = nullptr;
+			GetTwoSameType(firstType, second);
+			std::iter_swap(reinterpret_cast<PointerObject*>(firstTypePtr), second);
 		} else {
 			OccurException(SVM_IEC_STACK_EMPTY);
 		}
@@ -313,16 +279,16 @@ namespace svm {
 
 namespace svm {
 	SVM_NOINLINE_FOR_PROFILING void Interpreter::InterpretToI() {
-		const Type** const typePtr = m_Stack.GetTopType();
+		Type* const typePtr = m_Stack.GetTopType();
 		if (!typePtr) {
 			OccurException(SVM_IEC_STACK_EMPTY);
 			return;
-		} else if (!m_LocalVariables.empty() && m_Stack.Get<const Type*>(m_LocalVariables.back()) == typePtr) {
+		} else if (!m_LocalVariables.empty() && m_Stack.Get<Type>(m_LocalVariables.back()) == typePtr) {
 			OccurException(SVM_IEC_STACK_EMPTY);
 			return;
 		}
 
-		const Type* const type = *typePtr;
+		const Type type = *typePtr;
 		if (type == IntType) {
 			return;
 		} else if (type == LongType) {
@@ -339,16 +305,16 @@ namespace svm {
 		}
 	}
 	SVM_NOINLINE_FOR_PROFILING void Interpreter::InterpretToL() {
-		const Type** const typePtr = m_Stack.GetTopType();
+		Type* const typePtr = m_Stack.GetTopType();
 		if (!typePtr) {
 			OccurException(SVM_IEC_STACK_EMPTY);
 			return;
-		} else if (!m_LocalVariables.empty() && m_Stack.Get<const Type*>(m_LocalVariables.back()) == typePtr) {
+		} else if (!m_LocalVariables.empty() && m_Stack.Get<Type>(m_LocalVariables.back()) == typePtr) {
 			OccurException(SVM_IEC_STACK_EMPTY);
 			return;
 		}
 
-		const Type* const type = *typePtr;
+		const Type type = *typePtr;
 		if (type == IntType) {
 			const IntObject value = *m_Stack.Pop<IntObject>();
 			m_Stack.Push<LongObject>(value.Value);
@@ -365,16 +331,16 @@ namespace svm {
 		}
 	}
 	SVM_NOINLINE_FOR_PROFILING void Interpreter::InterpretToD() {
-		const Type** const typePtr = m_Stack.GetTopType();
+		Type* const typePtr = m_Stack.GetTopType();
 		if (!typePtr) {
 			OccurException(SVM_IEC_STACK_EMPTY);
 			return;
-		} else if (!m_LocalVariables.empty() && m_Stack.Get<const Type*>(m_LocalVariables.back()) == typePtr) {
+		} else if (!m_LocalVariables.empty() && m_Stack.Get<Type>(m_LocalVariables.back()) == typePtr) {
 			OccurException(SVM_IEC_STACK_EMPTY);
 			return;
 		}
 
-		const Type* const type = *typePtr;
+		const Type type = *typePtr;
 		if (type == IntType) {
 			const IntObject value = *m_Stack.Pop<IntObject>();
 			m_Stack.Push<DoubleObject>(value.Value);
@@ -391,16 +357,16 @@ namespace svm {
 		}
 	}
 	SVM_NOINLINE_FOR_PROFILING void Interpreter::InterpretToP() {
-		const Type** const typePtr = m_Stack.GetTopType();
+		Type* const typePtr = m_Stack.GetTopType();
 		if (!typePtr) {
 			OccurException(SVM_IEC_STACK_EMPTY);
 			return;
-		} else if (!m_LocalVariables.empty() && m_Stack.Get<const Type*>(m_LocalVariables.back()) == typePtr) {
+		} else if (!m_LocalVariables.empty() && m_Stack.Get<Type>(m_LocalVariables.back()) == typePtr) {
 			OccurException(SVM_IEC_STACK_EMPTY);
 			return;
 		}
 
-		const Type* const type = *typePtr;
+		const Type type = *typePtr;
 		if (type == IntType) {
 			const IntObject value = *m_Stack.Pop<IntObject>();
 			m_Stack.Push<PointerObject>(reinterpret_cast<void*>(static_cast<std::uintptr_t>(value.Value)));

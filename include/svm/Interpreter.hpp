@@ -65,12 +65,13 @@ namespace svm {
 		T* GetTop() noexcept {
 			return Get<T>(m_Used);
 		}
-		const Type* const* GetTopType() const noexcept;
-		const Type** GetTopType() noexcept;
+		const Type* GetTopType() const noexcept;
+		Type* GetTopType() noexcept;
 		std::size_t GetSize() const noexcept;
 		std::size_t GetUsedSize() const noexcept;
 		std::size_t GetFreeSize() const noexcept;
 		void RemoveTo(std::size_t newSize) noexcept;
+		void Remove(std::size_t delta) noexcept;
 	};
 
 	struct StackFrame final {
@@ -126,9 +127,12 @@ namespace svm {
 		void OccurException(std::uint32_t code) noexcept;
 
 		template<typename T>
-		void DRefAndAssign(const Type** rhsTypePtr) noexcept;
+		void DRefAndAssign(Type* rhsTypePtr) noexcept;
+
 		template<typename T>
-		void PopTwoSameType(const Type*& rhsType, T& lhs, T& rhs) noexcept;
+		void GetTwoSameType(Type rhsType, T*& lhs) noexcept;
+		template<typename T>
+		void PopTwoSameType(Type& rhsType, T& lhs, T& rhs) noexcept;
 		template<typename T>
 		IntObject CompareTwoSameType(T lhs, T rhs) noexcept;
 		template<typename T>

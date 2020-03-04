@@ -28,7 +28,7 @@ namespace svm {
 		return m_IntPool.empty() && m_LongPool.empty() && m_DoublePool.empty();
 	}
 
-	const Type* ConstantPool::GetConstantType(std::uint32_t index) const noexcept {
+	Type ConstantPool::GetConstantType(std::uint32_t index) const noexcept {
 		if (index >= GetDoubleOffset()) {
 			return DoubleType;
 		} else if (index >= GetLongOffset()) {
@@ -72,7 +72,7 @@ namespace svm {
 
 		stream << defIndent << "ConstantPool:";
 
-		static constexpr std::uint32_t((ConstantPool::*types[])() const noexcept) = {
+		static constexpr std::uint32_t((ConstantPool:: * types[])() const noexcept) = {
 			&ConstantPool::GetIntCount,
 			&ConstantPool::GetLongCount,
 			&ConstantPool::GetDoubleCount,

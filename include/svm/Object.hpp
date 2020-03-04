@@ -12,51 +12,73 @@ namespace svm {
 		Pointer,
 	};
 
-	class Type final {
+	class TypeData final {
 	public:
 		TypeCode Code = TypeCode::None;
 		const char* Name = nullptr;
 
 	public:
-		Type() noexcept = default;
-		Type(TypeCode code, const char* name) noexcept;
-		Type(const Type&) = delete;
-		~Type() = default;
+		TypeData() noexcept = default;
+		TypeData(TypeCode code, const char* name) noexcept;
+		TypeData(const TypeData&) = delete;
+		~TypeData() = default;
 
 	public:
-		Type& operator=(const Type&) = delete;
-		bool operator==(const Type&) = delete;
-		bool operator!=(const Type&) = delete;
+		TypeData& operator=(const TypeData&) = delete;
+		bool operator==(const TypeData&) = delete;
+		bool operator!=(const TypeData&) = delete;
 	};
 
-	extern const Type* IntType;
-	extern const Type* LongType;
-	extern const Type* DoubleType;
-	extern const Type* PointerType;
+	class Type final {
+	private:
+		const TypeData* m_Data = nullptr;
+
+	public:
+		Type() noexcept = default;
+		Type(std::nullptr_t) noexcept;
+		Type(const TypeData& data) noexcept;
+		Type(const Type& type) noexcept;
+		~Type() noexcept = default;
+
+	public:
+		Type& operator=(const Type& type) noexcept;
+		bool operator==(const Type& type) const noexcept;
+		bool operator!=(const Type& type) const noexcept;
+		const TypeData& operator*() const noexcept;
+		const TypeData* operator->() const noexcept;
+
+	public:
+		bool IsValidType() const noexcept;
+	};
+
+	extern const Type IntType;
+	extern const Type LongType;
+	extern const Type DoubleType;
+	extern const Type PointerType;
 }
 
 namespace svm {
 	class Object {
 	private:
-		const Type* m_Type = nullptr;
+		Type m_Type;
 
 	public:
 		Object() noexcept = default;
 		~Object() = default;
 
 	protected:
-		Object(const Type* type) noexcept;
+		Object(Type type) noexcept;
 		Object(const Object& object) noexcept;
 
 	protected:
 		Object& operator=(const Object& object) noexcept;
 
 	public:
-		const Type* GetType() const noexcept;
-		TypeCode GetTypeCode() const noexcept;
+		Type GetType() const noexcept;
 		bool IsInt() const noexcept;
 		bool IsLong() const noexcept;
 		bool IsDouble() const noexcept;
+		bool IsPointer() const noexcept;
 	};
 
 	class IntObject final : public Object {
