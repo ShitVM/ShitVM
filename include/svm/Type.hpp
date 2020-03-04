@@ -1,5 +1,7 @@
 #pragma once
 
+#include <svm/detail/ReferenceWrapper.hpp>
+
 namespace svm {
 	enum class TypeCode {
 		None,
@@ -27,23 +29,9 @@ namespace svm {
 		bool operator!=(const TypeData&) = delete;
 	};
 
-	class Type final {
-	private:
-		const TypeData* m_Data = nullptr;
-
+	class Type final : public detail::ReferenceWrapper<TypeData> {
 	public:
-		Type() noexcept = default;
-		Type(std::nullptr_t) noexcept;
-		Type(const TypeData& data) noexcept;
-		Type(const Type& type) noexcept;
-		~Type() noexcept = default;
-
-	public:
-		Type& operator=(const Type& type) noexcept;
-		bool operator==(const Type& type) const noexcept;
-		bool operator!=(const Type& type) const noexcept;
-		const TypeData& operator*() const noexcept;
-		const TypeData* operator->() const noexcept;
+		using detail::ReferenceWrapper<TypeData>::ReferenceWrapper;
 
 	public:
 		bool IsValidType() const noexcept;
