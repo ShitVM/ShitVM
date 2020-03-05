@@ -96,7 +96,7 @@ namespace svm {
 
 	std::ostream& operator<<(std::ostream& stream, const Instructions& instructions) {
 		const std::string defIndent = detail::MakeTabs(stream);
-		stream << defIndent << "Instructions:\n"
+		stream << defIndent << "Instructions: " << instructions.GetInstructionCount() << '\n'
 			   << defIndent << "\tLabels: " << instructions.GetLabelCount();
 		for (std::uint32_t i = 0; i < instructions.GetLabelCount(); ++i) {
 			stream << '\n' << defIndent << "\t\t[" << i << "]: " << instructions.GetLabel(i)

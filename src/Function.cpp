@@ -39,7 +39,7 @@ namespace svm {
 	std::ostream& operator<<(std::ostream& stream, const Functions& functions) {
 		const std::string defIndent = detail::MakeTabs(stream);
 
-		stream << defIndent << "Functions:" << Indent << Indent;
+		stream << defIndent << "Functions: " << functions.size() << Indent << Indent;
 		for (std::uint32_t i = 0; i < static_cast<std::uint32_t>(functions.size()); ++i) {
 			stream << '\n' << defIndent << "\t[" << i << "]:\n" << functions[i];
 		}

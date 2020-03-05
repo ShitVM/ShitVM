@@ -62,7 +62,7 @@ namespace svm {
 	std::ostream& operator<<(std::ostream& stream, const Structures& structures) {
 		const std::string defIndent = detail::MakeTabs(stream);
 
-		stream << defIndent << "Structures:" << Indent << Indent;
+		stream << defIndent << "Structures: " << structures.GetCount() << Indent << Indent;
 		for (std::uint32_t i = 0; i < structures.GetCount(); ++i) {
 			stream << '\n' << defIndent << "\t[" << i << "]:\n" << structures[i];
 		}

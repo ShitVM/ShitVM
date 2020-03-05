@@ -70,7 +70,7 @@ namespace svm {
 	std::ostream& operator<<(std::ostream& stream, const ConstantPool& constantPool) {
 		const std::string defIndent = detail::MakeTabs(stream);
 
-		stream << defIndent << "ConstantPool:";
+		stream << defIndent << "ConstantPool: " << constantPool.GetAllCount();
 
 		static constexpr std::uint32_t((ConstantPool:: * types[])() const noexcept) = {
 			&ConstantPool::GetIntCount,
