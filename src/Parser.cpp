@@ -102,7 +102,7 @@ namespace svm {
 		if (!IsParsed()) throw std::runtime_error("Failed to move the result. Incomplete parsing.");
 
 		ByteFile result(std::move(m_Path), std::move(m_ConstantPool), std::move(m_Structures),
-						std::move(m_Functions), std::move(m_EntryPoint));
+			std::move(m_Functions), std::move(m_EntryPoint));
 		Clear();
 		return result;
 	}
@@ -146,7 +146,29 @@ namespace svm {
 			structures[i].Fields.resize(fieldCount);
 
 			for (std::uint32_t j = 0; j < fieldCount; ++j) {
+				using namespace std::string_literals;
+
 				structures[i].Fields[j] = GetTypeFromTypeCode(structures, ReadFile<TypeCode>());
+				structures[i].Type.Name = "structure"s + std::to_string(i);
+				structures[i].Type.Code = static_cast<TypeCode>(i + static_cast<std::uint32_t>(TypeCode::Structure));
+				structures[i].Type.Size = structures[i].Type.DataSize = 0;
+			}
+		}
+
+		m_Structures = std::move(structures);
+		if (structCount < 2) return;
+
+		std::vector<Structure> cycle;
+		for (std::uint32_t i = 0; i < structCount; ++i) {
+			std::unordered_map<std::size_t, int> visited;
+			if (FindCycle(visited, cycle, i)) {
+				std::ostringstream oss;
+				oss << "Failed to parse the file. Detected circular reference in the structures([" << i << ']';
+				for (auto iter = cycle.rbegin(); iter < cycle.rend(); ++iter) {
+					oss << "-[" << static_cast<std::uint32_t>((*iter)->Type.Code) - static_cast<std::uint32_t>(TypeCode::Structure) << ']';
+				}
+				oss << ").";
+				throw std::runtime_error(oss.str());
 			}
 		}
 	}
@@ -201,5 +223,22 @@ namespace svm {
 		}
 
 		return result;
+	}
+	bool Parser::FindCycle(std::unordered_map<std::size_t, int>& visited, std::vector<Structure>& cycle, std::size_t node) {
+		int& status = visited[node];
+		if (status) return visited[node] == 1;
+
+		status = 1;
+		for (std::size_t i = 0; i < m_Structures[node]->Fields.size(); ++i) {
+			const Type type = m_Structures[node]->Fields[i];
+			if (!type.IsStructure()) continue;
+			else if (const auto index = static_cast<std::uint32_t>(type->Code) - static_cast<std::uint32_t>(TypeCode::Structure);
+					 FindCycle(visited, cycle, index)) {
+				cycle.push_back(m_Structures[index]);
+				return true;
+			}
+		}
+		status = 2;
+		return false;
 	}
 }

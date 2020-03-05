@@ -17,7 +17,7 @@ namespace svm {
 		const std::string defIndent = detail::MakeTabs(stream);
 
 		stream << defIndent << "Structure:\n"
-			   << defIndent << "\tFields:";
+			   << defIndent << "\tFields: " << structureInfo.Fields.size();
 		for (std::uint32_t i = 0; i < static_cast<std::uint32_t>(structureInfo.Fields.size()); ++i) {
 			stream << '\n' << defIndent << "\t\t[" << i << "]: " << structureInfo.Fields[i]->Name;
 		}

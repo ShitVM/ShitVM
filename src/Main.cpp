@@ -5,6 +5,7 @@
 #include <algorithm>
 #include <chrono>
 #include <cstdlib>
+#include <exception>
 #include <iomanip>
 #include <iostream>
 
@@ -20,7 +21,13 @@ int main(int argc, char* argv[]) {
 
 	svm::Parser parser;
 	parser.Load(argv[1]);
-	parser.Parse();
+	try {
+		parser.Parse();
+	} catch (const std::exception & e) {
+		std::cout << "Occured exception!\n"
+				  << "Message: \"" << e.what() << "\"\n";
+		return EXIT_FAILURE;
+	}
 
 	const auto endParsing = std::chrono::system_clock::now();
 	const std::chrono::duration<double> parsing = endParsing - startParsing;

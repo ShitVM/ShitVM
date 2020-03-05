@@ -3,6 +3,7 @@
 #include <svm/detail/ReferenceWrapper.hpp>
 
 #include <cstdint>
+#include <string>
 #include <vector>
 
 namespace svm {
@@ -24,13 +25,13 @@ namespace svm {
 	class TypeInfo final {
 	public:
 		TypeCode Code = TypeCode::None;
-		const char* Name = nullptr;
+		std::string Name;
 		unsigned Size = 0;
 		unsigned DataSize = 0;
 
 	public:
 		TypeInfo() noexcept = default;
-		TypeInfo(TypeCode code, const char* name, unsigned size, unsigned dataSize) noexcept;
+		TypeInfo(TypeCode code, std::string name, unsigned size, unsigned dataSize) noexcept;
 		TypeInfo(const TypeInfo&) = delete;
 		~TypeInfo() = default;
 

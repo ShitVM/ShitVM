@@ -3,9 +3,11 @@
 #include <svm/Object.hpp>
 #include <svm/Structure.hpp>
 
+#include <utility>
+
 namespace svm {
-	TypeInfo::TypeInfo(TypeCode code, const char* name, unsigned size, unsigned dataSize) noexcept
-		: Code(code), Name(name), Size(size), DataSize(dataSize) {}
+	TypeInfo::TypeInfo(TypeCode code, std::string name, unsigned size, unsigned dataSize) noexcept
+		: Code(code), Name(std::move(name)), Size(size), DataSize(dataSize) {}
 }
 
 namespace svm {

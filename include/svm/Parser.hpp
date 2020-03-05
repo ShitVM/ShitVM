@@ -10,6 +10,7 @@
 #include <cstdint>
 #include <string>
 #include <type_traits>
+#include <unordered_map>
 #include <utility>
 #include <vector>
 
@@ -96,5 +97,6 @@ namespace svm {
 		Instructions ParseInstructions();
 
 		OpCode ReadOpCode() noexcept;
+		bool FindCycle(std::unordered_map<std::size_t, int>& visited, std::vector<Structure>& cycle, std::size_t node);
 	};
 }
