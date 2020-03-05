@@ -103,7 +103,7 @@ namespace svm {
 				   << '(' << std::hex << std::uppercase << std::setw(16) << std::setfill('0') << instructions.GetInstruction(instructions.GetLabel(i)).Offset << ')'
 				   << std::dec << std::nouppercase;
 		}
-		for (std::uint32_t i = 0; i < instructions.GetInstructionCount(); ++i) {
+		for (std::uint64_t i = 0; i < instructions.GetInstructionCount(); ++i) {
 			stream << '\n' << defIndent << '\t' << instructions.GetInstruction(i);
 		}
 

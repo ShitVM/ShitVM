@@ -1,7 +1,6 @@
 #include <svm/Function.hpp>
 
 #include <svm/IO.hpp>
-#include <svm/Memory.hpp>
 
 #include <utility>
 
@@ -41,7 +40,7 @@ namespace svm {
 		const std::string defIndent = detail::MakeTabs(stream);
 
 		stream << defIndent << "Functions:" << Indent << Indent;
-		for (std::uint32_t i = 0; i < functions.size(); ++i) {
+		for (std::uint32_t i = 0; i < static_cast<std::uint32_t>(functions.size()); ++i) {
 			stream << '\n' << defIndent << "\t[" << i << "]:\n" << functions[i];
 		}
 		stream << UnIndent << UnIndent;

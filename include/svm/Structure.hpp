@@ -4,6 +4,7 @@
 #include <svm/detail/ReferenceWrapper.hpp>
 
 #include <cstdint>
+#include <ostream>
 #include <vector>
 
 namespace svm {
@@ -34,4 +35,9 @@ namespace svm {
 	public:
 		using detail::ReferenceWrapper<StructureData>::ReferenceWrapper;
 	};
+
+	using Structures = std::vector<Structure>;
+
+	std::ostream& operator<<(std::ostream& stream, const Structure& structure);
+	std::ostream& operator<<(std::ostream& stream, const Structures& structures);
 }
