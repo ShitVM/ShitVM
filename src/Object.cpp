@@ -91,3 +91,8 @@ namespace svm {
 		return *this;
 	}
 }
+
+namespace svm {
+	StructureObject::StructureObject(Type type) noexcept
+		: Object(type) {}
+}

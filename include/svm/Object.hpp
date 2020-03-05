@@ -1,6 +1,7 @@
 #pragma once
 
 #include <svm/Type.hpp>
+#include <svm/Structure.hpp>
 
 #include <cstdint>
 
@@ -19,6 +20,10 @@ namespace svm {
 
 	protected:
 		Object& operator=(const Object& object) noexcept;
+
+	public:
+		bool operator==(const Object&) = delete;
+		bool operator!=(const Object&) = delete;
 
 	public:
 		Type GetType() const noexcept;
@@ -40,6 +45,8 @@ namespace svm {
 
 	public:
 		IntObject& operator=(const IntObject& object) noexcept;
+		bool operator==(const IntObject&) = delete;
+		bool operator!=(const IntObject&) = delete;
 	};
 
 	class LongObject final : public Object {
@@ -54,6 +61,8 @@ namespace svm {
 
 	public:
 		LongObject& operator=(const LongObject& object) noexcept;
+		bool operator==(const LongObject&) = delete;
+		bool operator!=(const LongObject&) = delete;
 	};
 
 	class DoubleObject final : public Object {
@@ -68,6 +77,8 @@ namespace svm {
 
 	public:
 		DoubleObject& operator=(const DoubleObject& object) noexcept;
+		bool operator==(const DoubleObject&) = delete;
+		bool operator!=(const DoubleObject&) = delete;
 	};
 
 	class PointerObject final : public Object {
@@ -82,5 +93,19 @@ namespace svm {
 
 	public:
 		PointerObject& operator=(const PointerObject& object) noexcept;
+		bool operator==(const PointerObject&) = delete;
+		bool operator!=(const PointerObject&) = delete;
+	};
+
+	class StructureObject final : public Object {
+	public:
+		StructureObject(Type type) noexcept;
+		StructureObject(const StructureObject&) = delete;
+		~StructureObject() = default;
+
+	public:
+		StructureObject& operator=(StructureObject) = delete;
+		bool operator==(const StructureObject&) = delete;
+		bool operator!=(const StructureObject&) = delete;
 	};
 }

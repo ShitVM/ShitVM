@@ -2,24 +2,34 @@
 
 #include <svm/detail/ReferenceWrapper.hpp>
 
+#include <cstdint>
+
 namespace svm {
-	enum class TypeCode {
+	enum class TypeCode : std::uint32_t {
 		None,
 
+		Byte,				// Not supported
+		Short,				// Not supported
 		Int,
 		Long,
+		Float,				// Not supported
 		Double,
 		Pointer,
+		GCPointer,			// Not supported
+		Array,				// Not supported
+		Structure,
 	};
 
 	class TypeData final {
 	public:
 		TypeCode Code = TypeCode::None;
 		const char* Name = nullptr;
+		unsigned Size = 0;
+		unsigned DataSize = 0;
 
 	public:
 		TypeData() noexcept = default;
-		TypeData(TypeCode code, const char* name) noexcept;
+		TypeData(TypeCode code, const char* name, unsigned size, unsigned dataSize) noexcept;
 		TypeData(const TypeData&) = delete;
 		~TypeData() = default;
 
@@ -28,17 +38,24 @@ namespace svm {
 		bool operator==(const TypeData&) = delete;
 		bool operator!=(const TypeData&) = delete;
 	};
+}
 
+namespace svm {
 	class Type final : public detail::ReferenceWrapper<TypeData> {
 	public:
 		using detail::ReferenceWrapper<TypeData>::ReferenceWrapper;
 
 	public:
-		bool IsValidType() const noexcept;
+		bool IsFundamentalType() const noexcept;
+		bool IsStructure() const noexcept;
 	};
 
+	extern const Type NoneType;
 	extern const Type IntType;
 	extern const Type LongType;
 	extern const Type DoubleType;
 	extern const Type PointerType;
+	extern const Type StructureType;
+
+	Type GetTypeFromTypeCode(TypeCode code) noexcept;
 }

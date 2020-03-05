@@ -123,7 +123,7 @@ namespace svm {
 			if (!typePtr) {
 				OccurException(SVM_IEC_STACK_EMPTY);
 				return;
-			} else if (!typePtr->IsValidType()) {
+			} else if (!typePtr->IsFundamentalType()) {
 				OccurException(SVM_IEC_STACK_EMPTY);
 				return;
 			}
