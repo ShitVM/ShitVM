@@ -6,8 +6,8 @@
 #include <utility>
 
 namespace svm {
-	TypeInfo::TypeInfo(TypeCode code, std::string name, unsigned size, unsigned dataSize) noexcept
-		: Code(code), Name(std::move(name)), Size(size), DataSize(dataSize) {}
+	TypeInfo::TypeInfo(TypeCode code, std::string name, std::size_t size) noexcept
+		: Code(code), Name(std::move(name)), Size(size) {}
 }
 
 namespace svm {
@@ -22,11 +22,11 @@ namespace svm {
 	}
 
 	namespace {
-		static const TypeInfo s_NoneType(TypeCode::None, "none", 0, 0);
-		static const TypeInfo s_IntType(TypeCode::Int, "int", sizeof(IntObject), sizeof(std::uint32_t));
-		static const TypeInfo s_LongType(TypeCode::Long, "long", sizeof(LongObject), sizeof(std::uint64_t));
-		static const TypeInfo s_DoubleType(TypeCode::Double, "double", sizeof(DoubleObject), sizeof(double));
-		static const TypeInfo s_PointerType(TypeCode::Pointer, "pointer", sizeof(PointerObject), sizeof(void*));
+		static const TypeInfo s_NoneType(TypeCode::None, "none", 0);
+		static const TypeInfo s_IntType(TypeCode::Int, "int", sizeof(IntObject));
+		static const TypeInfo s_LongType(TypeCode::Long, "long", sizeof(LongObject));
+		static const TypeInfo s_DoubleType(TypeCode::Double, "double", sizeof(DoubleObject));
+		static const TypeInfo s_PointerType(TypeCode::Pointer, "pointer", sizeof(PointerObject));
 	}
 
 	const Type NoneType = s_NoneType;

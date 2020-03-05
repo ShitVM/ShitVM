@@ -10,7 +10,8 @@
 namespace svm {
 	class StructureInfo final {
 	public:
-		std::vector<svm::Type> Fields;
+		std::vector<svm::Type> FieldTypes;
+		std::vector<std::size_t> FieldOffsets;
 		TypeInfo Type;
 
 	public:

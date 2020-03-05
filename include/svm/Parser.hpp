@@ -96,7 +96,11 @@ namespace svm {
 		void ParseFunctions();
 		Instructions ParseInstructions();
 
+		void FindCycle(const std::vector<StructureInfo>& structures) const;
+		bool FindCycle(const std::vector<StructureInfo>& structures, std::unordered_map<std::uint32_t, int>& visited, std::vector<Structure>& cycle, std::uint32_t node) const;
+		void CalcSize(std::vector<StructureInfo>& structures) const;
+		std::size_t CalcSize(std::vector<StructureInfo>& structures, std::uint32_t node) const;
+		std::size_t PadeSize(std::size_t size) const noexcept;
 		OpCode ReadOpCode() noexcept;
-		bool FindCycle(std::unordered_map<std::size_t, int>& visited, std::vector<Structure>& cycle, std::size_t node);
 	};
 }

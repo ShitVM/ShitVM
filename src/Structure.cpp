@@ -6,20 +6,20 @@
 
 namespace svm {
 	StructureInfo::StructureInfo(StructureInfo&& structure) noexcept
-		: Fields(std::move(structure.Fields)) {}
+		: FieldTypes(std::move(structure.FieldTypes)) {}
 
 	StructureInfo& StructureInfo::operator=(StructureInfo&& structure) noexcept {
-		Fields = std::move(structure.Fields);
+		FieldTypes = std::move(structure.FieldTypes);
 		return *this;
 	}
 
 	std::ostream& operator<<(std::ostream& stream, const StructureInfo& structureInfo) {
 		const std::string defIndent = detail::MakeTabs(stream);
 
-		stream << defIndent << "Structure:\n"
-			   << defIndent << "\tFields: " << structureInfo.Fields.size();
-		for (std::uint32_t i = 0; i < static_cast<std::uint32_t>(structureInfo.Fields.size()); ++i) {
-			stream << '\n' << defIndent << "\t\t[" << i << "]: " << structureInfo.Fields[i]->Name;
+		stream << defIndent << "Structure: " << structureInfo.Type.Size << "B\n"
+			   << defIndent << "\tFields: " << structureInfo.FieldTypes.size();
+		for (std::uint32_t i = 0; i < static_cast<std::uint32_t>(structureInfo.FieldTypes.size()); ++i) {
+			stream << '\n' << defIndent << "\t\t[" << i << "]: " << structureInfo.FieldTypes[i]->Name << '(' << structureInfo.FieldTypes[i]->Size << "B)";
 		}
 		return stream;
 	}

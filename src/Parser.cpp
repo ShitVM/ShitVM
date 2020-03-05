@@ -143,34 +143,24 @@ namespace svm {
 
 		for (std::uint32_t i = 0; i < structCount; ++i) {
 			const auto fieldCount = ReadFile<std::uint32_t>();
-			structures[i].Fields.resize(fieldCount);
+			structures[i].FieldTypes.resize(fieldCount);
 
 			for (std::uint32_t j = 0; j < fieldCount; ++j) {
 				using namespace std::string_literals;
 
-				structures[i].Fields[j] = GetTypeFromTypeCode(structures, ReadFile<TypeCode>());
+				structures[i].FieldTypes[j] = GetTypeFromTypeCode(structures, ReadFile<TypeCode>());
 				structures[i].Type.Name = "structure"s + std::to_string(i);
 				structures[i].Type.Code = static_cast<TypeCode>(i + static_cast<std::uint32_t>(TypeCode::Structure));
-				structures[i].Type.Size = structures[i].Type.DataSize = 0;
+				structures[i].Type.Size = 0;
 			}
 		}
+
+		if (structCount >= 2) {
+			FindCycle(structures);
+		}
+		CalcSize(structures);
 
 		m_Structures = std::move(structures);
-		if (structCount < 2) return;
-
-		std::vector<Structure> cycle;
-		for (std::uint32_t i = 0; i < structCount; ++i) {
-			std::unordered_map<std::size_t, int> visited;
-			if (FindCycle(visited, cycle, i)) {
-				std::ostringstream oss;
-				oss << "Failed to parse the file. Detected circular reference in the structures([" << i << ']';
-				for (auto iter = cycle.rbegin(); iter < cycle.rend(); ++iter) {
-					oss << "-[" << static_cast<std::uint32_t>((*iter)->Type.Code) - static_cast<std::uint32_t>(TypeCode::Structure) << ']';
-				}
-				oss << ").";
-				throw std::runtime_error(oss.str());
-			}
-		}
 	}
 	void Parser::ParseFunctions() {
 		const auto funcCount = ReadFile<std::uint32_t>();
@@ -214,6 +204,64 @@ namespace svm {
 		return { std::move(labels), std::move(insts) };
 	}
 
+	void Parser::FindCycle(const std::vector<StructureInfo>& structures) const {
+		std::vector<Structure> cycle;
+		for (std::uint32_t i = 0; i < static_cast<std::uint32_t>(structures.size()); ++i) {
+			std::unordered_map<std::uint32_t, int> visited;
+			if (FindCycle(structures, visited, cycle, i)) {
+				std::ostringstream oss;
+				oss << "Failed to parse the file. Detected circular reference in the structures([" << i << ']';
+				for (auto iter = cycle.rbegin(); iter < cycle.rend(); ++iter) {
+					oss << "-[" << static_cast<std::uint32_t>((*iter)->Type.Code) - static_cast<std::uint32_t>(TypeCode::Structure) << ']';
+				}
+				oss << ").";
+				throw std::runtime_error(oss.str());
+			}
+		}
+	}
+	bool Parser::FindCycle(const std::vector<StructureInfo>& structures, std::unordered_map<std::uint32_t, int>& visited, std::vector<Structure>& cycle, std::uint32_t node) const {
+		int& status = visited[node];
+		if (status) return visited[node] == 1;
+
+		status = 1;
+		for (std::size_t i = 0; i < structures[node].FieldTypes.size(); ++i) {
+			const Type type = structures[node].FieldTypes[i];
+			if (!type.IsStructure()) continue;
+			else if (const auto index = static_cast<std::uint32_t>(type->Code) - static_cast<std::uint32_t>(TypeCode::Structure);
+					 FindCycle(structures, visited, cycle, index)) {
+				cycle.push_back(structures[index]);
+				return true;
+			}
+		}
+		status = 2;
+		return false;
+	}
+	void Parser::CalcSize(std::vector<StructureInfo>& structures) const {
+		for (std::uint32_t i = 0; i < static_cast<std::uint32_t>(structures.size()); ++i) {
+			structures[i].Type.Size = CalcSize(structures, i);
+		}
+	}
+	std::size_t Parser::CalcSize(std::vector<StructureInfo>& structures, std::uint32_t node) const {
+		std::size_t& s = structures[node].Type.Size;
+		if (s) return s;
+
+		for (std::size_t i = 0; i < structures[node].FieldTypes.size(); ++i) {
+			const Type type = structures[node].FieldTypes[i];
+			if (!type.IsStructure()) {
+				s += type->Size;
+			} else {
+				s += CalcSize(structures, static_cast<std::uint32_t>(type->Code) - static_cast<std::uint32_t>(TypeCode::Structure));
+			}
+		}
+
+		s += sizeof(Type);
+		return s = PadeSize(s);
+	}
+	std::size_t Parser::PadeSize(std::size_t size) const noexcept {
+		const auto temp = size / sizeof(void*) * sizeof(void*);
+		if (size == temp) return size;
+		else return temp + sizeof(void*);
+	}
 	OpCode Parser::ReadOpCode() noexcept {
 		OpCode result = ReadFile<OpCode>();
 		if (m_ByteCodeVersion >= ByteCodeVersion::v0_2_0) return result;
@@ -223,22 +271,5 @@ namespace svm {
 		}
 
 		return result;
-	}
-	bool Parser::FindCycle(std::unordered_map<std::size_t, int>& visited, std::vector<Structure>& cycle, std::size_t node) {
-		int& status = visited[node];
-		if (status) return visited[node] == 1;
-
-		status = 1;
-		for (std::size_t i = 0; i < m_Structures[node]->Fields.size(); ++i) {
-			const Type type = m_Structures[node]->Fields[i];
-			if (!type.IsStructure()) continue;
-			else if (const auto index = static_cast<std::uint32_t>(type->Code) - static_cast<std::uint32_t>(TypeCode::Structure);
-					 FindCycle(visited, cycle, index)) {
-				cycle.push_back(m_Structures[index]);
-				return true;
-			}
-		}
-		status = 2;
-		return false;
 	}
 }

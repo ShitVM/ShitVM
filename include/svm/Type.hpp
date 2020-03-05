@@ -2,6 +2,7 @@
 
 #include <svm/detail/ReferenceWrapper.hpp>
 
+#include <cstddef>
 #include <cstdint>
 #include <string>
 #include <vector>
@@ -26,12 +27,11 @@ namespace svm {
 	public:
 		TypeCode Code = TypeCode::None;
 		std::string Name;
-		unsigned Size = 0;
-		unsigned DataSize = 0;
+		std::size_t Size = 0;
 
 	public:
 		TypeInfo() noexcept = default;
-		TypeInfo(TypeCode code, std::string name, unsigned size, unsigned dataSize) noexcept;
+		TypeInfo(TypeCode code, std::string name, std::size_t size) noexcept;
 		TypeInfo(const TypeInfo&) = delete;
 		~TypeInfo() = default;
 
