@@ -20,7 +20,7 @@ namespace svm {
 		Structure,
 	};
 
-	class TypeData final {
+	class TypeInfo final {
 	public:
 		TypeCode Code = TypeCode::None;
 		const char* Name = nullptr;
@@ -28,22 +28,22 @@ namespace svm {
 		unsigned DataSize = 0;
 
 	public:
-		TypeData() noexcept = default;
-		TypeData(TypeCode code, const char* name, unsigned size, unsigned dataSize) noexcept;
-		TypeData(const TypeData&) = delete;
-		~TypeData() = default;
+		TypeInfo() noexcept = default;
+		TypeInfo(TypeCode code, const char* name, unsigned size, unsigned dataSize) noexcept;
+		TypeInfo(const TypeInfo&) = delete;
+		~TypeInfo() = default;
 
 	public:
-		TypeData& operator=(const TypeData&) = delete;
-		bool operator==(const TypeData&) = delete;
-		bool operator!=(const TypeData&) = delete;
+		TypeInfo& operator=(const TypeInfo&) = delete;
+		bool operator==(const TypeInfo&) = delete;
+		bool operator!=(const TypeInfo&) = delete;
 	};
 }
 
 namespace svm {
-	class Type final : public detail::ReferenceWrapper<TypeData> {
+	class Type final : public detail::ReferenceWrapper<TypeInfo> {
 	public:
-		using detail::ReferenceWrapper<TypeData>::ReferenceWrapper;
+		using detail::ReferenceWrapper<TypeInfo>::ReferenceWrapper;
 
 	public:
 		bool IsFundamentalType() const noexcept;

@@ -5,30 +5,28 @@
 #include <utility>
 
 namespace svm {
-	StructureData::StructureData(std::vector<Type> fieldTypes, std::vector<std::size_t> fieldOffsets) noexcept
+	StructureInfo::StructureInfo(std::vector<Type> fieldTypes, std::vector<std::size_t> fieldOffsets) noexcept
 		: m_FieldTypes(std::move(fieldTypes)), m_FieldOffsets(std::move(fieldOffsets)) {}
-	StructureData::StructureData(StructureData&& structure) noexcept
+	StructureInfo::StructureInfo(StructureInfo&& structure) noexcept
 		: m_FieldTypes(std::move(structure.m_FieldTypes)), m_FieldOffsets(std::move(structure.m_FieldOffsets)) {}
 
-	StructureData& StructureData::operator=(StructureData&& structure) noexcept {
+	StructureInfo& StructureInfo::operator=(StructureInfo&& structure) noexcept {
 		m_FieldTypes = std::move(structure.m_FieldTypes);
 		m_FieldOffsets = std::move(structure.m_FieldOffsets);
 		return *this;
 	}
 
-	const std::vector<Type>& StructureData::GetFieldTypes() const noexcept {
+	const std::vector<Type>& StructureInfo::GetFieldTypes() const noexcept {
 		return m_FieldTypes;
 	}
-	const std::vector<std::size_t>& StructureData::GetFieldOffsets() const noexcept {
+	const std::vector<std::size_t>& StructureInfo::GetFieldOffsets() const noexcept {
 		return m_FieldOffsets;
 	}
-}
 
-namespace svm {
-	std::ostream& operator<<(std::ostream& stream, const Structure& structure) {
+	std::ostream& operator<<(std::ostream& stream, const StructureInfo& structureInfo) {
 		const std::string defIndent = detail::MakeTabs(stream);
 
-		const auto& types = structure->GetFieldTypes();
+		const auto& types = structureInfo.GetFieldTypes();
 
 		stream << defIndent << "Structure:\n"
 			   << defIndent << "\tFields:";
@@ -37,11 +35,47 @@ namespace svm {
 		}
 		return stream;
 	}
+}
+
+namespace svm {
+	std::ostream& operator<<(std::ostream& stream, const Structure& structure) {
+		return stream << structure.GetReference();
+	}
+}
+
+namespace svm {
+	Structures::Structures(std::vector<StructureInfo>&& structures) noexcept
+		: m_Structures(std::move(structures)) {}
+	Structures::Structures(Structures&& structures) noexcept
+		: m_Structures(std::move(structures.m_Structures)) {}
+
+	Structures& Structures::operator=(Structures&& structures) noexcept {
+		m_Structures = std::move(structures.m_Structures);
+		return *this;
+	}
+	Structure Structures::operator[](std::uint32_t index) const noexcept {
+		return m_Structures[index];
+	}
+
+	void Structures::Clear() noexcept {
+		m_Structures.clear();
+	}
+	bool Structures::IsEmpty() const noexcept {
+		return m_Structures.empty();
+	}
+
+	Structure Structures::Get(std::uint32_t index) const noexcept {
+		return m_Structures[index];
+	}
+	std::uint32_t Structures::GetCount() const noexcept {
+		return static_cast<std::uint32_t>(m_Structures.size());
+	}
+
 	std::ostream& operator<<(std::ostream& stream, const Structures& structures) {
 		const std::string defIndent = detail::MakeTabs(stream);
 
 		stream << defIndent << "Structures:" << Indent << Indent;
-		for (std::uint32_t i = 0; i < static_cast<std::uint32_t>(structures.size()); ++i) {
+		for (std::uint32_t i = 0; i < structures.GetCount(); ++i) {
 			stream << '\n' << defIndent << "\t[" << i << "]:\n" << structures[i];
 		}
 		stream << UnIndent << UnIndent;

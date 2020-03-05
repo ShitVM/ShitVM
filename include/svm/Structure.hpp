@@ -8,36 +8,63 @@
 #include <vector>
 
 namespace svm {
-	class StructureData final {
+	class StructureInfo final {
 	private:
 		std::vector<Type> m_FieldTypes;
 		std::vector<std::size_t> m_FieldOffsets;
 
 	public:
-		StructureData() noexcept = default;
-		StructureData(std::vector<Type> fieldTypes, std::vector<std::size_t> fieldOffsets) noexcept;
-		StructureData(StructureData&& structure) noexcept;
-		~StructureData() = default;
+		StructureInfo() noexcept = default;
+		StructureInfo(std::vector<Type> fieldTypes, std::vector<std::size_t> fieldOffsets) noexcept;
+		StructureInfo(StructureInfo&& structure) noexcept;
+		~StructureInfo() = default;
 
 	public:
-		StructureData& operator=(StructureData&& structure) noexcept;
-		bool operator==(const StructureData&) = delete;
-		bool operator!=(const StructureData&) = delete;
+		StructureInfo& operator=(StructureInfo&& structure) noexcept;
+		bool operator==(const StructureInfo&) = delete;
+		bool operator!=(const StructureInfo&) = delete;
 
 	public:
 		const std::vector<Type>& GetFieldTypes() const noexcept;
 		const std::vector<std::size_t>& GetFieldOffsets() const noexcept;
 	};
+
+	std::ostream& operator<<(std::ostream& stream, const StructureInfo& structureInfo);
 }
 
 namespace svm {
-	class Structure final : public detail::ReferenceWrapper<StructureData> {
+	class Structure final : public detail::ReferenceWrapper<StructureInfo> {
 	public:
-		using detail::ReferenceWrapper<StructureData>::ReferenceWrapper;
+		using detail::ReferenceWrapper<StructureInfo>::ReferenceWrapper;
 	};
 
-	using Structures = std::vector<Structure>;
-
 	std::ostream& operator<<(std::ostream& stream, const Structure& structure);
+}
+
+namespace svm {
+	class Structures final {
+	private:
+		std::vector<StructureInfo> m_Structures;
+
+	public:
+		Structures() noexcept = default;
+		Structures(std::vector<StructureInfo>&& structures) noexcept;
+		Structures(Structures&& structures) noexcept;
+		~Structures() = default;
+
+	public:
+		Structures& operator=(Structures&& structures) noexcept;
+		bool operator==(const Structures&) = delete;
+		bool operator!=(const Structures&) = delete;
+		Structure operator[](std::uint32_t index) const noexcept;
+
+	public:
+		void Clear() noexcept;
+		bool IsEmpty() const noexcept;
+
+		Structure Get(std::uint32_t index) const noexcept;
+		std::uint32_t GetCount() const noexcept;
+	};
+
 	std::ostream& operator<<(std::ostream& stream, const Structures& structures);
 }

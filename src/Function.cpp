@@ -30,7 +30,7 @@ namespace svm {
 	std::ostream& operator<<(std::ostream& stream, const Function& function) {
 		const std::string defIndent = detail::MakeTabs(stream);
 
-		stream << defIndent << "Function\n"
+		stream << defIndent << "Function:\n"
 			   << defIndent << "\tArity: " << function.GetArity() << '\n'
 			   << defIndent << "\tHasResult: " << std::boolalpha << function.HasResult() << '\n'
 			   << Indent << Indent << function.GetInstructions() << UnIndent << UnIndent;
