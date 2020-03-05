@@ -3,6 +3,7 @@
 #include <svm/ConstantPool.hpp>
 #include <svm/Function.hpp>
 #include <svm/Instruction.hpp>
+#include <svm/Structure.hpp>
 
 #include <ostream>
 #include <string>
@@ -13,12 +14,13 @@ namespace svm {
 	private:
 		std::string m_Path;
 		ConstantPool m_ConstantPool;
+		Structures m_Structures;
 		Functions m_Functions;
 		Instructions m_EntryPoint;
 
 	public:
 		ByteFile() noexcept = default;
-		ByteFile(std::string path, ConstantPool&& constantPool, Functions&& functions, Instructions&& entryPoint) noexcept;
+		ByteFile(std::string path, ConstantPool&& constantPool, Structures&& structures, Functions&& functions, Instructions&& entryPoint) noexcept;
 		ByteFile(ByteFile&& file) noexcept;
 		~ByteFile() = default;
 
@@ -33,6 +35,7 @@ namespace svm {
 
 		std::string_view GetPath() const noexcept;
 		const ConstantPool& GetConstantPool() const noexcept;
+		const Structures& GetStructures() const noexcept;
 		const Functions& GetFunctions() const noexcept;
 		const Instructions& GetEntryPoint() const noexcept;
 	};

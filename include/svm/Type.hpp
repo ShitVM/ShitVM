@@ -3,6 +3,7 @@
 #include <svm/detail/ReferenceWrapper.hpp>
 
 #include <cstdint>
+#include <vector>
 
 namespace svm {
 	enum class TypeCode : std::uint32_t {
@@ -41,6 +42,8 @@ namespace svm {
 }
 
 namespace svm {
+	class StructureInfo;
+
 	class Type final : public detail::ReferenceWrapper<TypeInfo> {
 	public:
 		using detail::ReferenceWrapper<TypeInfo>::ReferenceWrapper;
@@ -55,7 +58,6 @@ namespace svm {
 	extern const Type LongType;
 	extern const Type DoubleType;
 	extern const Type PointerType;
-	extern const Type StructureType;
 
-	Type GetTypeFromTypeCode(TypeCode code) noexcept;
+	Type GetTypeFromTypeCode(const std::vector<StructureInfo>& structures, TypeCode code) noexcept;
 }

@@ -4,6 +4,7 @@
 #include <svm/Instruction.hpp>
 #include <svm/Memory.hpp>
 #include <svm/Object.hpp>
+#include <svm/Structure.hpp>
 
 #include <cstddef>
 #include <cstdint>
@@ -15,8 +16,9 @@
 namespace svm {
 	enum class ByteFileVersion : std::uint16_t {
 		v0_1_0,
+		v0_2_0,
 
-		Latest = v0_1_0,
+		Latest = v0_2_0,
 	};
 
 	enum class ByteCodeVersion : std::uint16_t {
@@ -33,6 +35,7 @@ namespace svm {
 
 		std::string m_Path;
 		ConstantPool m_ConstantPool;
+		Structures m_Structures;
 		Functions m_Functions;
 		Instructions m_EntryPoint;
 
@@ -59,6 +62,7 @@ namespace svm {
 		ByteFile GetResult();
 		std::string_view GetPath() const noexcept;
 		const ConstantPool& GetConstantPool() const noexcept;
+		const Structures& GetStructures() const noexcept;
 		const Functions& GetFunctions() const noexcept;
 		const Instructions& GetEntryPoint() const noexcept;
 
@@ -87,6 +91,7 @@ namespace svm {
 				obj.Value = ReadFile<decltype(obj.Value)>();
 			}
 		}
+		void ParseStructures();
 		void ParseFunctions();
 		Instructions ParseInstructions();
 

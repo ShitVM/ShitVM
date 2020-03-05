@@ -5,33 +5,21 @@
 #include <utility>
 
 namespace svm {
-	StructureInfo::StructureInfo(std::vector<Type> fieldTypes, std::vector<std::size_t> fieldOffsets) noexcept
-		: m_FieldTypes(std::move(fieldTypes)), m_FieldOffsets(std::move(fieldOffsets)) {}
 	StructureInfo::StructureInfo(StructureInfo&& structure) noexcept
-		: m_FieldTypes(std::move(structure.m_FieldTypes)), m_FieldOffsets(std::move(structure.m_FieldOffsets)) {}
+		: Fields(std::move(structure.Fields)) {}
 
 	StructureInfo& StructureInfo::operator=(StructureInfo&& structure) noexcept {
-		m_FieldTypes = std::move(structure.m_FieldTypes);
-		m_FieldOffsets = std::move(structure.m_FieldOffsets);
+		Fields = std::move(structure.Fields);
 		return *this;
-	}
-
-	const std::vector<Type>& StructureInfo::GetFieldTypes() const noexcept {
-		return m_FieldTypes;
-	}
-	const std::vector<std::size_t>& StructureInfo::GetFieldOffsets() const noexcept {
-		return m_FieldOffsets;
 	}
 
 	std::ostream& operator<<(std::ostream& stream, const StructureInfo& structureInfo) {
 		const std::string defIndent = detail::MakeTabs(stream);
 
-		const auto& types = structureInfo.GetFieldTypes();
-
 		stream << defIndent << "Structure:\n"
 			   << defIndent << "\tFields:";
-		for (std::uint32_t i = 0; i < static_cast<std::uint32_t>(types.size()); ++i) {
-			stream << '\n' << defIndent << "\t\t[" << i << "]: " << types[i]->Name;
+		for (std::uint32_t i = 0; i < static_cast<std::uint32_t>(structureInfo.Fields.size()); ++i) {
+			stream << '\n' << defIndent << "\t\t[" << i << "]: " << structureInfo.Fields[i]->Name;
 		}
 		return stream;
 	}

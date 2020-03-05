@@ -1,6 +1,7 @@
 #include <svm/Type.hpp>
 
 #include <svm/Object.hpp>
+#include <svm/Structure.hpp>
 
 namespace svm {
 	TypeInfo::TypeInfo(TypeCode code, const char* name, unsigned size, unsigned dataSize) noexcept
@@ -24,7 +25,6 @@ namespace svm {
 		static const TypeInfo s_LongType(TypeCode::Long, "long", sizeof(LongObject), sizeof(std::uint64_t));
 		static const TypeInfo s_DoubleType(TypeCode::Double, "double", sizeof(DoubleObject), sizeof(double));
 		static const TypeInfo s_PointerType(TypeCode::Pointer, "pointer", sizeof(PointerObject), sizeof(void*));
-		static const TypeInfo s_StructureType(TypeCode::Structure, "structure", 0, 0);
 	}
 
 	const Type NoneType = s_NoneType;
@@ -32,9 +32,8 @@ namespace svm {
 	const Type LongType = s_LongType;
 	const Type DoubleType = s_DoubleType;
 	const Type PointerType = s_PointerType;
-	const Type StructureType = s_StructureType;
 
-	Type GetTypeFromTypeCode(TypeCode code) noexcept {
+	Type GetTypeFromTypeCode(const std::vector<StructureInfo>& structures, TypeCode code) noexcept {
 		switch (code) {
 		case TypeCode::Int: return IntType;
 		case TypeCode::Long: return LongType;
@@ -42,7 +41,7 @@ namespace svm {
 		case TypeCode::Pointer: return PointerType;
 
 		default:
-			if (code >= TypeCode::Structure) return StructureType;
+			if (code >= TypeCode::Structure) return structures[static_cast<std::uint8_t>(code) - static_cast<std::uint8_t>(TypeCode::Structure)].Type;
 			else return NoneType;
 		}
 	}

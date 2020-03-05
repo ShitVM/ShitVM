@@ -9,13 +9,12 @@
 
 namespace svm {
 	class StructureInfo final {
-	private:
-		std::vector<Type> m_FieldTypes;
-		std::vector<std::size_t> m_FieldOffsets;
+	public:
+		std::vector<svm::Type> Fields;
+		TypeInfo Type;
 
 	public:
 		StructureInfo() noexcept = default;
-		StructureInfo(std::vector<Type> fieldTypes, std::vector<std::size_t> fieldOffsets) noexcept;
 		StructureInfo(StructureInfo&& structure) noexcept;
 		~StructureInfo() = default;
 
@@ -23,10 +22,6 @@ namespace svm {
 		StructureInfo& operator=(StructureInfo&& structure) noexcept;
 		bool operator==(const StructureInfo&) = delete;
 		bool operator!=(const StructureInfo&) = delete;
-
-	public:
-		const std::vector<Type>& GetFieldTypes() const noexcept;
-		const std::vector<std::size_t>& GetFieldOffsets() const noexcept;
 	};
 
 	std::ostream& operator<<(std::ostream& stream, const StructureInfo& structureInfo);
