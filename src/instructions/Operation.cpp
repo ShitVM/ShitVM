@@ -316,19 +316,14 @@ namespace svm {
 			OccurException(SVM_IEC_STACK_EMPTY);
 		}
 	}
-	SVM_NOINLINE_FOR_PROFILING void Interpreter::InterpretIncDec(int delta) {
-		if (IsLocalVariable()) {
-			OccurException(SVM_IEC_STACK_EMPTY);
+	SVM_NOINLINE_FOR_PROFILING void Interpreter::InterpretIncDec(std::uint32_t operand, int delta) {
+		operand += static_cast<std::uint32_t>(m_StackFrame.VariableBegin);
+		if (operand >= m_LocalVariables.size()) {
+			OccurException(SVM_IEC_LOCALVARIABLE_OUTOFRANGE);
 			return;
 		}
 
-		Type* const typePtr = m_Stack.GetTopType();
-		if (!typePtr) {
-			OccurException(SVM_IEC_STACK_EMPTY);
-			return;
-		}
-
-		Type& type = *typePtr;
+		Type& type = *m_Stack.Get<Type>(m_LocalVariables[operand]);
 		if (type == IntType) {
 			reinterpret_cast<IntObject&>(type).Value += delta;
 		} else if (type == LongType) {

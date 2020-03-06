@@ -158,7 +158,7 @@ namespace svm {
 		void InterpretMod();
 		void InterpretIMod();
 		void InterpretNeg();
-		void InterpretIncDec(int delta);
+		void InterpretIncDec(std::uint32_t operand, int delta);
 
 		void InterpretAnd();
 		void InterpretOr();

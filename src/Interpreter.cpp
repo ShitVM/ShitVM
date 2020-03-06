@@ -137,8 +137,8 @@ namespace svm {
 			case OpCode::Mod: InterpretMod(); break;
 			case OpCode::IMod: InterpretIMod(); break;
 			case OpCode::Neg: InterpretNeg(); break;
-			case OpCode::Inc: InterpretIncDec(1); break;
-			case OpCode::Dec: InterpretIncDec(-1); break;
+			case OpCode::Inc: InterpretIncDec(inst.Operand, 1); break;
+			case OpCode::Dec: InterpretIncDec(inst.Operand, -1); break;
 
 			case OpCode::And: InterpretAnd(); break;
 			case OpCode::Or: InterpretOr(); break;

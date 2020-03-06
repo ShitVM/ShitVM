@@ -79,7 +79,8 @@ namespace svm {
 		m_ByteCodeVersion = ReadFile<ByteCodeVersion>();
 
 		if (m_ByteFileVersion > ByteFileVersion::Latest) throw std::runtime_error("Failed to parse the file. Incompatible ShitVM Byte File version.");
-		if (m_ByteCodeVersion > ByteCodeVersion::Latest) throw std::runtime_error("Failed to parse the file. Incompatible ShitBC version.");
+		if (m_ByteCodeVersion > ByteCodeVersion::Latest ||
+			m_ByteCodeVersion < ByteCodeVersion::Least) throw std::runtime_error("Failed to parse the file. Incompatible ShitBC version.");
 
 		ParseConstantPool();
 		ParseFunctions();
@@ -154,6 +155,7 @@ namespace svm {
 			const std::uint64_t offset = nextOffset;
 
 			if (OpCode::Push <= opCode && opCode <= OpCode::Lea && opCode != OpCode::Pop ||
+				OpCode::Inc <= opCode && opCode <= OpCode::Dec ||
 				OpCode::Jmp <= opCode && opCode <= OpCode::Call) {
 				operand = ReadFile<std::uint32_t>();
 				nextOffset += 4;
@@ -167,13 +169,6 @@ namespace svm {
 	}
 
 	OpCode Parser::ReadOpCode() noexcept {
-		OpCode result = ReadFile<OpCode>();
-		if (m_ByteCodeVersion >= ByteCodeVersion::v0_2_0) return result;
-
-		if (result >= OpCode::Lea) {
-			result = static_cast<OpCode>(static_cast<std::uint8_t>(result) + 5);
-		}
-
-		return result;
+		return ReadFile<OpCode>();
 	}
 }
