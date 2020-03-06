@@ -32,22 +32,23 @@ namespace svm {
 		m_Stack.Pop<PointerObject>();
 	}
 	template<typename T>
-	void Interpreter::GetTwoSameType(Type rhsType, T*& lhs) noexcept {
+	bool Interpreter::GetTwoSameType(Type rhsType, T*& lhs) noexcept {
 		if (IsLocalVariable() || IsLocalVariable(sizeof(T))) {
 			OccurException(SVM_IEC_STACK_EMPTY);
-			return;
+			return false;
 		}
 
 		Type* const lhsTypePtr = m_Stack.Get<Type>(m_Stack.GetUsedSize() - sizeof(T));
 		if (!lhsTypePtr) {
 			OccurException(SVM_IEC_STACK_EMPTY);
-			return;
+			return false;
 		} else if (rhsType != *lhsTypePtr) {
 			OccurException(SVM_IEC_STACK_DIFFERENTTYPE);
-			return;
+			return false;
 		}
 
 		lhs = reinterpret_cast<T*>(lhsTypePtr);
+		return true;
 	}
 }
 
@@ -281,19 +282,19 @@ namespace svm {
 		const Type firstType = *firstTypePtr;
 		if (firstType == IntType) {
 			IntObject* second = nullptr;
-			GetTwoSameType(firstType, second);
+			if (!GetTwoSameType(firstType, second)) return;
 			std::iter_swap(reinterpret_cast<IntObject*>(firstTypePtr), second);
 		} else if (firstType == LongType) {
 			LongObject* second = nullptr;
-			GetTwoSameType(firstType, second);
+			if (!GetTwoSameType(firstType, second)) return;
 			std::iter_swap(reinterpret_cast<LongObject*>(firstTypePtr), second);
 		} else if (firstType == DoubleType) {
 			DoubleObject* second = nullptr;
-			GetTwoSameType(firstType, second);
+			if (!GetTwoSameType(firstType, second)) return;
 			std::iter_swap(reinterpret_cast<DoubleObject*>(firstTypePtr), second);
 		} else if (firstType == PointerType) {
 			PointerObject* second = nullptr;
-			GetTwoSameType(firstType, second);
+			if (!GetTwoSameType(firstType, second)) return;
 			std::iter_swap(reinterpret_cast<PointerObject*>(firstTypePtr), second);
 		} else {
 			OccurException(SVM_IEC_STACK_EMPTY);

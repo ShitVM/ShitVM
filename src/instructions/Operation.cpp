@@ -7,19 +7,19 @@
 
 namespace svm {
 	template<typename T>
-	void Interpreter::PopTwoSameType(Type& rhsType, T& lhs, T& rhs) noexcept {
+	bool Interpreter::PopTwoSameType(Type& rhsType, T& lhs, T& rhs) noexcept {
 		if (IsLocalVariable() || IsLocalVariable(sizeof(T))) {
 			OccurException(SVM_IEC_STACK_EMPTY);
-			return;
+			return false;
 		}
 
 		Type* const lhsTypePtr = m_Stack.Get<Type>(m_Stack.GetUsedSize() - sizeof(T));
 		if (!lhsTypePtr) {
 			OccurException(SVM_IEC_STACK_EMPTY);
-			return;
+			return false;
 		} else if (rhsType != *lhsTypePtr) {
 			OccurException(SVM_IEC_STACK_DIFFERENTTYPE);
-			return;
+			return false;
 		}
 
 		lhs = *reinterpret_cast<T*>(lhsTypePtr);
@@ -27,6 +27,7 @@ namespace svm {
 
 		m_Stack.Pop<T>();
 		m_Stack.Pop<T>();
+		return true;
 	}
 }
 
@@ -41,15 +42,15 @@ namespace svm {
 		Type& rhsType = *rhsTypePtr;
 		if (rhsType == IntType) {
 			IntObject lhs, rhs;
-			PopTwoSameType(rhsType, lhs, rhs);
+			if (!PopTwoSameType(rhsType, lhs, rhs)) return;
 			m_Stack.Push<IntObject>(lhs.Value + rhs.Value);
 		} else if (rhsType == LongType) {
 			LongObject lhs, rhs;
-			PopTwoSameType(rhsType, lhs, rhs);
+			if (!PopTwoSameType(rhsType, lhs, rhs)) return;
 			m_Stack.Push<LongObject>(lhs.Value + rhs.Value);
 		} else if (rhsType == DoubleType) {
 			DoubleObject lhs, rhs;
-			PopTwoSameType(rhsType, lhs, rhs);
+			if (!PopTwoSameType(rhsType, lhs, rhs)) return;
 			m_Stack.Push<DoubleObject>(lhs.Value + rhs.Value);
 		} else if (rhsType == PointerType) {
 			OccurException(SVM_IEC_POINTER_INVALIDFORPOINTER);
@@ -67,15 +68,15 @@ namespace svm {
 		Type& rhsType = *rhsTypePtr;
 		if (rhsType == IntType) {
 			IntObject lhs, rhs;
-			PopTwoSameType(rhsType, lhs, rhs);
+			if (!PopTwoSameType(rhsType, lhs, rhs)) return;
 			m_Stack.Push<IntObject>(lhs.Value - rhs.Value);
 		} else if (rhsType == LongType) {
 			LongObject lhs, rhs;
-			PopTwoSameType(rhsType, lhs, rhs);
+			if (!PopTwoSameType(rhsType, lhs, rhs)) return;
 			m_Stack.Push<LongObject>(lhs.Value - rhs.Value);
 		} else if (rhsType == DoubleType) {
 			DoubleObject lhs, rhs;
-			PopTwoSameType(rhsType, lhs, rhs);
+			if (!PopTwoSameType(rhsType, lhs, rhs)) return;
 			m_Stack.Push<DoubleObject>(lhs.Value - rhs.Value);
 		} else if (rhsType == PointerType) {
 			OccurException(SVM_IEC_POINTER_INVALIDFORPOINTER);
@@ -93,15 +94,15 @@ namespace svm {
 		Type& rhsType = *rhsTypePtr;
 		if (rhsType == IntType) {
 			IntObject lhs, rhs;
-			PopTwoSameType(rhsType, lhs, rhs);
+			if (!PopTwoSameType(rhsType, lhs, rhs)) return;
 			m_Stack.Push<IntObject>(lhs.Value * rhs.Value);
 		} else if (rhsType == LongType) {
 			LongObject lhs, rhs;
-			PopTwoSameType(rhsType, lhs, rhs);
+			if (!PopTwoSameType(rhsType, lhs, rhs)) return;
 			m_Stack.Push<LongObject>(lhs.Value * rhs.Value);
 		} else if (rhsType == DoubleType) {
 			DoubleObject lhs, rhs;
-			PopTwoSameType(rhsType, lhs, rhs);
+			if (!PopTwoSameType(rhsType, lhs, rhs)) return;
 			m_Stack.Push<DoubleObject>(lhs.Value * rhs.Value);
 		} else if (rhsType == PointerType) {
 			OccurException(SVM_IEC_POINTER_INVALIDFORPOINTER);
@@ -119,15 +120,15 @@ namespace svm {
 		Type& rhsType = *rhsTypePtr;
 		if (rhsType == IntType) {
 			IntObject lhs, rhs;
-			PopTwoSameType(rhsType, lhs, rhs);
+			if (!PopTwoSameType(rhsType, lhs, rhs)) return;
 			m_Stack.Push<IntObject>(static_cast<std::int32_t>(lhs.Value)* static_cast<std::int32_t>(rhs.Value));
 		} else if (rhsType == LongType) {
 			LongObject lhs, rhs;
-			PopTwoSameType(rhsType, lhs, rhs);
+			if (!PopTwoSameType(rhsType, lhs, rhs)) return;
 			m_Stack.Push<LongObject>(static_cast<std::int64_t>(lhs.Value)* static_cast<std::int64_t>(rhs.Value));
 		} else if (rhsType == DoubleType) {
 			DoubleObject lhs, rhs;
-			PopTwoSameType(rhsType, lhs, rhs);
+			if (!PopTwoSameType(rhsType, lhs, rhs)) return;
 			m_Stack.Push<DoubleObject>(lhs.Value * rhs.Value);
 		} else if (rhsType == PointerType) {
 			OccurException(SVM_IEC_POINTER_INVALIDFORPOINTER);
@@ -145,7 +146,7 @@ namespace svm {
 		Type& rhsType = *rhsTypePtr;
 		if (rhsType == IntType) {
 			IntObject lhs, rhs;
-			PopTwoSameType(rhsType, lhs, rhs);
+			if (!PopTwoSameType(rhsType, lhs, rhs)) return;
 			if (rhs.Value == 0) {
 				OccurException(SVM_IEC_ARITHMETIC_DIVIDEBYZERO);
 				return;
@@ -153,7 +154,7 @@ namespace svm {
 			m_Stack.Push<IntObject>(lhs.Value / rhs.Value);
 		} else if (rhsType == LongType) {
 			LongObject lhs, rhs;
-			PopTwoSameType(rhsType, lhs, rhs);
+			if (!PopTwoSameType(rhsType, lhs, rhs)) return;
 			if (rhs.Value == 0) {
 				OccurException(SVM_IEC_ARITHMETIC_DIVIDEBYZERO);
 				return;
@@ -161,7 +162,7 @@ namespace svm {
 			m_Stack.Push<LongObject>(lhs.Value / rhs.Value);
 		} else if (rhsType == DoubleType) {
 			DoubleObject lhs, rhs;
-			PopTwoSameType(rhsType, lhs, rhs);
+			if (!PopTwoSameType(rhsType, lhs, rhs)) return;
 			if (rhs.Value == 0) {
 				OccurException(SVM_IEC_ARITHMETIC_DIVIDEBYZERO);
 				return;
@@ -183,7 +184,7 @@ namespace svm {
 		Type& rhsType = *rhsTypePtr;
 		if (rhsType == IntType) {
 			IntObject lhs, rhs;
-			PopTwoSameType(rhsType, lhs, rhs);
+			if (!PopTwoSameType(rhsType, lhs, rhs)) return;
 			if (rhs.Value == 0) {
 				OccurException(SVM_IEC_ARITHMETIC_DIVIDEBYZERO);
 				return;
@@ -191,7 +192,7 @@ namespace svm {
 			m_Stack.Push<IntObject>(static_cast<std::int32_t>(lhs.Value) / static_cast<std::int32_t>(rhs.Value));
 		} else if (rhsType == LongType) {
 			LongObject lhs, rhs;
-			PopTwoSameType(rhsType, lhs, rhs);
+			if (!PopTwoSameType(rhsType, lhs, rhs)) return;
 			if (rhs.Value == 0) {
 				OccurException(SVM_IEC_ARITHMETIC_DIVIDEBYZERO);
 				return;
@@ -199,7 +200,7 @@ namespace svm {
 			m_Stack.Push<LongObject>(static_cast<std::int64_t>(lhs.Value) / static_cast<std::int64_t>(rhs.Value));
 		} else if (rhsType == DoubleType) {
 			DoubleObject lhs, rhs;
-			PopTwoSameType(rhsType, lhs, rhs);
+			if (!PopTwoSameType(rhsType, lhs, rhs)) return;
 			if (rhs.Value == 0) {
 				OccurException(SVM_IEC_ARITHMETIC_DIVIDEBYZERO);
 				return;
@@ -221,7 +222,7 @@ namespace svm {
 		Type& rhsType = *rhsTypePtr;
 		if (rhsType == IntType) {
 			IntObject lhs, rhs;
-			PopTwoSameType(rhsType, lhs, rhs);
+			if (!PopTwoSameType(rhsType, lhs, rhs)) return;
 			if (rhs.Value == 0) {
 				OccurException(SVM_IEC_ARITHMETIC_DIVIDEBYZERO);
 				return;
@@ -229,7 +230,7 @@ namespace svm {
 			m_Stack.Push<IntObject>(lhs.Value % rhs.Value);
 		} else if (rhsType == LongType) {
 			LongObject lhs, rhs;
-			PopTwoSameType(rhsType, lhs, rhs);
+			if (!PopTwoSameType(rhsType, lhs, rhs)) return;
 			if (rhs.Value == 0) {
 				OccurException(SVM_IEC_ARITHMETIC_DIVIDEBYZERO);
 				return;
@@ -237,7 +238,7 @@ namespace svm {
 			m_Stack.Push<LongObject>(lhs.Value % rhs.Value);
 		} else if (rhsType == DoubleType) {
 			DoubleObject lhs, rhs;
-			PopTwoSameType(rhsType, lhs, rhs);
+			if (!PopTwoSameType(rhsType, lhs, rhs)) return;
 			if (rhs.Value == 0) {
 				OccurException(SVM_IEC_ARITHMETIC_DIVIDEBYZERO);
 				return;
@@ -259,7 +260,7 @@ namespace svm {
 		Type& rhsType = *rhsTypePtr;
 		if (rhsType == IntType) {
 			IntObject lhs, rhs;
-			PopTwoSameType(rhsType, lhs, rhs);
+			if (!PopTwoSameType(rhsType, lhs, rhs)) return;
 			if (rhs.Value == 0) {
 				OccurException(SVM_IEC_ARITHMETIC_DIVIDEBYZERO);
 				return;
@@ -267,7 +268,7 @@ namespace svm {
 			m_Stack.Push<IntObject>(static_cast<std::int32_t>(lhs.Value) % static_cast<std::int32_t>(rhs.Value));
 		} else if (rhsType == LongType) {
 			LongObject lhs, rhs;
-			PopTwoSameType(rhsType, lhs, rhs);
+			if (!PopTwoSameType(rhsType, lhs, rhs)) return;
 			if (rhs.Value == 0) {
 				OccurException(SVM_IEC_ARITHMETIC_DIVIDEBYZERO);
 				return;
@@ -275,7 +276,7 @@ namespace svm {
 			m_Stack.Push<LongObject>(static_cast<std::int64_t>(lhs.Value) % static_cast<std::int64_t>(rhs.Value));
 		} else if (rhsType == DoubleType) {
 			DoubleObject lhs, rhs;
-			PopTwoSameType(rhsType, lhs, rhs);
+			if (!PopTwoSameType(rhsType, lhs, rhs)) return;
 			if (rhs.Value == 0) {
 				OccurException(SVM_IEC_ARITHMETIC_DIVIDEBYZERO);
 				return;
@@ -353,11 +354,11 @@ namespace svm {
 		Type& rhsType = *rhsTypePtr;
 		if (rhsType == IntType) {
 			IntObject lhs, rhs;
-			PopTwoSameType(rhsType, lhs, rhs);
+			if (!PopTwoSameType(rhsType, lhs, rhs)) return;
 			m_Stack.Push<IntObject>(lhs.Value & rhs.Value);
 		} else if (rhsType == LongType || rhsType == DoubleType) {
 			LongObject lhs, rhs;
-			PopTwoSameType(rhsType, lhs, rhs);
+			if (!PopTwoSameType(rhsType, lhs, rhs)) return;
 			m_Stack.Push<LongObject>(lhs.Value & rhs.Value);
 			if (rhsType == DoubleType) {
 				*m_Stack.GetTopType() = DoubleType;
@@ -378,11 +379,11 @@ namespace svm {
 		Type& rhsType = *rhsTypePtr;
 		if (rhsType == IntType) {
 			IntObject lhs, rhs;
-			PopTwoSameType(rhsType, lhs, rhs);
+			if (!PopTwoSameType(rhsType, lhs, rhs)) return;
 			m_Stack.Push<IntObject>(lhs.Value | rhs.Value);
 		} else if (rhsType == LongType || rhsType == DoubleType) {
 			LongObject lhs, rhs;
-			PopTwoSameType(rhsType, lhs, rhs);
+			if (!PopTwoSameType(rhsType, lhs, rhs)) return;
 			m_Stack.Push<LongObject>(lhs.Value | rhs.Value);
 			if (rhsType == DoubleType) {
 				*m_Stack.GetTopType() = DoubleType;
@@ -403,11 +404,11 @@ namespace svm {
 		Type& rhsType = *rhsTypePtr;
 		if (rhsType == IntType) {
 			IntObject lhs, rhs;
-			PopTwoSameType(rhsType, lhs, rhs);
+			if (!PopTwoSameType(rhsType, lhs, rhs)) return;
 			m_Stack.Push<IntObject>(lhs.Value ^ rhs.Value);
 		} else if (rhsType == LongType || rhsType == DoubleType) {
 			LongObject lhs, rhs;
-			PopTwoSameType(rhsType, lhs, rhs);
+			if (!PopTwoSameType(rhsType, lhs, rhs)) return;
 			m_Stack.Push<LongObject>(lhs.Value ^ rhs.Value);
 			if (rhsType == DoubleType) {
 				*m_Stack.GetTopType() = DoubleType;
@@ -453,11 +454,11 @@ namespace svm {
 		Type& rhsType = *rhsTypePtr;
 		if (rhsType == IntType) {
 			IntObject lhs, rhs;
-			PopTwoSameType(rhsType, lhs, rhs);
+			if (!PopTwoSameType(rhsType, lhs, rhs)) return;
 			m_Stack.Push<IntObject>(lhs.Value << rhs.Value);
 		} else if (rhsType == LongType || rhsType == DoubleType) {
 			LongObject lhs, rhs;
-			PopTwoSameType(rhsType, lhs, rhs);
+			if (!PopTwoSameType(rhsType, lhs, rhs)) return;
 			m_Stack.Push<LongObject>(lhs.Value << rhs.Value);
 			if (rhsType == DoubleType) {
 				*m_Stack.GetTopType() = DoubleType;
@@ -481,11 +482,11 @@ namespace svm {
 		Type& rhsType = *rhsTypePtr;
 		if (rhsType == IntType) {
 			IntObject lhs, rhs;
-			PopTwoSameType(rhsType, lhs, rhs);
+			if (!PopTwoSameType(rhsType, lhs, rhs)) return;
 			m_Stack.Push<IntObject>(lhs.Value >> rhs.Value);
 		} else if (rhsType == LongType || rhsType == DoubleType) {
 			LongObject lhs, rhs;
-			PopTwoSameType(rhsType, lhs, rhs);
+			if (!PopTwoSameType(rhsType, lhs, rhs)) return;
 			m_Stack.Push<LongObject>(lhs.Value >> rhs.Value);
 			if (rhsType == DoubleType) {
 				*m_Stack.GetTopType() = DoubleType;
@@ -506,11 +507,11 @@ namespace svm {
 		Type& rhsType = *rhsTypePtr;
 		if (rhsType == IntType) {
 			IntObject lhs, rhs;
-			PopTwoSameType(rhsType, lhs, rhs);
+			if (!PopTwoSameType(rhsType, lhs, rhs)) return;
 			m_Stack.Push<IntObject>(static_cast<std::int32_t>(lhs.Value) >> static_cast<std::int32_t>(rhs.Value));
 		} else if (rhsType == LongType || rhsType == DoubleType) {
 			LongObject lhs, rhs;
-			PopTwoSameType(rhsType, lhs, rhs);
+			if (!PopTwoSameType(rhsType, lhs, rhs)) return;
 			m_Stack.Push<LongObject>(static_cast<std::int64_t>(lhs.Value) >> static_cast<std::int64_t>(rhs.Value));
 			if (rhsType == DoubleType) {
 				*m_Stack.GetTopType() = DoubleType;
@@ -547,19 +548,19 @@ namespace svm {
 		Type& rhsType = *rhsTypePtr;
 		if (rhsType == IntType) {
 			IntObject lhs, rhs;
-			PopTwoSameType(rhsType, lhs, rhs);
+			if (!PopTwoSameType(rhsType, lhs, rhs)) return;
 			m_Stack.Push(CompareTwoSameType(lhs.Value, rhs.Value));
 		} else if (rhsType == LongType) {
 			LongObject lhs, rhs;
-			PopTwoSameType(rhsType, lhs, rhs);
+			if (!PopTwoSameType(rhsType, lhs, rhs)) return;
 			m_Stack.Push(CompareTwoSameType(lhs.Value, rhs.Value));
 		} else if (rhsType == DoubleType) {
 			DoubleObject lhs, rhs;
-			PopTwoSameType(rhsType, lhs, rhs);
+			if (!PopTwoSameType(rhsType, lhs, rhs)) return;
 			m_Stack.Push(CompareTwoSameType(lhs.Value, rhs.Value));
 		} else if (rhsType == PointerType) {
 			PointerObject lhs, rhs;
-			PopTwoSameType(rhsType, lhs, rhs);
+			if (!PopTwoSameType(rhsType, lhs, rhs)) return;
 			m_Stack.Push(CompareTwoSameType(lhs.Value, rhs.Value));
 		} else {
 			OccurException(SVM_IEC_STACK_EMPTY);
@@ -575,19 +576,19 @@ namespace svm {
 		Type& rhsType = *rhsTypePtr;
 		if (rhsType == IntType) {
 			IntObject lhs, rhs;
-			PopTwoSameType(rhsType, lhs, rhs);
+			if (!PopTwoSameType(rhsType, lhs, rhs)) return;
 			m_Stack.Push(CompareTwoSameType<std::int32_t>(lhs.Value, rhs.Value));
 		} else if (rhsType == LongType) {
 			LongObject lhs, rhs;
-			PopTwoSameType(rhsType, lhs, rhs);
+			if (!PopTwoSameType(rhsType, lhs, rhs)) return;
 			m_Stack.Push(CompareTwoSameType<std::int64_t>(lhs.Value, rhs.Value));
 		} else if (rhsType == DoubleType) {
 			DoubleObject lhs, rhs;
-			PopTwoSameType(rhsType, lhs, rhs);
+			if (!PopTwoSameType(rhsType, lhs, rhs)) return;
 			m_Stack.Push(CompareTwoSameType(lhs.Value, rhs.Value));
 		} else if (rhsType == PointerType) {
 			PointerObject lhs, rhs;
-			PopTwoSameType(rhsType, lhs, rhs);
+			if (!PopTwoSameType(rhsType, lhs, rhs)) return;
 			m_Stack.Push(CompareTwoSameType(lhs.Value, rhs.Value));
 		} else {
 			OccurException(SVM_IEC_STACK_EMPTY);
