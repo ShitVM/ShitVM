@@ -229,4 +229,7 @@ namespace svm {
 
 		e.Code = code;
 	}
+	bool Interpreter::IsLocalVariable(std::size_t delta) const noexcept {
+		return !m_LocalVariables.empty() && m_LocalVariables.back() == m_Stack.GetUsedSize() - delta;
+	}
 }

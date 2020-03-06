@@ -6,20 +6,12 @@
 
 namespace svm {
 	template<typename T>
-	void Interpreter::GetTwoSameType(Type rhsType, T*& lhs) noexcept {
-		Type* const lhsTypePtr = m_Stack.Get<Type>(m_Stack.GetUsedSize() - sizeof(T));
-		if (!lhsTypePtr) {
+	void Interpreter::DRefAndAssign(Type* rhsTypePtr) noexcept {
+		if (IsLocalVariable() || IsLocalVariable(sizeof(T))) {
 			OccurException(SVM_IEC_STACK_EMPTY);
-			return;
-		} else if (rhsType != *lhsTypePtr) {
-			OccurException(SVM_IEC_STACK_DIFFERENTTYPE);
 			return;
 		}
 
-		lhs = reinterpret_cast<T*>(lhsTypePtr);
-	}
-	template<typename T>
-	void Interpreter::DRefAndAssign(Type* rhsTypePtr) noexcept {
 		Type* const lhsTypePtr = m_Stack.Get<Type>(m_Stack.GetUsedSize() - sizeof(T));
 		if (!lhsTypePtr) {
 			OccurException(SVM_IEC_STACK_EMPTY);
@@ -38,6 +30,24 @@ namespace svm {
 		reinterpret_cast<T*>(targetType)->Value = reinterpret_cast<T*>(rhsTypePtr)->Value;
 		m_Stack.Pop<T>();
 		m_Stack.Pop<PointerObject>();
+	}
+	template<typename T>
+	void Interpreter::GetTwoSameType(Type rhsType, T*& lhs) noexcept {
+		if (IsLocalVariable() || IsLocalVariable(sizeof(T))) {
+			OccurException(SVM_IEC_STACK_EMPTY);
+			return;
+		}
+
+		Type* const lhsTypePtr = m_Stack.Get<Type>(m_Stack.GetUsedSize() - sizeof(T));
+		if (!lhsTypePtr) {
+			OccurException(SVM_IEC_STACK_EMPTY);
+			return;
+		} else if (rhsType != *lhsTypePtr) {
+			OccurException(SVM_IEC_STACK_DIFFERENTTYPE);
+			return;
+		}
+
+		lhs = reinterpret_cast<T*>(lhsTypePtr);
 	}
 }
 
@@ -65,9 +75,8 @@ namespace svm {
 #undef ConstantPool
 	}
 	SVM_NOINLINE_FOR_PROFILING void Interpreter::InterpretPop() {
-		if (!m_LocalVariables.empty() && m_Stack.GetUsedSize() == m_LocalVariables.back()) {
-			OccurException(SVM_IEC_STACK_EMPTY);
-			return;
+		if (IsLocalVariable()) {
+			m_LocalVariables.erase(m_LocalVariables.end() - 1);
 		}
 
 		Type* const typePtr = m_Stack.GetTopType();
@@ -113,6 +122,11 @@ namespace svm {
 		}
 	}
 	SVM_NOINLINE_FOR_PROFILING void Interpreter::InterpretStore(std::uint32_t operand) {
+		if (IsLocalVariable()) {
+			OccurException(SVM_IEC_STACK_EMPTY);
+			return;
+		}
+
 		operand += static_cast<std::uint32_t>(m_StackFrame.VariableBegin);
 		if (operand > m_LocalVariables.size()) {
 			OccurException(SVM_IEC_LOCALVARIABLE_INVALIDINDEX);
@@ -168,6 +182,11 @@ namespace svm {
 		}
 	}
 	SVM_NOINLINE_FOR_PROFILING void Interpreter::InterpretTLoad() {
+		if (IsLocalVariable()) {
+			OccurException(SVM_IEC_STACK_EMPTY);
+			return;
+		}
+
 		const auto ptr = m_Stack.Pop<PointerObject>();
 		if (!ptr) {
 			OccurException(SVM_IEC_STACK_EMPTY);
@@ -223,6 +242,11 @@ namespace svm {
 		}
 	}
 	SVM_NOINLINE_FOR_PROFILING void Interpreter::InterpretCopy() {
+		if (IsLocalVariable()) {
+			OccurException(SVM_IEC_STACK_EMPTY);
+			return;
+		}
+
 		Type* const typePtr = m_Stack.GetTopType();
 		if (!typePtr) {
 			OccurException(SVM_IEC_STACK_EMPTY);

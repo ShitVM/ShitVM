@@ -125,12 +125,13 @@ namespace svm {
 
 	private:
 		void OccurException(std::uint32_t code) noexcept;
-
-		template<typename T>
-		void DRefAndAssign(Type* rhsTypePtr) noexcept;
+		bool IsLocalVariable(std::size_t delta = 0) const noexcept;
 
 		template<typename T>
 		void GetTwoSameType(Type rhsType, T*& lhs) noexcept;
+		template<typename T>
+		void DRefAndAssign(Type* rhsTypePtr) noexcept;
+
 		template<typename T>
 		void PopTwoSameType(Type& rhsType, T& lhs, T& rhs) noexcept;
 		template<typename T>

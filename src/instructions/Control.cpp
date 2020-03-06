@@ -5,7 +5,10 @@
 namespace svm {
 	template<typename T>
 	void Interpreter::JumpCondition(std::uint32_t operand) {
-		if (operand >= m_StackFrame.Instructions->GetLabelCount()) {
+		if (IsLocalVariable()) {
+			OccurException(SVM_IEC_STACK_EMPTY);
+			return;
+		} else if (operand >= m_StackFrame.Instructions->GetLabelCount()) {
 			OccurException(SVM_IEC_LABEL_OUTOFRANGE);
 			return;
 		}
@@ -145,6 +148,11 @@ namespace svm {
 
 		Result result;
 		if (m_StackFrame.Function->HasResult()) {
+			if (IsLocalVariable()) {
+				OccurException(SVM_IEC_STACK_EMPTY);
+				return;
+			}
+
 			Type* const typePtr = m_Stack.GetTopType();
 			if (!typePtr) {
 				OccurException(SVM_IEC_STACK_EMPTY);
