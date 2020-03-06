@@ -19,13 +19,14 @@ namespace svm {
 		v0_1_0,
 		v0_2_0,
 
+		Least = v0_1_0,
 		Latest = v0_2_0,
 	};
 
 	enum class ByteCodeVersion : std::uint16_t {
-		v0_1_0,
 		v0_2_0,
 
+		Least = v0_2_0,
 		Latest = v0_2_0,
 	};
 

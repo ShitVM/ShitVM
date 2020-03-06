@@ -138,8 +138,8 @@ namespace svm {
 			case OpCode::Mod: InterpretMod(); break;
 			case OpCode::IMod: InterpretIMod(); break;
 			case OpCode::Neg: InterpretNeg(); break;
-			case OpCode::Inc: InterpretIncDec(1); break;
-			case OpCode::Dec: InterpretIncDec(-1); break;
+			case OpCode::Inc: InterpretIncDec(inst.Operand, 1); break;
+			case OpCode::Dec: InterpretIncDec(inst.Operand, -1); break;
 
 			case OpCode::And: InterpretAnd(); break;
 			case OpCode::Or: InterpretOr(); break;
@@ -229,5 +229,8 @@ namespace svm {
 		e.InstructionIndex = m_InstructionIndex;
 
 		e.Code = code;
+	}
+	bool Interpreter::IsLocalVariable(std::size_t delta) const noexcept {
+		return !m_LocalVariables.empty() && m_LocalVariables.back() == m_Stack.GetUsedSize() - delta;
 	}
 }

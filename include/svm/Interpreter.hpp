@@ -126,14 +126,15 @@ namespace svm {
 
 	private:
 		void OccurException(std::uint32_t code) noexcept;
+		bool IsLocalVariable(std::size_t delta = 0) const noexcept;
 
 		template<typename T>
 		void DRefAndAssign(Type* rhsTypePtr) noexcept;
+		template<typename T>
+		bool GetTwoSameType(Type rhsType, T*& lhs) noexcept;
 
 		template<typename T>
-		void GetTwoSameType(Type rhsType, T*& lhs) noexcept;
-		template<typename T>
-		void PopTwoSameType(Type& rhsType, T& lhs, T& rhs) noexcept;
+		bool PopTwoSameType(Type& rhsType, T& lhs, T& rhs) noexcept;
 		template<typename T>
 		IntObject CompareTwoSameType(T lhs, T rhs) noexcept;
 		template<typename T>
@@ -158,7 +159,7 @@ namespace svm {
 		void InterpretMod();
 		void InterpretIMod();
 		void InterpretNeg();
-		void InterpretIncDec(int delta);
+		void InterpretIncDec(std::uint32_t operand, int delta);
 
 		void InterpretAnd();
 		void InterpretOr();
