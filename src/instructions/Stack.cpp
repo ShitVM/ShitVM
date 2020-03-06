@@ -6,6 +6,27 @@
 #include <algorithm>
 
 namespace svm {
+	void Interpreter::PushStructure(std::uint32_t code) noexcept {
+#define Structures m_ByteFile.GetStructures()
+		if (code >= Structures.GetCount()) {
+			OccurException(SVM_IEC_CONSTANTPOOL_OUTOFRANGE);
+			return;
+		}
+
+		const Structure structure = Structures.Get(code);
+		if (!m_Stack.Add(structure->Type.Size)) {
+			OccurException(SVM_IEC_STACK_OVERFLOW);
+			return;
+		}
+
+		*m_Stack.GetTopType() = structure->Type;
+		std::size_t stackOffset = m_Stack.GetUsedSize() - sizeof(Type);
+		for (std::size_t i = 0; i < structure->FieldTypes.size(); ++i) {
+			*m_Stack.Get<Type>(stackOffset) = structure->FieldTypes[i];
+			stackOffset -= structure->FieldTypes[i]->Size;
+		}
+#undef Structures
+	}
 	template<typename T>
 	void Interpreter::DRefAndAssign(Type* rhsTypePtr) noexcept {
 		if (IsLocalVariable() || IsLocalVariable(sizeof(T))) {
@@ -57,7 +78,7 @@ namespace svm {
 	SVM_NOINLINE_FOR_PROFILING void Interpreter::InterpretPush(std::uint32_t operand) {
 #define ConstantPool m_ByteFile.GetConstantPool()
 		if (operand >= ConstantPool.GetAllCount()) {
-			OccurException(SVM_IEC_CONSTANTPOOL_OUTOFRANGE);
+			PushStructure(operand - ConstantPool.GetAllCount());
 			return;
 		}
 

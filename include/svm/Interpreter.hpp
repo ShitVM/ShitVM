@@ -73,6 +73,7 @@ namespace svm {
 		std::size_t GetFreeSize() const noexcept;
 		void RemoveTo(std::size_t newSize) noexcept;
 		void Remove(std::size_t delta) noexcept;
+		bool Add(std::size_t delta) noexcept;
 	};
 
 	struct StackFrame final {
@@ -128,6 +129,7 @@ namespace svm {
 		void OccurException(std::uint32_t code) noexcept;
 		bool IsLocalVariable(std::size_t delta = 0) const noexcept;
 
+		void PushStructure(std::uint32_t code) noexcept;
 		template<typename T>
 		void DRefAndAssign(Type* rhsTypePtr) noexcept;
 		template<typename T>

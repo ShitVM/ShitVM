@@ -55,6 +55,10 @@ namespace svm {
 	void Stack::Remove(std::size_t delta) noexcept {
 		m_Used -= delta;
 	}
+	bool Stack::Add(std::size_t delta) noexcept {
+		if (GetFreeSize() < delta) return false;
+		m_Used += delta;
+	}
 }
 
 namespace svm {
