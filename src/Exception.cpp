@@ -26,6 +26,8 @@ namespace svm {
 		case SVM_IEC_POINTER_NOTPOINTER: return "Not a pointer";
 		case SVM_IEC_POINTER_INVALIDFORPOINTER: return "Can't operate on pointers";
 
+		case SVM_IEC_STRUCTURE_INVALIDFORSTRUCTURE: return "Can't operate on structures";
+
 		default: return "";
 		}
 	}

@@ -52,6 +52,7 @@ namespace svm {
 	public:
 		bool IsFundamentalType() const noexcept;
 		bool IsStructure() const noexcept;
+		bool IsValidType() const noexcept;
 	};
 
 	extern const Type NoneType;

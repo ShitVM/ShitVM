@@ -20,6 +20,9 @@ namespace svm {
 	bool Type::IsStructure() const noexcept {
 		return GetReference().Code >= TypeCode::Structure;
 	}
+	bool Type::IsValidType() const noexcept {
+		return IsFundamentalType() || IsStructure();
+	}
 
 	namespace {
 		static const TypeInfo s_NoneType(TypeCode::None, "none", 0);
