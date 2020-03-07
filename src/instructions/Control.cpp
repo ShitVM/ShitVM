@@ -45,6 +45,8 @@ namespace svm {
 				m_InstructionIndex = m_StackFrame.Instructions->GetLabel(operand) - 1;
 				m_Stack.Remove(sizeof(PointerObject));
 			}
+		} else if (type.IsStructure()) {
+			OccurException(SVM_IEC_STRUCTURE_INVALIDFORSTRUCTURE);
 		} else {
 			OccurException(SVM_IEC_STACK_EMPTY);
 		}
@@ -122,14 +124,8 @@ namespace svm {
 			m_LocalVariables.push_back(stackOffset);
 
 			const Type type = *typePtr;
-			if (type == IntType) {
-				stackOffset -= sizeof(IntObject);
-			} else if (type == LongType) {
-				stackOffset -= sizeof(LongObject);
-			} else if (type == DoubleType) {
-				stackOffset -= sizeof(DoubleObject);
-			} else if (type == PointerType) {
-				stackOffset -= sizeof(PointerObject);
+			if (type.IsValidType()) {
+				stackOffset -= type->Size;
 			} else {
 				OccurException(SVM_IEC_STACK_EMPTY);
 				m_StackFrame = m_Stack.Pop<StackFrame>().value();
@@ -148,6 +144,7 @@ namespace svm {
 		}
 
 		Result result;
+		std::size_t structureOffset = 0;
 		if (m_StackFrame.Function->HasResult()) {
 			if (IsLocalVariable()) {
 				OccurException(SVM_IEC_STACK_EMPTY);
@@ -169,6 +166,10 @@ namespace svm {
 				result = m_Stack.Pop<DoubleObject>()->Value;
 			} else if (type == PointerType) {
 				result = m_Stack.Pop<PointerObject>()->Value;
+			} else if (type.IsStructure()) {
+				result.emplace<StructureObject>(type);
+				structureOffset = m_Stack.GetUsedSize();
+				m_Stack.Remove(type->Size);
 			} else {
 				OccurException(SVM_IEC_STACK_EMPTY);
 				return;
@@ -185,15 +186,7 @@ namespace svm {
 
 		for (std::uint16_t j = 0; j < arity; ++j) {
 			const Type type = *m_Stack.GetTopType();
-			if (type == IntType) {
-				m_Stack.Remove(sizeof(IntObject));
-			} else if (type == LongType) {
-				m_Stack.Remove(sizeof(LongObject));
-			} else if (type == DoubleType) {
-				m_Stack.Remove(sizeof(DoubleObject));
-			} else if (type == PointerType) {
-				m_Stack.Remove(sizeof(PointerObject));
-			}
+			m_Stack.Remove(type->Size);
 		}
 
 		--m_Depth;
@@ -207,6 +200,10 @@ namespace svm {
 			m_Stack.Push<DoubleObject>(std::get<double>(result));
 		} else if (std::holds_alternative<void*>(result)) {
 			m_Stack.Push<PointerObject>(std::get<void*>(result));
+		} else if (std::holds_alternative<StructureObject>(result)) {
+			const Type type = std::get<StructureObject>(result).GetType();
+			m_Stack.Add(type->Size);
+			std::memmove(m_Stack.GetTopType(), m_Stack.Get<Type>(structureOffset), type->Size);
 		}
 	}
 }

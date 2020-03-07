@@ -88,7 +88,7 @@ namespace svm {
 namespace svm {
 	class Interpreter final {
 	public:
-		using Result = std::variant<std::monostate, std::uint32_t, std::uint64_t, double, void*>;
+		using Result = std::variant<std::monostate, std::uint32_t, std::uint64_t, double, void*, StructureObject>;
 
 	private:
 		ByteFile m_ByteFile;
