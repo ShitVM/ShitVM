@@ -239,6 +239,43 @@ namespace svm {
 			OccurException(SVM_IEC_STACK_OVERFLOW);
 		}
 	}
+	SVM_NOINLINE_FOR_PROFILING void Interpreter::InterpretFLea(std::uint32_t operand) {
+		if (IsLocalVariable()) {
+			OccurException(SVM_IEC_STACK_EMPTY);
+			return;
+		}
+
+		const auto ptr = m_Stack.Pop<PointerObject>();
+		if (!ptr) {
+			OccurException(SVM_IEC_STACK_EMPTY);
+			return;
+		} else if (ptr->GetType() != PointerType) {
+			m_Stack.Push(*ptr);
+			OccurException(SVM_IEC_POINTER_NOTPOINTER);
+			return;
+		}
+
+		Type* const targetTypePtr = static_cast<Type*>(ptr->Value);
+		if (!targetTypePtr) {
+			m_Stack.Push(*ptr);
+			OccurException(SVM_IEC_POINTER_NULLPOINTER);
+			return;
+		} else if (!targetTypePtr->IsStructure()) {
+			m_Stack.Push(*ptr);
+			OccurException(SVM_IEC_STRUCTURE_NOTSTRUCTURE);
+			return;
+		}
+
+		const Structure structure =
+			m_ByteFile.GetStructures()[static_cast<std::uint32_t>(targetTypePtr->GetReference().Code) - static_cast<std::uint32_t>(TypeCode::Structure)];
+		if (operand >= structure->FieldTypes.size()) {
+			m_Stack.Push(*ptr);
+			OccurException(SVM_IEC_STRUCTURE_FIELD_OUTOFRANGE);
+			return;
+		}
+
+		m_Stack.Push(PointerObject(reinterpret_cast<std::uint8_t*>(targetTypePtr) - structure->FieldOffsets[operand]));
+	}
 	SVM_NOINLINE_FOR_PROFILING void Interpreter::InterpretTLoad() {
 		if (IsLocalVariable()) {
 			OccurException(SVM_IEC_STACK_EMPTY);

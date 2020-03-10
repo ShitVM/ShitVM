@@ -129,6 +129,7 @@ namespace svm {
 			case OpCode::Load: InterpretLoad(inst.Operand); break;
 			case OpCode::Store: InterpretStore(inst.Operand); break;
 			case OpCode::Lea: InterpretLea(inst.Operand); break;
+			case OpCode::FLea: InterpretFLea(inst.Operand); break;
 			case OpCode::TLoad: InterpretTLoad(); break;
 			case OpCode::TStore: InterpretTStore(); break;
 			case OpCode::Copy: InterpretCopy(); break;

@@ -151,6 +151,7 @@ namespace svm {
 		void InterpretLoad(std::uint32_t operand);
 		void InterpretStore(std::uint32_t operand);
 		void InterpretLea(std::uint32_t operand);
+		void InterpretFLea(std::uint32_t operand);
 		void InterpretTLoad();
 		void InterpretTStore();
 		void InterpretCopy();

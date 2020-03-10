@@ -192,7 +192,7 @@ namespace svm {
 			std::uint32_t operand = Instruction::NoOperand;
 			const std::uint64_t offset = nextOffset;
 
-			if (OpCode::Push <= opCode && opCode <= OpCode::Lea && opCode != OpCode::Pop ||
+			if (OpCode::Push <= opCode && opCode <= OpCode::FLea && opCode != OpCode::Pop ||
 				OpCode::Inc <= opCode && opCode <= OpCode::Dec ||
 				OpCode::Jmp <= opCode && opCode <= OpCode::Call) {
 				operand = ReadFile<std::uint32_t>();
