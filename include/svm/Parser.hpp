@@ -16,7 +16,7 @@
 
 namespace svm {
 	enum class ByteFileVersion : std::uint16_t {
-		v0_1_0,
+		v0_1_0 = 0,
 		v0_2_0,
 
 		Least = v0_1_0,
@@ -24,7 +24,7 @@ namespace svm {
 	};
 
 	enum class ByteCodeVersion : std::uint16_t {
-		v0_2_0,
+		v0_2_0 = 1,
 
 		Least = v0_2_0,
 		Latest = v0_2_0,
