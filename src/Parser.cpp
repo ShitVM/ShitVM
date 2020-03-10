@@ -162,7 +162,7 @@ namespace svm {
 			StructureInfo& structure = structures[i];
 			structure.FieldOffsets.resize(structure.FieldTypes.size());
 
-			std::size_t offset = 0;
+			std::size_t offset = sizeof(Type);
 			for (std::uint32_t j = 0; j < structure.FieldTypes.size(); ++j) {
 				structure.FieldOffsets[j] = offset;
 				offset += structure.FieldTypes[j]->Size;

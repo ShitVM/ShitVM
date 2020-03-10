@@ -21,9 +21,9 @@ namespace svm {
 		}
 
 		*m_Stack.GetTopType() = structure->Type;
-		const std::size_t firstOffset = m_Stack.GetUsedSize() - sizeof(Type);
+		const std::size_t topOffset = m_Stack.GetUsedSize();
 		for (std::size_t i = 0; i < structure->FieldTypes.size(); ++i) {
-			*m_Stack.Get<Type>(firstOffset - structure->FieldOffsets[i]) = structure->FieldTypes[i];
+			*m_Stack.Get<Type>(topOffset - structure->FieldOffsets[i]) = structure->FieldTypes[i];
 		}
 #undef Structures
 	}
@@ -274,7 +274,7 @@ namespace svm {
 			return;
 		}
 
-		m_Stack.Push(PointerObject(reinterpret_cast<std::uint8_t*>(targetTypePtr) - structure->FieldOffsets[operand]));
+		m_Stack.Push(PointerObject(reinterpret_cast<std::uint8_t*>(targetTypePtr) + structure->FieldOffsets[operand]));
 	}
 	SVM_NOINLINE_FOR_PROFILING void Interpreter::InterpretTLoad() {
 		if (IsLocalVariable()) {
