@@ -335,27 +335,46 @@ namespace svm {
 			OccurException(SVM_IEC_STACK_EMPTY);
 		}
 	}
-	SVM_NOINLINE_FOR_PROFILING void Interpreter::InterpretIncDec(std::uint32_t operand, int delta) {
-		operand += static_cast<std::uint32_t>(m_StackFrame.VariableBegin);
-		if (operand >= m_LocalVariables.size()) {
-			OccurException(SVM_IEC_LOCALVARIABLE_OUTOFRANGE);
+	SVM_NOINLINE_FOR_PROFILING void Interpreter::InterpretIncDec(int delta) {
+		if (IsLocalVariable()) {
+			OccurException(SVM_IEC_STACK_EMPTY);
 			return;
 		}
 
-		Type& type = *m_Stack.Get<Type>(m_LocalVariables[operand]);
-		if (type == IntType) {
-			reinterpret_cast<IntObject&>(type).Value += delta;
-		} else if (type == LongType) {
-			reinterpret_cast<LongObject&>(type).Value += delta;
-		} else if (type == DoubleType) {
-			reinterpret_cast<DoubleObject&>(type).Value += delta;
-		} else if (type == PointerType) {
+		Type* const typePtr = m_Stack.GetTopType();
+		if (!typePtr) {
+			OccurException(SVM_IEC_STACK_EMPTY);
+			return;
+		} else if (*typePtr != PointerType) {
+			OccurException(SVM_IEC_POINTER_NOTPOINTER);
+			return;
+		}
+
+		Type* const targetTypePtr = static_cast<Type*>(reinterpret_cast<PointerObject*>(typePtr)->Value);
+		if (!targetTypePtr) {
+			OccurException(SVM_IEC_POINTER_NULLPOINTER);
+			return;
+		} else if (!targetTypePtr->IsFundamentalType()) {
+			OccurException(SVM_IEC_STRUCTURE_INVALIDFORSTRUCTURE);
+			return;
+		}
+
+		const Type targetType = *targetTypePtr;
+		if (targetType == IntType) {
+			reinterpret_cast<IntObject*>(targetTypePtr)->Value += delta;
+		} else if (targetType == LongType) {
+			reinterpret_cast<LongObject*>(targetTypePtr)->Value += delta;
+		} else if (targetType == DoubleType) {
+			reinterpret_cast<DoubleObject*>(targetTypePtr)->Value += delta;
+		} else if (targetType == PointerType) {
 			OccurException(SVM_IEC_POINTER_INVALIDFORPOINTER);
-		} else if (type.IsStructure()) {
+		} else if (targetType.IsStructure()) {
 			OccurException(SVM_IEC_STRUCTURE_INVALIDFORSTRUCTURE);
 		} else {
 			OccurException(SVM_IEC_STACK_EMPTY);
 		}
+
+		m_Stack.Pop<PointerObject>();
 	}
 }
 
