@@ -39,7 +39,7 @@ int main(int argc, char* argv[]) {
 	const auto startInterpreting = std::chrono::system_clock::now();
 
 	svm::Interpreter i(std::move(byteFile));
-	i.AllocateStack(128);
+	i.AllocateStack();
 	const bool success = i.Interpret();
 
 	const auto endInterpreting = std::chrono::system_clock::now();
