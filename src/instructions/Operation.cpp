@@ -1,5 +1,6 @@
 #include <svm/Interpreter.hpp>
 
+#include <svm/Type.hpp>
 #include <svm/detail/InterpreterExceptionCode.hpp>
 
 #include <cmath>
@@ -54,6 +55,8 @@ namespace svm {
 			m_Stack.Push<DoubleObject>(lhs.Value + rhs.Value);
 		} else if (rhsType == PointerType) {
 			OccurException(SVM_IEC_POINTER_INVALIDFORPOINTER);
+		} else if (rhsType.IsStructure()) {
+			OccurException(SVM_IEC_STRUCTURE_INVALIDFORSTRUCTURE);
 		} else {
 			OccurException(SVM_IEC_STACK_EMPTY);
 		}
@@ -80,6 +83,8 @@ namespace svm {
 			m_Stack.Push<DoubleObject>(lhs.Value - rhs.Value);
 		} else if (rhsType == PointerType) {
 			OccurException(SVM_IEC_POINTER_INVALIDFORPOINTER);
+		} else if (rhsType.IsStructure()) {
+			OccurException(SVM_IEC_STRUCTURE_INVALIDFORSTRUCTURE);
 		} else {
 			OccurException(SVM_IEC_STACK_EMPTY);
 		}
@@ -106,6 +111,8 @@ namespace svm {
 			m_Stack.Push<DoubleObject>(lhs.Value * rhs.Value);
 		} else if (rhsType == PointerType) {
 			OccurException(SVM_IEC_POINTER_INVALIDFORPOINTER);
+		} else if (rhsType.IsStructure()) {
+			OccurException(SVM_IEC_STRUCTURE_INVALIDFORSTRUCTURE);
 		} else {
 			OccurException(SVM_IEC_STACK_EMPTY);
 		}
@@ -132,6 +139,8 @@ namespace svm {
 			m_Stack.Push<DoubleObject>(lhs.Value * rhs.Value);
 		} else if (rhsType == PointerType) {
 			OccurException(SVM_IEC_POINTER_INVALIDFORPOINTER);
+		} else if (rhsType.IsStructure()) {
+			OccurException(SVM_IEC_STRUCTURE_INVALIDFORSTRUCTURE);
 		} else {
 			OccurException(SVM_IEC_STACK_EMPTY);
 		}
@@ -170,6 +179,8 @@ namespace svm {
 			m_Stack.Push<DoubleObject>(lhs.Value / rhs.Value);
 		} else if (rhsType == PointerType) {
 			OccurException(SVM_IEC_POINTER_INVALIDFORPOINTER);
+		} else if (rhsType.IsStructure()) {
+			OccurException(SVM_IEC_STRUCTURE_INVALIDFORSTRUCTURE);
 		} else {
 			OccurException(SVM_IEC_STACK_EMPTY);
 		}
@@ -208,6 +219,8 @@ namespace svm {
 			m_Stack.Push<DoubleObject>(lhs.Value / rhs.Value);
 		} else if (rhsType == PointerType) {
 			OccurException(SVM_IEC_POINTER_INVALIDFORPOINTER);
+		} else if (rhsType.IsStructure()) {
+			OccurException(SVM_IEC_STRUCTURE_INVALIDFORSTRUCTURE);
 		} else {
 			OccurException(SVM_IEC_STACK_EMPTY);
 		}
@@ -246,6 +259,8 @@ namespace svm {
 			m_Stack.Push<DoubleObject>(std::fmod(lhs.Value, rhs.Value));
 		} else if (rhsType == PointerType) {
 			OccurException(SVM_IEC_POINTER_INVALIDFORPOINTER);
+		} else if (rhsType.IsStructure()) {
+			OccurException(SVM_IEC_STRUCTURE_INVALIDFORSTRUCTURE);
 		} else {
 			OccurException(SVM_IEC_STACK_EMPTY);
 		}
@@ -284,6 +299,8 @@ namespace svm {
 			m_Stack.Push<DoubleObject>(std::fmod(lhs.Value, rhs.Value));
 		} else if (rhsType == PointerType) {
 			OccurException(SVM_IEC_POINTER_INVALIDFORPOINTER);
+		} else if (rhsType.IsStructure()) {
+			OccurException(SVM_IEC_STRUCTURE_INVALIDFORSTRUCTURE);
 		} else {
 			OccurException(SVM_IEC_STACK_EMPTY);
 		}
@@ -312,6 +329,8 @@ namespace svm {
 			top.Value = -top.Value;
 		} else if (type == PointerType) {
 			OccurException(SVM_IEC_POINTER_INVALIDFORPOINTER);
+		} else if (type.IsStructure()) {
+			OccurException(SVM_IEC_STRUCTURE_INVALIDFORSTRUCTURE);
 		} else {
 			OccurException(SVM_IEC_STACK_EMPTY);
 		}
@@ -332,6 +351,8 @@ namespace svm {
 			reinterpret_cast<DoubleObject&>(type).Value += delta;
 		} else if (type == PointerType) {
 			OccurException(SVM_IEC_POINTER_INVALIDFORPOINTER);
+		} else if (type.IsStructure()) {
+			OccurException(SVM_IEC_STRUCTURE_INVALIDFORSTRUCTURE);
 		} else {
 			OccurException(SVM_IEC_STACK_EMPTY);
 		}
@@ -360,6 +381,8 @@ namespace svm {
 			}
 		} else if (rhsType == PointerType) {
 			OccurException(SVM_IEC_POINTER_INVALIDFORPOINTER);
+		} else if (rhsType.IsStructure()) {
+			OccurException(SVM_IEC_STRUCTURE_INVALIDFORSTRUCTURE);
 		} else {
 			OccurException(SVM_IEC_STACK_EMPTY);
 		}
@@ -385,6 +408,8 @@ namespace svm {
 			}
 		} else if (rhsType == PointerType) {
 			OccurException(SVM_IEC_POINTER_INVALIDFORPOINTER);
+		} else if (rhsType.IsStructure()) {
+			OccurException(SVM_IEC_STRUCTURE_INVALIDFORSTRUCTURE);
 		} else {
 			OccurException(SVM_IEC_STACK_EMPTY);
 		}
@@ -410,6 +435,8 @@ namespace svm {
 			}
 		} else if (rhsType == PointerType) {
 			OccurException(SVM_IEC_POINTER_INVALIDFORPOINTER);
+		} else if (rhsType.IsStructure()) {
+			OccurException(SVM_IEC_STRUCTURE_INVALIDFORSTRUCTURE);
 		} else {
 			OccurException(SVM_IEC_STACK_EMPTY);
 		}
@@ -435,6 +462,8 @@ namespace svm {
 			top.Value = ~top.Value;
 		} else if (type == PointerType) {
 			OccurException(SVM_IEC_POINTER_INVALIDFORPOINTER);
+		} else if (type.IsStructure()) {
+			OccurException(SVM_IEC_STRUCTURE_INVALIDFORSTRUCTURE);
 		} else {
 			OccurException(SVM_IEC_STACK_EMPTY);
 		}
@@ -460,6 +489,8 @@ namespace svm {
 			}
 		} else if (rhsType == PointerType) {
 			OccurException(SVM_IEC_POINTER_INVALIDFORPOINTER);
+		} else if (rhsType.IsStructure()) {
+			OccurException(SVM_IEC_STRUCTURE_INVALIDFORSTRUCTURE);
 		} else {
 			OccurException(SVM_IEC_STACK_EMPTY);
 		}
@@ -488,6 +519,8 @@ namespace svm {
 			}
 		} else if (rhsType == PointerType) {
 			OccurException(SVM_IEC_POINTER_INVALIDFORPOINTER);
+		} else if (rhsType.IsStructure()) {
+			OccurException(SVM_IEC_STRUCTURE_INVALIDFORSTRUCTURE);
 		} else {
 			OccurException(SVM_IEC_STACK_EMPTY);
 		}
@@ -513,6 +546,8 @@ namespace svm {
 			}
 		} else if (rhsType == PointerType) {
 			OccurException(SVM_IEC_POINTER_INVALIDFORPOINTER);
+		} else if (rhsType.IsStructure()) {
+			OccurException(SVM_IEC_STRUCTURE_INVALIDFORSTRUCTURE);
 		} else {
 			OccurException(SVM_IEC_STACK_EMPTY);
 		}
@@ -557,6 +592,8 @@ namespace svm {
 			PointerObject lhs, rhs;
 			if (!PopTwoSameType(rhsType, lhs, rhs)) return;
 			m_Stack.Push(CompareTwoSameType(lhs.Value, rhs.Value));
+		} else if (rhsType.IsStructure()) {
+			OccurException(SVM_IEC_STRUCTURE_INVALIDFORSTRUCTURE);
 		} else {
 			OccurException(SVM_IEC_STACK_EMPTY);
 		}
@@ -585,6 +622,8 @@ namespace svm {
 			PointerObject lhs, rhs;
 			if (!PopTwoSameType(rhsType, lhs, rhs)) return;
 			m_Stack.Push(CompareTwoSameType(lhs.Value, rhs.Value));
+		} else if (rhsType.IsStructure()) {
+			OccurException(SVM_IEC_STRUCTURE_INVALIDFORSTRUCTURE);
 		} else {
 			OccurException(SVM_IEC_STACK_EMPTY);
 		}

@@ -5,6 +5,7 @@
 #include <algorithm>
 #include <chrono>
 #include <cstdlib>
+#include <exception>
 #include <iomanip>
 #include <iostream>
 
@@ -20,7 +21,13 @@ int main(int argc, char* argv[]) {
 
 	svm::Parser parser;
 	parser.Load(argv[1]);
-	parser.Parse();
+	try {
+		parser.Parse();
+	} catch (const std::exception & e) {
+		std::cout << "Occured exception!\n"
+				  << "Message: \"" << e.what() << "\"\n";
+		return EXIT_FAILURE;
+	}
 
 	const auto endParsing = std::chrono::system_clock::now();
 	const std::chrono::duration<double> parsing = endParsing - startParsing;
@@ -74,12 +81,16 @@ int main(int argc, char* argv[]) {
 			  << "Result: ";
 
 	const auto result = i.GetResult();
-	if (std::holds_alternative<std::uint32_t>(result)) {
+	if (std::holds_alternative<std::monostate>(result)) {
+		std::cout << "none";
+	} else if (std::holds_alternative<std::uint32_t>(result)) {
 		std::cout << std::get<std::uint32_t>(result);
 	} else if (std::holds_alternative<std::uint64_t>(result)) {
 		std::cout << std::get<std::uint64_t>(result);
 	} else if (std::holds_alternative<double>(result)) {
 		std::cout << std::get<double>(result);
+	} else if (std::holds_alternative<const svm::StructureObject*>(result)) {
+		std::cout << std::get<const svm::StructureObject*>(result)->GetType()->Name;
 	}
 
 	std::cout << "\n----------------------------------------\n"

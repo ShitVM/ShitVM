@@ -42,7 +42,7 @@ namespace svm {
 	std::ostream& operator<<(std::ostream& stream, const Instruction& instruction) {
 		if (instruction.HasOffset()) {
 			stream << std::hex << std::uppercase << std::setw(16) << std::setfill('0') << instruction.Offset << ": "
-				<< std::dec << std::nouppercase;
+				   << std::dec << std::nouppercase;
 		}
 		stream << Mnemonics[static_cast<int>(instruction.OpCode)];
 		if (instruction.HasOperand()) {
@@ -96,14 +96,14 @@ namespace svm {
 
 	std::ostream& operator<<(std::ostream& stream, const Instructions& instructions) {
 		const std::string defIndent = detail::MakeTabs(stream);
-		stream << defIndent << "Instructions:\n"
+		stream << defIndent << "Instructions: " << instructions.GetInstructionCount() << '\n'
 			   << defIndent << "\tLabels: " << instructions.GetLabelCount();
 		for (std::uint32_t i = 0; i < instructions.GetLabelCount(); ++i) {
 			stream << '\n' << defIndent << "\t\t[" << i << "]: " << instructions.GetLabel(i)
 				   << '(' << std::hex << std::uppercase << std::setw(16) << std::setfill('0') << instructions.GetInstruction(instructions.GetLabel(i)).Offset << ')'
 				   << std::dec << std::nouppercase;
 		}
-		for (std::uint32_t i = 0; i < instructions.GetInstructionCount(); ++i) {
+		for (std::uint64_t i = 0; i < instructions.GetInstructionCount(); ++i) {
 			stream << '\n' << defIndent << '\t' << instructions.GetInstruction(i);
 		}
 

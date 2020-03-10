@@ -1,61 +1,9 @@
 #pragma once
 
+#include <svm/Type.hpp>
+#include <svm/Structure.hpp>
+
 #include <cstdint>
-
-namespace svm {
-	enum class TypeCode {
-		None,
-
-		Int,
-		Long,
-		Double,
-		Pointer,
-	};
-
-	class TypeData final {
-	public:
-		TypeCode Code = TypeCode::None;
-		const char* Name = nullptr;
-
-	public:
-		TypeData() noexcept = default;
-		TypeData(TypeCode code, const char* name) noexcept;
-		TypeData(const TypeData&) = delete;
-		~TypeData() = default;
-
-	public:
-		TypeData& operator=(const TypeData&) = delete;
-		bool operator==(const TypeData&) = delete;
-		bool operator!=(const TypeData&) = delete;
-	};
-
-	class Type final {
-	private:
-		const TypeData* m_Data = nullptr;
-
-	public:
-		Type() noexcept = default;
-		Type(std::nullptr_t) noexcept;
-		Type(const TypeData& data) noexcept;
-		Type(const Type& type) noexcept;
-		~Type() noexcept = default;
-
-	public:
-		Type& operator=(const Type& type) noexcept;
-		bool operator==(const Type& type) const noexcept;
-		bool operator!=(const Type& type) const noexcept;
-		const TypeData& operator*() const noexcept;
-		const TypeData* operator->() const noexcept;
-
-	public:
-		bool IsValidType() const noexcept;
-	};
-
-	extern const Type IntType;
-	extern const Type LongType;
-	extern const Type DoubleType;
-	extern const Type PointerType;
-}
 
 namespace svm {
 	class Object {
@@ -72,6 +20,10 @@ namespace svm {
 
 	protected:
 		Object& operator=(const Object& object) noexcept;
+
+	public:
+		bool operator==(const Object&) = delete;
+		bool operator!=(const Object&) = delete;
 
 	public:
 		Type GetType() const noexcept;
@@ -93,6 +45,8 @@ namespace svm {
 
 	public:
 		IntObject& operator=(const IntObject& object) noexcept;
+		bool operator==(const IntObject&) = delete;
+		bool operator!=(const IntObject&) = delete;
 	};
 
 	class LongObject final : public Object {
@@ -107,6 +61,8 @@ namespace svm {
 
 	public:
 		LongObject& operator=(const LongObject& object) noexcept;
+		bool operator==(const LongObject&) = delete;
+		bool operator!=(const LongObject&) = delete;
 	};
 
 	class DoubleObject final : public Object {
@@ -121,6 +77,8 @@ namespace svm {
 
 	public:
 		DoubleObject& operator=(const DoubleObject& object) noexcept;
+		bool operator==(const DoubleObject&) = delete;
+		bool operator!=(const DoubleObject&) = delete;
 	};
 
 	class PointerObject final : public Object {
@@ -135,5 +93,19 @@ namespace svm {
 
 	public:
 		PointerObject& operator=(const PointerObject& object) noexcept;
+		bool operator==(const PointerObject&) = delete;
+		bool operator!=(const PointerObject&) = delete;
+	};
+
+	class StructureObject final : public Object {
+	public:
+		StructureObject(Type type) noexcept;
+		StructureObject(const StructureObject&) = delete;
+		~StructureObject() = default;
+
+	public:
+		StructureObject& operator=(StructureObject) = delete;
+		bool operator==(const StructureObject&) = delete;
+		bool operator!=(const StructureObject&) = delete;
 	};
 }

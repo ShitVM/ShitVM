@@ -1,6 +1,7 @@
 #include <svm/Interpreter.hpp>
 
 #include <svm/Object.hpp>
+#include <svm/Type.hpp>
 #include <svm/detail/InterpreterExceptionCode.hpp>
 
 namespace svm {
@@ -53,6 +54,11 @@ namespace svm {
 	}
 	void Stack::Remove(std::size_t delta) noexcept {
 		m_Used -= delta;
+	}
+	bool Stack::Add(std::size_t delta) noexcept {
+		if (GetFreeSize() < delta) return false;
+		m_Used += delta;
+		return true;
 	}
 }
 
@@ -123,6 +129,7 @@ namespace svm {
 			case OpCode::Load: InterpretLoad(inst.Operand); break;
 			case OpCode::Store: InterpretStore(inst.Operand); break;
 			case OpCode::Lea: InterpretLea(inst.Operand); break;
+			case OpCode::FLea: InterpretFLea(inst.Operand); break;
 			case OpCode::TLoad: InterpretTLoad(); break;
 			case OpCode::TStore: InterpretTStore(); break;
 			case OpCode::Copy: InterpretCopy(); break;
@@ -190,6 +197,8 @@ namespace svm {
 			return m_Stack.GetTop<DoubleObject>()->Value;
 		} else if (type == PointerType) {
 			return m_Stack.GetTop<PointerObject>()->Value;
+		} else if (type.IsStructure()) {
+			return m_Stack.GetTop<StructureObject>();
 		} else return std::monostate();
 	}
 	std::vector<StackFrame> Interpreter::GetCallStacks() const {

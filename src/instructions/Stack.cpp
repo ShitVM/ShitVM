@@ -1,10 +1,38 @@
 #include <svm/Interpreter.hpp>
 
+#include <svm/Type.hpp>
 #include <svm/detail/InterpreterExceptionCode.hpp>
 
 #include <algorithm>
+#include <cstring>
 
 namespace svm {
+	void Interpreter::PushStructure(std::uint32_t code) noexcept {
+#define Structures m_ByteFile.GetStructures()
+		if (code >= Structures.GetCount()) {
+			OccurException(SVM_IEC_CONSTANTPOOL_OUTOFRANGE);
+			return;
+		}
+
+		const Structure structure = Structures.Get(code);
+		if (!m_Stack.Add(structure->Type.Size)) {
+			OccurException(SVM_IEC_STACK_OVERFLOW);
+			return;
+		}
+
+		*m_Stack.GetTopType() = structure->Type;
+		const std::size_t firstOffset = m_Stack.GetUsedSize() - sizeof(Type);
+		for (std::size_t i = 0; i < structure->FieldTypes.size(); ++i) {
+			*m_Stack.Get<Type>(firstOffset - structure->FieldOffsets[i]) = structure->FieldTypes[i];
+		}
+#undef Structures
+	}
+	void Interpreter::CopyStructure(const Type& type) noexcept {
+		CopyStructure(type, *m_Stack.GetTopType());
+	}
+	void Interpreter::CopyStructure(const Type& from, Type& to) const noexcept {
+		std::memcpy(&to, &from, from->Size);
+	}
 	template<typename T>
 	void Interpreter::DRefAndAssign(Type* rhsTypePtr) noexcept {
 		if (IsLocalVariable() || IsLocalVariable(sizeof(T))) {
@@ -31,6 +59,31 @@ namespace svm {
 		m_Stack.Pop<T>();
 		m_Stack.Pop<PointerObject>();
 	}
+	template<>
+	void Interpreter::DRefAndAssign<StructureObject>(Type* rhsTypePtr) noexcept {
+		if (IsLocalVariable() || IsLocalVariable((*rhsTypePtr)->Size)) {
+			OccurException(SVM_IEC_STACK_EMPTY);
+			return;
+		}
+
+		Type* const lhsTypePtr = m_Stack.Get<Type>(m_Stack.GetUsedSize() - (*rhsTypePtr)->Size);
+		if (!lhsTypePtr) {
+			OccurException(SVM_IEC_STACK_EMPTY);
+			return;
+		} else if (*lhsTypePtr != PointerType) {
+			OccurException(SVM_IEC_POINTER_NOTPOINTER);
+			return;
+		}
+
+		Type* const targetType = static_cast<Type*>(reinterpret_cast<PointerObject*>(lhsTypePtr)->Value);
+		if (*targetType != *rhsTypePtr) {
+			OccurException(SVM_IEC_STACK_DIFFERENTTYPE);
+			return;
+		}
+
+		CopyStructure(*rhsTypePtr, *targetType);
+		m_Stack.Remove((*rhsTypePtr)->Size + sizeof(PointerObject));
+	}
 	template<typename T>
 	bool Interpreter::GetTwoSameType(Type rhsType, T*& lhs) noexcept {
 		if (IsLocalVariable() || IsLocalVariable(sizeof(T))) {
@@ -56,7 +109,7 @@ namespace svm {
 	SVM_NOINLINE_FOR_PROFILING void Interpreter::InterpretPush(std::uint32_t operand) {
 #define ConstantPool m_ByteFile.GetConstantPool()
 		if (operand >= ConstantPool.GetAllCount()) {
-			OccurException(SVM_IEC_CONSTANTPOOL_OUTOFRANGE);
+			PushStructure(operand - ConstantPool.GetAllCount());
 			return;
 		}
 
@@ -95,6 +148,8 @@ namespace svm {
 			m_Stack.Pop<DoubleObject>();
 		} else if (type == PointerType) {
 			m_Stack.Pop<PointerObject>();
+		} else if (type.IsStructure()) {
+			m_Stack.Remove(type->Size);
 		} else {
 			OccurException(SVM_IEC_STACK_EMPTY);
 		}
@@ -116,6 +171,8 @@ namespace svm {
 			isSuccess = m_Stack.Push(reinterpret_cast<const DoubleObject&>(type));
 		} else if (type == PointerType) {
 			isSuccess = m_Stack.Push(reinterpret_cast<const PointerObject&>(type));
+		} else if (type.IsStructure() && (isSuccess = m_Stack.Add(type->Size))) {
+			CopyStructure(type);
 		}
 
 		if (!isSuccess) {
@@ -134,10 +191,7 @@ namespace svm {
 			return;
 		} else if (operand == m_LocalVariables.size()) {
 			Type* const typePtr = m_Stack.GetTopType();
-			if (!typePtr) {
-				OccurException(SVM_IEC_STACK_EMPTY);
-				return;
-			} else if (!typePtr->IsValidType()) {
+			if (!typePtr || !typePtr->IsValidType()) {
 				OccurException(SVM_IEC_STACK_EMPTY);
 				return;
 			}
@@ -167,6 +221,9 @@ namespace svm {
 			reinterpret_cast<DoubleObject&>(varType) = *m_Stack.Pop<DoubleObject>();
 		} else if (type == PointerType) {
 			reinterpret_cast<PointerObject&>(varType) = *m_Stack.Pop<PointerObject>();
+		} else if (type.IsStructure()) {
+			CopyStructure(*typePtr, varType);
+			m_Stack.Remove(type->Size);
 		} else {
 			OccurException(SVM_IEC_STACK_EMPTY);
 		}
@@ -181,6 +238,43 @@ namespace svm {
 		if (!m_Stack.Push<PointerObject>(m_Stack.Get<Type>(m_LocalVariables[operand]))) {
 			OccurException(SVM_IEC_STACK_OVERFLOW);
 		}
+	}
+	SVM_NOINLINE_FOR_PROFILING void Interpreter::InterpretFLea(std::uint32_t operand) {
+		if (IsLocalVariable()) {
+			OccurException(SVM_IEC_STACK_EMPTY);
+			return;
+		}
+
+		const auto ptr = m_Stack.Pop<PointerObject>();
+		if (!ptr) {
+			OccurException(SVM_IEC_STACK_EMPTY);
+			return;
+		} else if (ptr->GetType() != PointerType) {
+			m_Stack.Push(*ptr);
+			OccurException(SVM_IEC_POINTER_NOTPOINTER);
+			return;
+		}
+
+		Type* const targetTypePtr = static_cast<Type*>(ptr->Value);
+		if (!targetTypePtr) {
+			m_Stack.Push(*ptr);
+			OccurException(SVM_IEC_POINTER_NULLPOINTER);
+			return;
+		} else if (!targetTypePtr->IsStructure()) {
+			m_Stack.Push(*ptr);
+			OccurException(SVM_IEC_STRUCTURE_NOTSTRUCTURE);
+			return;
+		}
+
+		const Structure structure =
+			m_ByteFile.GetStructures()[static_cast<std::uint32_t>(targetTypePtr->GetReference().Code) - static_cast<std::uint32_t>(TypeCode::Structure)];
+		if (operand >= structure->FieldTypes.size()) {
+			m_Stack.Push(*ptr);
+			OccurException(SVM_IEC_STRUCTURE_FIELD_OUTOFRANGE);
+			return;
+		}
+
+		m_Stack.Push(PointerObject(reinterpret_cast<std::uint8_t*>(targetTypePtr) - structure->FieldOffsets[operand]));
 	}
 	SVM_NOINLINE_FOR_PROFILING void Interpreter::InterpretTLoad() {
 		if (IsLocalVariable()) {
@@ -215,6 +309,8 @@ namespace svm {
 			isSuccess = m_Stack.Push(*reinterpret_cast<DoubleObject*>(varTypePtr));
 		} else if (varType == PointerType) {
 			isSuccess = m_Stack.Push(*reinterpret_cast<PointerObject*>(varTypePtr));
+		} else if (varType.IsStructure() && (isSuccess = m_Stack.Add(varType->Size))) {
+			CopyStructure(*varTypePtr);
 		}
 
 		if (!isSuccess) {
@@ -238,6 +334,8 @@ namespace svm {
 			DRefAndAssign<DoubleObject>(rhsTypePtr);
 		} else if (rhsType == PointerType) {
 			DRefAndAssign<PointerObject>(rhsTypePtr);
+		} else if (rhsType.IsStructure()) {
+			DRefAndAssign<StructureObject>(rhsTypePtr);
 		} else {
 			OccurException(SVM_IEC_STACK_EMPTY);
 		}
@@ -264,6 +362,8 @@ namespace svm {
 			isSuccess = m_Stack.Push(reinterpret_cast<const DoubleObject&>(type));
 		} else if (type == PointerType) {
 			isSuccess = m_Stack.Push(reinterpret_cast<const PointerObject&>(type));
+		} else if (type.IsStructure() && (isSuccess = m_Stack.Add(type->Size))) {
+			CopyStructure(type);
 		} else {
 			OccurException(SVM_IEC_STACK_EMPTY);
 		}
@@ -296,6 +396,18 @@ namespace svm {
 			PointerObject* second = nullptr;
 			if (!GetTwoSameType(firstType, second)) return;
 			std::iter_swap(reinterpret_cast<PointerObject*>(firstTypePtr), second);
+		} else if (firstType.IsStructure()) {
+			if (IsLocalVariable() || IsLocalVariable(firstType->Size)) {
+				OccurException(SVM_IEC_STACK_EMPTY);
+				return;
+			} else if (!m_Stack.Get<Type>(m_Stack.GetUsedSize() - firstType->Size)->IsStructure()) {
+				OccurException(SVM_IEC_STACK_DIFFERENTTYPE);
+				return;
+			}
+
+			for (std::size_t i = sizeof(Type); i < firstType->Size; i += sizeof(void*)) {
+				std::iter_swap(m_Stack.Get<void*>(m_Stack.GetUsedSize() - i), m_Stack.Get<void*>(m_Stack.GetUsedSize() - firstType->Size - i));
+			}
 		} else {
 			OccurException(SVM_IEC_STACK_EMPTY);
 		}
@@ -325,6 +437,8 @@ namespace svm {
 		} else if (type == PointerType) {
 			const PointerObject value = *m_Stack.Pop<PointerObject>();
 			m_Stack.Push<IntObject>(static_cast<std::uint32_t>(reinterpret_cast<std::uintptr_t>(value.Value)));
+		} else if (type.IsStructure()) {
+			OccurException(SVM_IEC_STRUCTURE_INVALIDFORSTRUCTURE);
 		} else {
 			OccurException(SVM_IEC_STACK_EMPTY);
 		}
@@ -351,6 +465,8 @@ namespace svm {
 		} else if (type == PointerType) {
 			const PointerObject value = *m_Stack.Pop<PointerObject>();
 			m_Stack.Push<LongObject>(static_cast<std::uint64_t>(reinterpret_cast<std::uintptr_t>(value.Value)));
+		} else if (type.IsStructure()) {
+			OccurException(SVM_IEC_STRUCTURE_INVALIDFORSTRUCTURE);
 		} else {
 			OccurException(SVM_IEC_STACK_EMPTY);
 		}
@@ -377,6 +493,8 @@ namespace svm {
 		} else if (type == PointerType) {
 			const PointerObject value = *m_Stack.Pop<PointerObject>();
 			m_Stack.Push<DoubleObject>(static_cast<double>(reinterpret_cast<std::uintptr_t>(value.Value)));
+		} else if (type.IsStructure()) {
+			OccurException(SVM_IEC_STRUCTURE_INVALIDFORSTRUCTURE);
 		} else {
 			OccurException(SVM_IEC_STACK_EMPTY);
 		}
@@ -403,6 +521,8 @@ namespace svm {
 			m_Stack.Push<PointerObject>(reinterpret_cast<void*>(static_cast<std::uintptr_t>(value.Value)));
 		} else if (type == PointerType) {
 			return;
+		} else if (type.IsStructure()) {
+			OccurException(SVM_IEC_STRUCTURE_INVALIDFORSTRUCTURE);
 		} else {
 			OccurException(SVM_IEC_STACK_EMPTY);
 		}

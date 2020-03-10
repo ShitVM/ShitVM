@@ -4,24 +4,27 @@
 #include <svm/Instruction.hpp>
 #include <svm/Memory.hpp>
 #include <svm/Object.hpp>
+#include <svm/Structure.hpp>
 
 #include <cstddef>
 #include <cstdint>
 #include <string>
 #include <type_traits>
+#include <unordered_map>
 #include <utility>
 #include <vector>
 
 namespace svm {
 	enum class ByteFileVersion : std::uint16_t {
-		v0_1_0,
-		
+		v0_1_0 = 0,
+		v0_2_0,
+
 		Least = v0_1_0,
-		Latest = v0_1_0,
+		Latest = v0_2_0,
 	};
 
 	enum class ByteCodeVersion : std::uint16_t {
-		v0_2_0,
+		v0_2_0 = 1,
 
 		Least = v0_2_0,
 		Latest = v0_2_0,
@@ -34,6 +37,7 @@ namespace svm {
 
 		std::string m_Path;
 		ConstantPool m_ConstantPool;
+		Structures m_Structures;
 		Functions m_Functions;
 		Instructions m_EntryPoint;
 
@@ -60,6 +64,7 @@ namespace svm {
 		ByteFile GetResult();
 		std::string_view GetPath() const noexcept;
 		const ConstantPool& GetConstantPool() const noexcept;
+		const Structures& GetStructures() const noexcept;
 		const Functions& GetFunctions() const noexcept;
 		const Instructions& GetEntryPoint() const noexcept;
 
@@ -88,9 +93,15 @@ namespace svm {
 				obj.Value = ReadFile<decltype(obj.Value)>();
 			}
 		}
+		void ParseStructures();
 		void ParseFunctions();
 		Instructions ParseInstructions();
 
+		void FindCycle(const std::vector<StructureInfo>& structures) const;
+		bool FindCycle(const std::vector<StructureInfo>& structures, std::unordered_map<std::uint32_t, int>& visited, std::vector<Structure>& cycle, std::uint32_t node) const;
+		void CalcSize(std::vector<StructureInfo>& structures) const;
+		std::size_t CalcSize(std::vector<StructureInfo>& structures, std::uint32_t node) const;
+		std::size_t PadeSize(std::size_t size) const noexcept;
 		OpCode ReadOpCode() noexcept;
 	};
 }

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <svm/Object.hpp>
+#include <svm/Type.hpp>
 
 #include <cstdint>
 #include <ostream>

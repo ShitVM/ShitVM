@@ -1,7 +1,6 @@
 #include <svm/Function.hpp>
 
 #include <svm/IO.hpp>
-#include <svm/Memory.hpp>
 
 #include <utility>
 
@@ -31,7 +30,7 @@ namespace svm {
 	std::ostream& operator<<(std::ostream& stream, const Function& function) {
 		const std::string defIndent = detail::MakeTabs(stream);
 
-		stream << defIndent << "Function\n"
+		stream << defIndent << "Function:\n"
 			   << defIndent << "\tArity: " << function.GetArity() << '\n'
 			   << defIndent << "\tHasResult: " << std::boolalpha << function.HasResult() << '\n'
 			   << Indent << Indent << function.GetInstructions() << UnIndent << UnIndent;
@@ -40,8 +39,8 @@ namespace svm {
 	std::ostream& operator<<(std::ostream& stream, const Functions& functions) {
 		const std::string defIndent = detail::MakeTabs(stream);
 
-		stream << defIndent << "Functions:" << Indent << Indent;
-		for (std::uint32_t i = 0; i < functions.size(); ++i) {
+		stream << defIndent << "Functions: " << functions.size() << Indent << Indent;
+		for (std::uint32_t i = 0; i < static_cast<std::uint32_t>(functions.size()); ++i) {
 			stream << '\n' << defIndent << "\t[" << i << "]:\n" << functions[i];
 		}
 		stream << UnIndent << UnIndent;

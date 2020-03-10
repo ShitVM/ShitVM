@@ -3,6 +3,7 @@
 #include <svm/ByteFile.hpp>
 #include <svm/Exception.hpp>
 #include <svm/Macro.hpp>
+#include <svm/Type.hpp>
 
 #include <cstddef>
 #include <cstdint>
@@ -72,6 +73,7 @@ namespace svm {
 		std::size_t GetFreeSize() const noexcept;
 		void RemoveTo(std::size_t newSize) noexcept;
 		void Remove(std::size_t delta) noexcept;
+		bool Add(std::size_t delta) noexcept;
 	};
 
 	struct StackFrame final {
@@ -86,7 +88,7 @@ namespace svm {
 namespace svm {
 	class Interpreter final {
 	public:
-		using Result = std::variant<std::monostate, std::uint32_t, std::uint64_t, double, void*>;
+		using Result = std::variant<std::monostate, std::uint32_t, std::uint64_t, double, void*, const StructureObject*>;
 
 	private:
 		ByteFile m_ByteFile;
@@ -127,8 +129,13 @@ namespace svm {
 		void OccurException(std::uint32_t code) noexcept;
 		bool IsLocalVariable(std::size_t delta = 0) const noexcept;
 
+		void PushStructure(std::uint32_t code) noexcept;
+		void CopyStructure(const Type& type) noexcept;
+		void CopyStructure(const Type& from, Type& to) const noexcept;
 		template<typename T>
 		void DRefAndAssign(Type* rhsTypePtr) noexcept;
+		template<>
+		void DRefAndAssign<StructureObject>(Type* rhsTypePtr) noexcept;
 		template<typename T>
 		bool GetTwoSameType(Type rhsType, T*& lhs) noexcept;
 
@@ -144,6 +151,7 @@ namespace svm {
 		void InterpretLoad(std::uint32_t operand);
 		void InterpretStore(std::uint32_t operand);
 		void InterpretLea(std::uint32_t operand);
+		void InterpretFLea(std::uint32_t operand);
 		void InterpretTLoad();
 		void InterpretTStore();
 		void InterpretCopy();
