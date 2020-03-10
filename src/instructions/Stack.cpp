@@ -251,20 +251,23 @@ namespace svm {
 			return;
 		}
 
-		Type* const typePtr = m_Stack.GetTopType();
-		if (!typePtr) {
+		const auto ptr = m_Stack.Pop<PointerObject>();
+		if (!ptr) {
 			OccurException(SVM_IEC_STACK_EMPTY);
 			return;
-		} else if (*typePtr != PointerType) {
+		} else if (ptr->GetType() != PointerType) {
+			m_Stack.Push(*ptr);
 			OccurException(SVM_IEC_POINTER_NOTPOINTER);
 			return;
 		}
 
-		Type* const targetTypePtr = static_cast<Type*>(reinterpret_cast<PointerObject*>(typePtr)->Value);
+		Type* const targetTypePtr = static_cast<Type*>(ptr->Value);
 		if (!targetTypePtr) {
+			m_Stack.Push(*ptr);
 			OccurException(SVM_IEC_POINTER_NULLPOINTER);
 			return;
 		} else if (!targetTypePtr->IsStructure()) {
+			m_Stack.Push(*ptr);
 			OccurException(SVM_IEC_STRUCTURE_NOTSTRUCTURE);
 			return;
 		}
@@ -272,6 +275,7 @@ namespace svm {
 		const Structure structure =
 			m_ByteFile.GetStructures()[static_cast<std::uint32_t>(targetTypePtr->GetReference().Code) - static_cast<std::uint32_t>(TypeCode::Structure)];
 		if (operand >= structure->FieldTypes.size()) {
+			m_Stack.Push(*ptr);
 			OccurException(SVM_IEC_STRUCTURE_FIELD_OUTOFRANGE);
 			return;
 		}
