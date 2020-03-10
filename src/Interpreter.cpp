@@ -197,6 +197,8 @@ namespace svm {
 			return m_Stack.GetTop<DoubleObject>()->Value;
 		} else if (type == PointerType) {
 			return m_Stack.GetTop<PointerObject>()->Value;
+		} else if (type.IsStructure()) {
+			return m_Stack.GetTop<StructureObject>();
 		} else return std::monostate();
 	}
 	std::vector<StackFrame> Interpreter::GetCallStacks() const {

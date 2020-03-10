@@ -144,7 +144,6 @@ namespace svm {
 		}
 
 		Result result;
-		std::size_t structureOffset = 0;
 		if (m_StackFrame.Function->HasResult()) {
 			if (IsLocalVariable()) {
 				OccurException(SVM_IEC_STACK_EMPTY);
@@ -167,8 +166,7 @@ namespace svm {
 			} else if (type == PointerType) {
 				result = m_Stack.Pop<PointerObject>()->Value;
 			} else if (type.IsStructure()) {
-				result.emplace<StructureObject>(type);
-				structureOffset = m_Stack.GetUsedSize();
+				result = reinterpret_cast<StructureObject*>(typePtr);
 				m_Stack.Remove(type->Size);
 			} else {
 				OccurException(SVM_IEC_STACK_EMPTY);
@@ -200,10 +198,10 @@ namespace svm {
 			m_Stack.Push<DoubleObject>(std::get<double>(result));
 		} else if (std::holds_alternative<void*>(result)) {
 			m_Stack.Push<PointerObject>(std::get<void*>(result));
-		} else if (std::holds_alternative<StructureObject>(result)) {
-			const Type type = std::get<StructureObject>(result).GetType();
-			m_Stack.Add(type->Size);
-			std::memmove(m_Stack.GetTopType(), m_Stack.Get<Type>(structureOffset), type->Size);
+		} else if (std::holds_alternative<const StructureObject*>(result)) {
+			const StructureObject* const structure = std::get<const StructureObject*>(result);
+			m_Stack.Add(structure->GetType()->Size);
+			std::memmove(m_Stack.GetTopType(), structure, structure->GetType()->Size);
 		}
 	}
 }

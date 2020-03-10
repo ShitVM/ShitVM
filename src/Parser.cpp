@@ -158,6 +158,16 @@ namespace svm {
 			FindCycle(structures);
 		}
 		CalcSize(structures);
+		for (std::uint32_t i = 0; i < structCount; ++i) {
+			StructureInfo& structure = structures[i];
+			structure.FieldOffsets.resize(structure.FieldTypes.size());
+
+			std::size_t offset = 0;
+			for (std::uint32_t j = 0; j < structure.FieldTypes.size(); ++j) {
+				structure.FieldOffsets[j] = offset;
+				offset += structure.FieldTypes[j]->Size;
+			}
+		}
 
 		m_Structures = std::move(structures);
 	}

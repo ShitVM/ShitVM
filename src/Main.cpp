@@ -81,12 +81,16 @@ int main(int argc, char* argv[]) {
 			  << "Result: ";
 
 	const auto result = i.GetResult();
-	if (std::holds_alternative<std::uint32_t>(result)) {
+	if (std::holds_alternative<std::monostate>(result)) {
+		std::cout << "none";
+	} else if (std::holds_alternative<std::uint32_t>(result)) {
 		std::cout << std::get<std::uint32_t>(result);
 	} else if (std::holds_alternative<std::uint64_t>(result)) {
 		std::cout << std::get<std::uint64_t>(result);
 	} else if (std::holds_alternative<double>(result)) {
 		std::cout << std::get<double>(result);
+	} else if (std::holds_alternative<const svm::StructureObject*>(result)) {
+		std::cout << std::get<const svm::StructureObject*>(result)->GetType()->Name;
 	}
 
 	std::cout << "\n----------------------------------------\n"
