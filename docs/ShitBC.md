@@ -697,6 +697,7 @@ ShitVM은 스택 기반 가상머신으로, 연산을 위한 피연산자가 모
 
 ### 함수 관련 예외
 - `FUNCTION_OUTOFRANGE`<br>범위를 벗어난 함수 번호입니다.
+- `FUNCTION_NORETINSTRUCTION`<br>함수가 `ret` 명령어 없이 종료되었습니다.
 
 ### 포인터 관련 예외
 - `POINTER_NULLPOINTER`<br>널포인터를 역참조할 수 없습니다.
