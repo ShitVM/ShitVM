@@ -48,7 +48,7 @@ int main(int argc, char* argv[]) {
 	if (!success) {
 		const auto& exception = i.GetException();
 		auto callStacks = i.GetCallStacks();
-		callStacks[0].Caller = exception.InstructionIndex;
+		callStacks[0].Caller = static_cast<std::size_t>(exception.InstructionIndex);
 		const auto& funcs = i.GetByteFile().GetFunctions();
 
 		std::cout << "Occured exception!\n"

@@ -3,6 +3,8 @@
 #include <svm/Type.hpp>
 #include <svm/detail/InterpreterExceptionCode.hpp>
 
+#include <cstring>
+
 namespace svm {
 	template<typename T>
 	SVM_NOINLINE_FOR_PROFILING void Interpreter::JumpCondition(std::uint32_t operand) {

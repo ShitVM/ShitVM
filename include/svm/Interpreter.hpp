@@ -136,8 +136,6 @@ namespace svm {
 		void CopyStructure(const Type& from, Type& to) const noexcept;
 		template<typename T>
 		void DRefAndAssign(Type* rhsTypePtr) noexcept;
-		template<>
-		void DRefAndAssign<StructureObject>(Type* rhsTypePtr) noexcept;
 		template<typename T>
 		bool GetTwoSameType(Type rhsType, T*& lhs) noexcept;
 

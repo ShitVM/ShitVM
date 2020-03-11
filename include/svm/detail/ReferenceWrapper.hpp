@@ -1,5 +1,7 @@
 #pragma once
 
+#include <cstddef>
+
 namespace svm::detail {
 	template<typename T>
 	class ReferenceWrapper {
