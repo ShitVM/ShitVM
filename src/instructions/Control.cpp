@@ -102,6 +102,11 @@ namespace svm {
 		JumpCondition<NotEqualOne>(operand);
 	}
 	SVM_NOINLINE_FOR_PROFILING void Interpreter::InterpretCall(std::uint32_t operand) {
+		if (operand >= m_ByteFile.GetFunctions().size()) {
+			OccurException(SVM_IEC_FUNCTION_OUTOFRANGE);
+			return;
+		}
+
 		m_StackFrame.Caller = static_cast<std::size_t>(m_InstructionIndex);
 		if (!m_Stack.Push(m_StackFrame)) {
 			OccurException(SVM_IEC_STACK_OVERFLOW);
@@ -139,7 +144,7 @@ namespace svm {
 	}
 	SVM_NOINLINE_FOR_PROFILING void Interpreter::InterpretRet() {
 		if (m_Depth == 0) {
-			OccurException(SVM_IEC_FUNCTION_TOPOFCALLSTACK);
+			m_InstructionIndex = m_StackFrame.Instructions->GetInstructionCount() - 1;
 			return;
 		}
 

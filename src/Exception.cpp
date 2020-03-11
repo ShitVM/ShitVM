@@ -19,7 +19,6 @@ namespace svm {
 		case SVM_IEC_LABEL_OUTOFRANGE: return "Label does not exist";
 
 		case SVM_IEC_FUNCTION_OUTOFRANGE: return "Function does not exist";
-		case SVM_IEC_FUNCTION_TOPOFCALLSTACK: return "Already at the top of the call stack";
 		case SVM_IEC_FUNCTION_NORETINSTRUCTION: return "Function exited without 'ret' instruction";
 
 		case SVM_IEC_POINTER_NULLPOINTER: return "Can't dereference null pointer";

@@ -50,7 +50,10 @@ namespace svm {
 		}
 
 		Type* const targetType = static_cast<Type*>(reinterpret_cast<PointerObject*>(lhsTypePtr)->Value);
-		if (*targetType != *rhsTypePtr) {
+		if (!targetType) {
+			OccurException(SVM_IEC_POINTER_NULLPOINTER);
+			return;
+		} else if (*targetType != *rhsTypePtr) {
 			OccurException(SVM_IEC_STACK_DIFFERENTTYPE);
 			return;
 		}
@@ -76,7 +79,10 @@ namespace svm {
 		}
 
 		Type* const targetType = static_cast<Type*>(reinterpret_cast<PointerObject*>(lhsTypePtr)->Value);
-		if (*targetType != *rhsTypePtr) {
+		if (!targetType) {
+			OccurException(SVM_IEC_POINTER_NULLPOINTER);
+			return;
+		} else if (*targetType != *rhsTypePtr) {
 			OccurException(SVM_IEC_STACK_DIFFERENTTYPE);
 			return;
 		}
@@ -270,7 +276,9 @@ namespace svm {
 			return;
 		}
 
-		m_Stack.Push(PointerObject(reinterpret_cast<std::uint8_t*>(targetTypePtr) + structure->FieldOffsets[operand]));
+		if (!m_Stack.Push(PointerObject(reinterpret_cast<std::uint8_t*>(targetTypePtr) + structure->FieldOffsets[operand]))) {
+			OccurException(SVM_IEC_STACK_OVERFLOW);
+		}
 	}
 	SVM_NOINLINE_FOR_PROFILING void Interpreter::InterpretTLoad() {
 		if (IsLocalVariable()) {
@@ -422,21 +430,26 @@ namespace svm {
 		}
 
 		const Type type = *typePtr;
+		bool isSuccess = false;
 		if (type == IntType) {
 			return;
 		} else if (type == LongType) {
 			const LongObject value = *m_Stack.Pop<LongObject>();
-			m_Stack.Push<IntObject>(static_cast<std::uint32_t>(value.Value));
+			isSuccess = m_Stack.Push<IntObject>(static_cast<std::uint32_t>(value.Value));
 		} else if (type == DoubleType) {
 			const DoubleObject value = *m_Stack.Pop<DoubleObject>();
-			m_Stack.Push<IntObject>(static_cast<std::uint32_t>(value.Value));
+			isSuccess = m_Stack.Push<IntObject>(static_cast<std::uint32_t>(value.Value));
 		} else if (type == PointerType) {
 			const PointerObject value = *m_Stack.Pop<PointerObject>();
-			m_Stack.Push<IntObject>(static_cast<std::uint32_t>(reinterpret_cast<std::uintptr_t>(value.Value)));
+			isSuccess = m_Stack.Push<IntObject>(static_cast<std::uint32_t>(reinterpret_cast<std::uintptr_t>(value.Value)));
 		} else if (type.IsStructure()) {
 			OccurException(SVM_IEC_STRUCTURE_INVALIDFORSTRUCTURE);
 		} else {
 			OccurException(SVM_IEC_STACK_EMPTY);
+		}
+
+		if (!isSuccess) {
+			OccurException(SVM_IEC_STACK_OVERFLOW);
 		}
 	}
 	SVM_NOINLINE_FOR_PROFILING void Interpreter::InterpretToL() {
@@ -450,21 +463,26 @@ namespace svm {
 		}
 
 		const Type type = *typePtr;
+		bool isSuccess = false;
 		if (type == IntType) {
 			const IntObject value = *m_Stack.Pop<IntObject>();
-			m_Stack.Push<LongObject>(value.Value);
+			isSuccess = m_Stack.Push<LongObject>(value.Value);
 		} else if (type == LongType) {
 			return;
 		} else if (type == DoubleType) {
 			const DoubleObject value = *m_Stack.Pop<DoubleObject>();
-			m_Stack.Push<LongObject>(static_cast<std::uint64_t>(value.Value));
+			isSuccess = m_Stack.Push<LongObject>(static_cast<std::uint64_t>(value.Value));
 		} else if (type == PointerType) {
 			const PointerObject value = *m_Stack.Pop<PointerObject>();
-			m_Stack.Push<LongObject>(static_cast<std::uint64_t>(reinterpret_cast<std::uintptr_t>(value.Value)));
+			isSuccess = m_Stack.Push<LongObject>(static_cast<std::uint64_t>(reinterpret_cast<std::uintptr_t>(value.Value)));
 		} else if (type.IsStructure()) {
 			OccurException(SVM_IEC_STRUCTURE_INVALIDFORSTRUCTURE);
 		} else {
 			OccurException(SVM_IEC_STACK_EMPTY);
+		}
+
+		if (!isSuccess) {
+			OccurException(SVM_IEC_STACK_OVERFLOW);
 		}
 	}
 	SVM_NOINLINE_FOR_PROFILING void Interpreter::InterpretToD() {
@@ -478,21 +496,26 @@ namespace svm {
 		}
 
 		const Type type = *typePtr;
+		bool isSuccess = false;
 		if (type == IntType) {
 			const IntObject value = *m_Stack.Pop<IntObject>();
-			m_Stack.Push<DoubleObject>(value.Value);
+			isSuccess = m_Stack.Push<DoubleObject>(value.Value);
 		} else if (type == LongType) {
 			const LongObject value = *m_Stack.Pop<LongObject>();
-			m_Stack.Push<DoubleObject>(static_cast<double>(value.Value));
+			isSuccess = m_Stack.Push<DoubleObject>(static_cast<double>(value.Value));
 		} else if (type == DoubleType) {
 			return;
 		} else if (type == PointerType) {
 			const PointerObject value = *m_Stack.Pop<PointerObject>();
-			m_Stack.Push<DoubleObject>(static_cast<double>(reinterpret_cast<std::uintptr_t>(value.Value)));
+			isSuccess = m_Stack.Push<DoubleObject>(static_cast<double>(reinterpret_cast<std::uintptr_t>(value.Value)));
 		} else if (type.IsStructure()) {
 			OccurException(SVM_IEC_STRUCTURE_INVALIDFORSTRUCTURE);
 		} else {
 			OccurException(SVM_IEC_STACK_EMPTY);
+		}
+
+		if (!isSuccess) {
+			OccurException(SVM_IEC_STACK_OVERFLOW);
 		}
 	}
 	SVM_NOINLINE_FOR_PROFILING void Interpreter::InterpretToP() {
@@ -506,21 +529,26 @@ namespace svm {
 		}
 
 		const Type type = *typePtr;
+		bool isSuccess = false;
 		if (type == IntType) {
 			const IntObject value = *m_Stack.Pop<IntObject>();
-			m_Stack.Push<PointerObject>(reinterpret_cast<void*>(static_cast<std::uintptr_t>(value.Value)));
+			isSuccess = m_Stack.Push<PointerObject>(reinterpret_cast<void*>(static_cast<std::uintptr_t>(value.Value)));
 		} else if (type == LongType) {
 			const LongObject value = *m_Stack.Pop<LongObject>();
-			m_Stack.Push<PointerObject>(reinterpret_cast<void*>(static_cast<std::uintptr_t>(value.Value)));
+			isSuccess = m_Stack.Push<PointerObject>(reinterpret_cast<void*>(static_cast<std::uintptr_t>(value.Value)));
 		} else if (type == DoubleType) {
 			const DoubleObject value = *m_Stack.Pop<DoubleObject>();
-			m_Stack.Push<PointerObject>(reinterpret_cast<void*>(static_cast<std::uintptr_t>(value.Value)));
+			isSuccess = m_Stack.Push<PointerObject>(reinterpret_cast<void*>(static_cast<std::uintptr_t>(value.Value)));
 		} else if (type == PointerType) {
 			return;
 		} else if (type.IsStructure()) {
 			OccurException(SVM_IEC_STRUCTURE_INVALIDFORSTRUCTURE);
 		} else {
 			OccurException(SVM_IEC_STACK_EMPTY);
+		}
+
+		if (!isSuccess) {
+			OccurException(SVM_IEC_STACK_OVERFLOW);
 		}
 	}
 }
