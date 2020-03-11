@@ -7,7 +7,7 @@
 #include <cstring>
 
 namespace svm {
-	void Interpreter::PushStructure(std::uint32_t code) noexcept {
+	SVM_NOINLINE_FOR_PROFILING void Interpreter::PushStructure(std::uint32_t code) noexcept {
 #define Structures m_ByteFile.GetStructures()
 		if (code >= Structures.GetCount()) {
 			OccurException(SVM_IEC_CONSTANTPOOL_OUTOFRANGE);
@@ -23,7 +23,7 @@ namespace svm {
 		InitStructure(structure, m_Stack.GetTopType());
 #undef Structures
 	}
-	void Interpreter::InitStructure(Structure structure, Type* type) const noexcept {
+	SVM_NOINLINE_FOR_PROFILING void Interpreter::InitStructure(Structure structure, Type* type) const noexcept {
 		*type = structure->Type;
 		for (std::size_t i = 0; i < structure->FieldTypes.size(); ++i) {
 			const Type fieldType = structure->FieldTypes[i];
@@ -36,14 +36,14 @@ namespace svm {
 			}
 		}
 	}
-	void Interpreter::CopyStructure(const Type& type) noexcept {
+	SVM_NOINLINE_FOR_PROFILING void Interpreter::CopyStructure(const Type& type) noexcept {
 		CopyStructure(type, *m_Stack.GetTopType());
 	}
-	void Interpreter::CopyStructure(const Type& from, Type& to) const noexcept {
+	SVM_NOINLINE_FOR_PROFILING void Interpreter::CopyStructure(const Type& from, Type& to) const noexcept {
 		std::memcpy(&to, &from, from->Size);
 	}
 	template<typename T>
-	void Interpreter::DRefAndAssign(Type* rhsTypePtr) noexcept {
+	SVM_NOINLINE_FOR_PROFILING void Interpreter::DRefAndAssign(Type* rhsTypePtr) noexcept {
 		if (IsLocalVariable() || IsLocalVariable(sizeof(T))) {
 			OccurException(SVM_IEC_STACK_EMPTY);
 			return;
@@ -72,7 +72,7 @@ namespace svm {
 		m_Stack.Pop<PointerObject>();
 	}
 	template<>
-	void Interpreter::DRefAndAssign<StructureObject>(Type* rhsTypePtr) noexcept {
+	SVM_NOINLINE_FOR_PROFILING void Interpreter::DRefAndAssign<StructureObject>(Type* rhsTypePtr) noexcept {
 		if (IsLocalVariable() || IsLocalVariable((*rhsTypePtr)->Size)) {
 			OccurException(SVM_IEC_STACK_EMPTY);
 			return;
@@ -100,7 +100,7 @@ namespace svm {
 		m_Stack.Remove((*rhsTypePtr)->Size + sizeof(PointerObject));
 	}
 	template<typename T>
-	bool Interpreter::GetTwoSameType(Type rhsType, T*& lhs) noexcept {
+	SVM_NOINLINE_FOR_PROFILING bool Interpreter::GetTwoSameType(Type rhsType, T*& lhs) noexcept {
 		if (IsLocalVariable() || IsLocalVariable(sizeof(T))) {
 			OccurException(SVM_IEC_STACK_EMPTY);
 			return false;

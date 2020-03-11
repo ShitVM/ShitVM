@@ -8,7 +8,7 @@
 
 namespace svm {
 	template<typename T>
-	bool Interpreter::PopTwoSameType(Type& rhsType, T& lhs, T& rhs) noexcept {
+	SVM_NOINLINE_FOR_PROFILING bool Interpreter::PopTwoSameType(Type& rhsType, T& lhs, T& rhs) noexcept {
 		if (IsLocalVariable() || IsLocalVariable(sizeof(T))) {
 			OccurException(SVM_IEC_STACK_EMPTY);
 			return false;

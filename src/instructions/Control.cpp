@@ -5,7 +5,7 @@
 
 namespace svm {
 	template<typename T>
-	void Interpreter::JumpCondition(std::uint32_t operand) {
+	SVM_NOINLINE_FOR_PROFILING void Interpreter::JumpCondition(std::uint32_t operand) {
 		if (IsLocalVariable()) {
 			OccurException(SVM_IEC_STACK_EMPTY);
 			return;
