@@ -15,6 +15,8 @@ $ cd bin
 $ ./ShitVM <입력: ShitVM 바이트 파일>
 ```
 
+## [문서](https://github.com/ShitVM/ShitVM/tree/master/docs)
+
 ## 관련된 레포지토리
 - **[ShitAsm](https://github.com/ShitVM/ShitAsm):** ShitBC 어셈블러
 - **[ShitGen](https://github.com/ShitVM/ShitGen):** ShitVM 바이트 파일 생성기
