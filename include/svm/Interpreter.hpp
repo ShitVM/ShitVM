@@ -77,6 +77,7 @@ namespace svm {
 	};
 
 	struct StackFrame final {
+		svm::Type Type = NoneType;
 		std::size_t StackBegin = 0;
 		std::size_t VariableBegin = 0;
 		std::size_t Caller = std::numeric_limits<std::size_t>::max();
@@ -130,6 +131,7 @@ namespace svm {
 		bool IsLocalVariable(std::size_t delta = 0) const noexcept;
 
 		void PushStructure(std::uint32_t code) noexcept;
+		void InitStructure(Structure structure, Type* type) const noexcept;
 		void CopyStructure(const Type& type) noexcept;
 		void CopyStructure(const Type& from, Type& to) const noexcept;
 		template<typename T>

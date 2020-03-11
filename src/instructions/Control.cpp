@@ -113,7 +113,7 @@ namespace svm {
 			return;
 		}
 
-		m_StackFrame = { m_Stack.GetUsedSize(), m_LocalVariables.size() };
+		m_StackFrame = { NoneType, m_Stack.GetUsedSize(), m_LocalVariables.size() };
 		m_StackFrame.Function = &m_ByteFile.GetFunctions()[operand];
 		m_StackFrame.Instructions = &m_StackFrame.Function->GetInstructions();
 

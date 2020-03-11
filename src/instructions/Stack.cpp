@@ -20,12 +20,21 @@ namespace svm {
 			return;
 		}
 
-		*m_Stack.GetTopType() = structure->Type;
-		const std::size_t topOffset = m_Stack.GetUsedSize();
-		for (std::size_t i = 0; i < structure->FieldTypes.size(); ++i) {
-			*m_Stack.Get<Type>(topOffset - structure->FieldOffsets[i]) = structure->FieldTypes[i];
-		}
+		InitStructure(structure, m_Stack.GetTopType());
 #undef Structures
+	}
+	void Interpreter::InitStructure(Structure structure, Type* type) const noexcept {
+		*type = structure->Type;
+		for (std::size_t i = 0; i < structure->FieldTypes.size(); ++i) {
+			const Type fieldType = structure->FieldTypes[i];
+			Type* const pointer = reinterpret_cast<Type*>(reinterpret_cast<std::uint8_t*>(type) + structure->FieldOffsets[i]);
+
+			if (fieldType.IsStructure()) {
+				InitStructure(m_ByteFile.GetStructures().Get(static_cast<std::uint32_t>(fieldType->Code) - static_cast<std::uint32_t>(TypeCode::Structure)), pointer);
+			} else {
+				*pointer = fieldType;
+			}
+		}
 	}
 	void Interpreter::CopyStructure(const Type& type) noexcept {
 		CopyStructure(type, *m_Stack.GetTopType());

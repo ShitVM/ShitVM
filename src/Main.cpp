@@ -48,7 +48,7 @@ int main(int argc, char* argv[]) {
 	if (!success) {
 		const auto& exception = i.GetException();
 		auto callStacks = i.GetCallStacks();
-		callStacks.erase(callStacks.end() - 1);
+		callStacks[0].Caller = exception.InstructionIndex;
 		const auto& funcs = i.GetByteFile().GetFunctions();
 
 		std::cout << "Occured exception!\n"
@@ -63,16 +63,24 @@ int main(int argc, char* argv[]) {
 			const auto dis = std::distance(funcs.begin(), iter);
 			std::cout << '[' << dis << ']';
 		}
-		std::cout << "\n"
-				  << "CallStacks:\n";
+		std::cout << "\nCallStacks:\n";
 		for (const auto& frame : callStacks) {
-			const auto iter = std::find_if(funcs.begin(), funcs.end(), [&](const auto& func) {
-				return &func == frame.Function;
-			});
-			const auto dis = std::distance(funcs.begin(), iter);
-			std::cout << "\t[" << dis << "] at\n";
+			if (frame.Function == nullptr) {
+				std::cout << "\tentrypoint";
+			} else {
+				const auto iter = std::find_if(funcs.begin(), funcs.end(), [&](const auto& func) {
+					return &func == frame.Function;
+					});
+				const auto dis = std::distance(funcs.begin(), iter);
+				std::cout << "\t[" << dis << ']';
+			}
+			std::cout << '(' << frame.Caller
+					  << '(' << std::hex << std::uppercase << std::setw(16) << std::setfill('0') << frame.Instructions->GetInstruction(frame.Caller).Offset
+					  << std::dec << std::nouppercase << "))";
+			if (frame.Function != nullptr) {
+				std::cout << " at\n";
+			}
 		}
-		std::cout << "\tentrypoint\n";
 
 		return EXIT_FAILURE;
 	}

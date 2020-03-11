@@ -211,17 +211,8 @@ namespace svm {
 			stackOffset = frame->StackBegin;
 			while (true) {
 				const Type type = *m_Stack.Get<Type>(stackOffset);
-				if (type == IntType) {
-					stackOffset -= sizeof(IntObject);
-				} else if (type == LongType) {
-					stackOffset -= sizeof(LongObject);
-				} else if (type == DoubleType) {
-					stackOffset -= sizeof(DoubleObject);
-				} else if (type == PointerType) {
-					stackOffset -= sizeof(PointerObject);
-				} else {
-					break;
-				}
+				if (!type.IsValidType()) break;
+				stackOffset -= type->Size;
 			}
 			frame = m_Stack.Get<StackFrame>(stackOffset);
 			result[i + 1] = *frame;
