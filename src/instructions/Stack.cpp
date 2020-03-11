@@ -176,18 +176,19 @@ namespace svm {
 			return;
 		}
 
-		const Type& type = *m_Stack.Get<Type>(m_LocalVariables[operand]);
+		const Type* const typePtr = m_Stack.Get<Type>(m_LocalVariables[operand]);
+		const Type type = *typePtr;
 		bool isSuccess = false;
 		if (type == IntType) {
-			isSuccess = m_Stack.Push(reinterpret_cast<const IntObject&>(type));
+			isSuccess = m_Stack.Push(reinterpret_cast<const IntObject&>(*typePtr));
 		} else if (type == LongType) {
-			isSuccess = m_Stack.Push(reinterpret_cast<const LongObject&>(type));
+			isSuccess = m_Stack.Push(reinterpret_cast<const LongObject&>(*typePtr));
 		} else if (type == DoubleType) {
-			isSuccess = m_Stack.Push(reinterpret_cast<const DoubleObject&>(type));
+			isSuccess = m_Stack.Push(reinterpret_cast<const DoubleObject&>(*typePtr));
 		} else if (type == PointerType) {
-			isSuccess = m_Stack.Push(reinterpret_cast<const PointerObject&>(type));
+			isSuccess = m_Stack.Push(reinterpret_cast<const PointerObject&>(*typePtr));
 		} else if (type.IsStructure() && (isSuccess = m_Stack.Add(type->Size))) {
-			CopyStructure(type);
+			CopyStructure(*typePtr);
 		}
 
 		if (!isSuccess) {
