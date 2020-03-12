@@ -193,5 +193,9 @@ namespace svm {
 		void InterpretToL();
 		void InterpretToD();
 		void InterpretToP();
+
+		void InterpretNull() noexcept;
+		void InterpretNew(std::uint32_t operand) noexcept;
+		void InterpretDelete() noexcept;
 	};
 }

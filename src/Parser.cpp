@@ -199,9 +199,7 @@ namespace svm {
 			const OpCode opCode = ReadOpCode();
 			std::uint32_t operand = Instruction::NoOperand;
 			const std::uint64_t offset = nextOffset;
-
-			if (OpCode::Push <= opCode && opCode <= OpCode::FLea && opCode != OpCode::Pop ||
-				OpCode::Jmp <= opCode && opCode <= OpCode::Call) {
+			if (HasOperand[static_cast<std::uint8_t>(opCode)]) {
 				operand = ReadFile<std::uint32_t>();
 				nextOffset += 4;
 			}

@@ -50,4 +50,16 @@ namespace svm {
 			else return NoneType;
 		}
 	}
+	Type GetTypeFromTypeCode(const Structures& structures, TypeCode code) noexcept {
+		switch (code) {
+		case TypeCode::Int: return IntType;
+		case TypeCode::Long: return LongType;
+		case TypeCode::Double: return DoubleType;
+		case TypeCode::Pointer: return PointerType;
+
+		default:
+			if (code >= TypeCode::Structure) return structures.Get(static_cast<std::uint8_t>(code) - static_cast<std::uint8_t>(TypeCode::Structure))->Type;
+			else return NoneType;
+		}
+	}
 }
