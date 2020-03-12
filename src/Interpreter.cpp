@@ -171,6 +171,10 @@ namespace svm {
 			case OpCode::ToI: InterpretToI(); break;
 			case OpCode::ToL: InterpretToL(); break;
 			case OpCode::ToD: InterpretToD(); break;
+
+			case OpCode::Null: InterpretNull(); break;
+			case OpCode::New: InterpretNew(inst.Operand); break;
+			case OpCode::Delete: InterpretDelete(); break;
 			}
 
 			if (m_Exception.has_value()) return false;
