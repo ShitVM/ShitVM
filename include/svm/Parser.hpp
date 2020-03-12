@@ -24,10 +24,10 @@ namespace svm {
 	};
 
 	enum class ByteCodeVersion : std::uint16_t {
-		v0_2_0 = 1,
+		v0_3_0 = 2,
 
-		Least = v0_2_0,
-		Latest = v0_2_0,
+		Least = v0_3_0,
+		Latest = v0_3_0,
 	};
 
 	class Parser final {

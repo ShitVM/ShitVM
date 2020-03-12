@@ -53,9 +53,12 @@ namespace svm {
 		Jbe,
 		Call,
 		Ret,
-
+		
+		ToB,				// Not supported
+		ToS,				// Not supported
 		ToI,
 		ToL,
+		ToF,				// Not supported
 		ToD,
 		ToP,
 	};
@@ -66,7 +69,7 @@ namespace svm {
 		"add", "sub", "mul", "imul", "div", "idiv", "mod", "imod", "neg", "inc", "dec",
 		"and", "or", "xor", "not", "shl", "shr", "sal", "sar",
 		"cmp", "icmp", "jmp", "je", "jne", "ja", "jae", "jb", "jbe", "call", "ret",
-		"toi", "tol", "tod", "top",
+		"tob", "tos", "toi", "tol", "tof", "tod", "top",
 	};
 }
 
