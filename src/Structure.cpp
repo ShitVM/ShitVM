@@ -15,10 +15,11 @@ namespace svm {
 
 	std::ostream& operator<<(std::ostream& stream, const StructureInfo& structureInfo) {
 		const std::string defIndent = detail::MakeTabs(stream);
+		const std::uint32_t fieldCount = static_cast<std::uint32_t>(structureInfo.FieldTypes.size());
 
 		stream << defIndent << "Structure: " << structureInfo.Type.Size << "B\n"
-			   << defIndent << "\tFields: " << structureInfo.FieldTypes.size();
-		for (std::uint32_t i = 0; i < static_cast<std::uint32_t>(structureInfo.FieldTypes.size()); ++i) {
+			   << defIndent << "\tFields: " << fieldCount;
+		for (std::uint32_t i = 0; i < fieldCount; ++i) {
 			stream << '\n' << defIndent << "\t\t[" << i << "]: " << structureInfo.FieldTypes[i]->Name << '(' << structureInfo.FieldTypes[i]->Size << "B)";
 		}
 		return stream;
@@ -52,18 +53,19 @@ namespace svm {
 		return m_Structures.empty();
 	}
 
-	Structure Structures::Get(std::uint32_t index) const noexcept {
+	Structure Structures::GetStructure(std::uint32_t index) const noexcept {
 		return m_Structures[index];
 	}
-	std::uint32_t Structures::GetCount() const noexcept {
+	std::uint32_t Structures::GetStructureCount() const noexcept {
 		return static_cast<std::uint32_t>(m_Structures.size());
 	}
 
 	std::ostream& operator<<(std::ostream& stream, const Structures& structures) {
 		const std::string defIndent = detail::MakeTabs(stream);
+		const std::uint32_t structCount = structures.GetStructureCount();
 
-		stream << defIndent << "Structures: " << structures.GetCount() << Indent << Indent;
-		for (std::uint32_t i = 0; i < structures.GetCount(); ++i) {
+		stream << defIndent << "Structures: " << structCount << Indent << Indent;
+		for (std::uint32_t i = 0; i < structCount; ++i) {
 			stream << '\n' << defIndent << "\t[" << i << "]:\n" << structures[i];
 		}
 		stream << UnIndent << UnIndent;

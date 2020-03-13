@@ -11,7 +11,7 @@ namespace svm {
 		}
 	}
 	void Interpreter::InterpretNew(std::uint32_t operand) noexcept {
-		if (operand >= m_ByteFile.GetStructures().GetCount() + 10) {
+		if (operand >= m_ByteFile.GetStructures().GetStructureCount() + 10) {
 			OccurException(SVM_IEC_TYPE_OUTOFRANGE);
 			return;
 		}
@@ -29,7 +29,7 @@ namespace svm {
 		if (type.IsFundamentalType()) {
 			*static_cast<Type*>(address) = type;
 		} else if (type.IsStructure()) {
-			InitStructure(m_ByteFile.GetStructures().Get(operand - 10), static_cast<Type*>(address));
+			InitStructure(m_ByteFile.GetStructures()[operand - 10], static_cast<Type*>(address));
 		}
 	}
 	void Interpreter::InterpretDelete() noexcept {

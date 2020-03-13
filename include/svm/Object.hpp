@@ -1,7 +1,7 @@
 #pragma once
 
-#include <svm/Type.hpp>
 #include <svm/Structure.hpp>
+#include <svm/Type.hpp>
 
 #include <cstdint>
 
@@ -27,10 +27,6 @@ namespace svm {
 
 	public:
 		Type GetType() const noexcept;
-		bool IsInt() const noexcept;
-		bool IsLong() const noexcept;
-		bool IsDouble() const noexcept;
-		bool IsPointer() const noexcept;
 	};
 
 	class IntObject final : public Object {

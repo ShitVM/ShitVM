@@ -1,19 +1,12 @@
 #include <svm/Instruction.hpp>
 
 #include <svm/IO.hpp>
-#include <svm/Memory.hpp>
 
-#include <iomanip>
-#include <ios>
 #include <utility>
 
 namespace svm {
-	Instruction::Instruction(svm::OpCode opCode) noexcept
-		: OpCode(opCode) {}
 	Instruction::Instruction(svm::OpCode opCode, std::uint64_t offset) noexcept
 		: OpCode(opCode), Offset(offset) {}
-	Instruction::Instruction(svm::OpCode opCode, std::uint32_t operand) noexcept
-		: OpCode(opCode), Operand(operand) {}
 	Instruction::Instruction(svm::OpCode opCode, std::uint32_t operand, std::uint64_t offset) noexcept
 		: OpCode(opCode), Operand(operand), Offset(offset) {}
 	Instruction::Instruction(const Instruction& instruction) noexcept
@@ -33,20 +26,13 @@ namespace svm {
 	}
 
 	bool Instruction::HasOperand() const noexcept {
-		return Operand != NoOperand;
-	}
-	bool Instruction::HasOffset() const noexcept {
-		return Offset != NoOffset;
+		return svm::HasOperand[static_cast<std::uint8_t>(OpCode)];
 	}
 
 	std::ostream& operator<<(std::ostream& stream, const Instruction& instruction) {
-		if (instruction.HasOffset()) {
-			stream << std::hex << std::uppercase << std::setw(16) << std::setfill('0') << instruction.Offset << ": "
-				   << std::dec << std::nouppercase;
-		}
-		stream << Mnemonics[static_cast<int>(instruction.OpCode)];
+		stream << QWord(instruction.Offset) << ": " << Mnemonics[static_cast<std::uint8_t>(instruction.OpCode)];
 		if (instruction.HasOperand()) {
-			stream << std::hex << std::uppercase << " 0x" << instruction.Operand << std::dec << std::nouppercase;
+			stream << " 0x" << Hex(instruction.Operand);
 		}
 		return stream;
 	}
@@ -81,12 +67,6 @@ namespace svm {
 	const Instruction& Instructions::GetInstruction(std::uint64_t offset) const noexcept {
 		return m_Instructions[static_cast<std::size_t>(offset)];
 	}
-	const std::vector<std::uint64_t>& Instructions::GetLabels() const noexcept {
-		return m_Labels;
-	}
-	const std::vector<Instruction>& Instructions::GetInstructions() const noexcept {
-		return m_Instructions;
-	}
 	std::uint32_t Instructions::GetLabelCount() const noexcept {
 		return static_cast<std::uint32_t>(m_Labels.size());
 	}
@@ -94,16 +74,26 @@ namespace svm {
 		return m_Instructions.size();
 	}
 
+	const std::vector<std::uint64_t>& Instructions::GetLabels() const noexcept {
+		return m_Labels;
+	}
+	const std::vector<Instruction>& Instructions::GetInstructions() const noexcept {
+		return m_Instructions;
+	}
+
 	std::ostream& operator<<(std::ostream& stream, const Instructions& instructions) {
 		const std::string defIndent = detail::MakeTabs(stream);
-		stream << defIndent << "Instructions: " << instructions.GetInstructionCount() << '\n'
-			   << defIndent << "\tLabels: " << instructions.GetLabelCount();
-		for (std::uint32_t i = 0; i < instructions.GetLabelCount(); ++i) {
-			stream << '\n' << defIndent << "\t\t[" << i << "]: " << instructions.GetLabel(i)
-				   << '(' << std::hex << std::uppercase << std::setw(16) << std::setfill('0') << instructions.GetInstruction(instructions.GetLabel(i)).Offset << ')'
-				   << std::dec << std::nouppercase;
+		const std::uint32_t labelCount = instructions.GetLabelCount();
+		const std::uint64_t instCount = instructions.GetInstructionCount();
+
+		stream << defIndent << "Instructions: " << instCount << '\n'
+			   << defIndent << "\tLabels: " << labelCount;
+		for (std::uint32_t i = 0; i < labelCount; ++i) {
+			const std::uint64_t label = instructions.GetLabel(i);
+			
+			stream << '\n' << defIndent << "\t\t[" << i << "]: " << label << '(' << QWord(instructions.GetInstruction(label).Offset) << ')';
 		}
-		for (std::uint64_t i = 0; i < instructions.GetInstructionCount(); ++i) {
+		for (std::uint64_t i = 0; i < instCount; ++i) {
 			stream << '\n' << defIndent << '\t' << instructions.GetInstruction(i);
 		}
 

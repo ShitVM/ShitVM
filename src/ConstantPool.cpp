@@ -1,9 +1,8 @@
 #include <svm/ConstantPool.hpp>
 
 #include <svm/IO.hpp>
-#include <svm/Macro.hpp>
-#include <svm/Memory.hpp>
 
+#include <cassert>
 #include <utility>
 
 namespace svm {
@@ -29,13 +28,11 @@ namespace svm {
 	}
 
 	Type ConstantPool::GetConstantType(std::uint32_t index) const noexcept {
-		if (index >= GetDoubleOffset()) {
-			return DoubleType;
-		} else if (index >= GetLongOffset()) {
-			return LongType;
-		} else {
-			return IntType;
-		}
+		assert(index < GetAllCount());
+
+		if (index >= GetDoubleOffset()) return DoubleType;
+		else if (index >= GetLongOffset()) return LongType;
+		else return IntType;
 	}
 	std::uint32_t ConstantPool::GetIntOffset() const noexcept {
 		return 0;
@@ -59,6 +56,25 @@ namespace svm {
 		return GetIntCount() + GetLongCount() + GetDoubleCount();
 	}
 
+	const std::vector<IntObject>& ConstantPool::GetIntPool() const noexcept {
+		return m_IntPool;
+	}
+	void ConstantPool::SetIntPool(std::vector<IntObject> newIntPool) noexcept {
+		m_IntPool = std::move(newIntPool);
+	}
+	const std::vector<LongObject>& ConstantPool::GetLongPool() const noexcept {
+		return m_LongPool;
+	}
+	void ConstantPool::SetLongPool(std::vector<LongObject> newLongPool) noexcept {
+		m_LongPool = std::move(newLongPool);
+	}
+	const std::vector<DoubleObject>& ConstantPool::GetDoublePool() const noexcept {
+		return m_DoublePool;
+	}
+	void ConstantPool::SetDoublePool(std::vector<DoubleObject> newDoublePool) noexcept {
+		m_DoublePool = std::move(newDoublePool);
+	}
+
 	namespace {
 		template<typename T>
 		void PrintConstants(std::ostream& stream, const ConstantPool& constantPool, const std::string& defIndent, std::uint32_t i) {
@@ -72,17 +88,17 @@ namespace svm {
 
 		stream << defIndent << "ConstantPool: " << constantPool.GetAllCount();
 
-		static constexpr std::uint32_t((ConstantPool:: * types[])() const noexcept) = {
+		static constexpr std::uint32_t((ConstantPool::*types[])() const noexcept) = {
 			&ConstantPool::GetIntCount,
 			&ConstantPool::GetLongCount,
 			&ConstantPool::GetDoubleCount,
 		};
 
 		std::uint32_t i = 0;
-		std::uint32_t offset = 0;
 		for (auto type : types) {
 			const std::uint32_t count = (constantPool.*type)();
-			const std::uint32_t end = offset + count;
+			const std::uint32_t end = i + count;
+
 			for (; i < end; ++i) {
 				if (type == &ConstantPool::GetIntCount) {
 					PrintConstants<IntObject>(stream, constantPool, defIndent, i);
@@ -93,7 +109,6 @@ namespace svm {
 				}
 			}
 		}
-
 		return stream;
 	}
 }

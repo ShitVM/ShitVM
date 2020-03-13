@@ -14,18 +14,6 @@ namespace svm {
 	Type Object::GetType() const noexcept {
 		return m_Type;
 	}
-	bool Object::IsInt() const noexcept {
-		return m_Type == IntType;
-	}
-	bool Object::IsLong() const noexcept {
-		return m_Type == LongType;
-	}
-	bool Object::IsDouble() const noexcept {
-		return m_Type == DoubleType;
-	}
-	bool Object::IsPointer() const noexcept {
-		return m_Type == PointerType;
-	}
 }
 
 namespace svm {

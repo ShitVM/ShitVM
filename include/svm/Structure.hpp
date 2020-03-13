@@ -3,6 +3,7 @@
 #include <svm/Type.hpp>
 #include <svm/detail/ReferenceWrapper.hpp>
 
+#include <cstddef>
 #include <cstdint>
 #include <ostream>
 #include <vector>
@@ -58,8 +59,8 @@ namespace svm {
 		void Clear() noexcept;
 		bool IsEmpty() const noexcept;
 
-		Structure Get(std::uint32_t index) const noexcept;
-		std::uint32_t GetCount() const noexcept;
+		Structure GetStructure(std::uint32_t index) const noexcept;
+		std::uint32_t GetStructureCount() const noexcept;
 	};
 
 	std::ostream& operator<<(std::ostream& stream, const Structures& structures);

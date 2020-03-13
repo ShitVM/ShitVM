@@ -34,10 +34,15 @@ namespace svm {
 		bool IsEmpty() const noexcept;
 
 		std::string_view GetPath() const noexcept;
+		void SetPath(std::string newPath) noexcept;
 		const ConstantPool& GetConstantPool() const noexcept;
+		void SetConstantPool(ConstantPool&& newConstantPool) noexcept;
 		const Structures& GetStructures() const noexcept;
+		void SetStructures(Structures&& newStructures) noexcept;
 		const Functions& GetFunctions() const noexcept;
+		void SetFunctions(Functions&& newFunctions) noexcept;
 		const Instructions& GetEntryPoint() const noexcept;
+		void SetEntryPoint(Instructions&& newEntryPoint) noexcept;
 	};
 
 	std::ostream& operator<<(std::ostream& stream, const ByteFile& byteFile);

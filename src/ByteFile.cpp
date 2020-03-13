@@ -36,22 +36,37 @@ namespace svm {
 	std::string_view ByteFile::GetPath() const noexcept {
 		return m_Path;
 	}
+	void ByteFile::SetPath(std::string newPath) noexcept {
+		m_Path = std::move(newPath);
+	}
 	const ConstantPool& ByteFile::GetConstantPool() const noexcept {
 		return m_ConstantPool;
+	}
+	void ByteFile::SetConstantPool(ConstantPool&& newConstantPool) noexcept {
+		m_ConstantPool = std::move(newConstantPool);
 	}
 	const Structures& ByteFile::GetStructures() const noexcept {
 		return m_Structures;
 	}
+	void ByteFile::SetStructures(Structures&& newStructures) noexcept {
+		m_Structures = std::move(newStructures);
+	}
 	const Functions& ByteFile::GetFunctions() const noexcept {
 		return m_Functions;
+	}
+	void ByteFile::SetFunctions(Functions&& newFunctions) noexcept {
+		m_Functions = std::move(newFunctions);
 	}
 	const Instructions& ByteFile::GetEntryPoint() const noexcept {
 		return m_EntryPoint;
 	}
+	void ByteFile::SetEntryPoint(Instructions&& newEntryPoint) noexcept {
+		m_EntryPoint = std::move(newEntryPoint);
+	}
 
 	std::ostream& operator<<(std::ostream& stream, const ByteFile& byteFile) {
 		const std::string defIndent = detail::MakeTabs(stream);
-		
+
 		stream << defIndent << "ByteFile:\n"
 			   << defIndent << "\tPath: \"" << byteFile.GetPath() << "\"\n"
 			   << Indent << byteFile.GetConstantPool() << '\n'
@@ -59,7 +74,6 @@ namespace svm {
 						 << byteFile.GetFunctions() << '\n' << UnIndent
 			   << defIndent << "\tEntryPoint:\n"
 			   << Indent << Indent << byteFile.GetEntryPoint() << UnIndent << UnIndent;
-
 		return stream;
 	}
 }

@@ -26,8 +26,11 @@ namespace svm {
 
 	public:
 		std::uint16_t GetArity() const noexcept;
+		void SetArity(std::uint16_t newArity) noexcept;
 		bool HasResult() const noexcept;
+		void SetHasResult(bool newHasResult) noexcept;
 		const Instructions& GetInstructions() const noexcept;
+		void SetInstructions(Instructions&& newInstructions) noexcept;
 	};
 
 	using Functions = std::vector<Function>;

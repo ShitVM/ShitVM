@@ -21,11 +21,11 @@ namespace svm {
 
 	template<typename T>
 	T ReverseEndian(const T& value) noexcept {
-		union transformer {
+		union Transformer {
 			std::uint8_t Bytes[sizeof(value)];
 		} temp;
-		temp = *reinterpret_cast<const transformer*>(&value);
+		temp = reinterpret_cast<const Transformer&>(value);
 		std::reverse(temp.Bytes, temp.Bytes + sizeof(value));
-		return *reinterpret_cast<T*>(&temp);
+		return reinterpret_cast<T&>(temp);
 	}
 }

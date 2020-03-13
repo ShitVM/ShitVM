@@ -5,7 +5,6 @@
 
 #include <cstdint>
 #include <ostream>
-#include <type_traits>
 #include <vector>
 
 namespace svm {
@@ -31,42 +30,29 @@ namespace svm {
 		bool IsEmpty() const noexcept;
 
 		template<typename T>
-		const T& GetConstant(std::uint32_t index) const noexcept {
-			static_assert(std::is_base_of_v<Object, T>);
-
-			if constexpr (std::is_same_v<IntObject, T>) {
-				return m_IntPool[index - GetOffset<T>()];
-			} else if constexpr (std::is_same_v<LongObject, T>) {
-				return m_LongPool[index - GetOffset<T>()];
-			} else if constexpr (std::is_same_v<DoubleObject, T>) {
-				return m_DoublePool[index - GetOffset<T>()];
-			}
-		}
+		const T& GetConstant(std::uint32_t index) const noexcept;
 		Type GetConstantType(std::uint32_t index) const noexcept;
 		template<typename T>
-		std::uint32_t GetOffset() const noexcept {
-			static_assert(std::is_base_of_v<Object, T>);
-
-			if constexpr (std::is_same_v<IntObject, T>) return GetIntOffset();
-			else if constexpr (std::is_same_v<LongObject, T>) return GetLongOffset();
-			else if constexpr (std::is_same_v<DoubleObject, T>) return GetDoubleOffset();
-		}
+		std::uint32_t GetOffset() const noexcept;
 		std::uint32_t GetIntOffset() const noexcept;
 		std::uint32_t GetLongOffset() const noexcept;
 		std::uint32_t GetDoubleOffset() const noexcept;
 		template<typename T>
-		std::uint32_t GetCount() const noexcept {
-			static_assert(std::is_base_of_v<Object, T>);
-
-			if constexpr (std::is_same_v<IntObject, T>) return GetIntCount();
-			else if constexpr (std::is_same_v<LongObject, T>) return GetLongCount();
-			else if constexpr (std::is_same_v<DoubleObject, T>) return GetDoubleCount();
-		}
+		std::uint32_t GetCount() const noexcept;
 		std::uint32_t GetIntCount() const noexcept;
 		std::uint32_t GetLongCount() const noexcept;
 		std::uint32_t GetDoubleCount() const noexcept;
 		std::uint32_t GetAllCount() const noexcept;
+
+		const std::vector<IntObject>& GetIntPool() const noexcept;
+		void SetIntPool(std::vector<IntObject> newIntPool) noexcept;
+		const std::vector<LongObject>& GetLongPool() const noexcept;
+		void SetLongPool(std::vector<LongObject> newLongPool) noexcept;
+		const std::vector<DoubleObject>& GetDoublePool() const noexcept;
+		void SetDoublePool(std::vector<DoubleObject> newDoublePool) noexcept;
 	};
 
 	std::ostream& operator<<(std::ostream& stream, const ConstantPool& constantPool);
 }
+
+#include "detail/impl/ConstantPool.hpp"

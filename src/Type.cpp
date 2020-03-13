@@ -12,10 +12,7 @@ namespace svm {
 
 namespace svm {
 	bool Type::IsFundamentalType() const noexcept {
-		return GetPointer() == IntType.GetPointer() ||
-			GetPointer() == LongType.GetPointer() ||
-			GetPointer() == DoubleType.GetPointer() ||
-			GetPointer() == PointerType.GetPointer();
+		return GetReference().Code < TypeCode::Structure;
 	}
 	bool Type::IsStructure() const noexcept {
 		return GetReference().Code >= TypeCode::Structure;
@@ -58,7 +55,7 @@ namespace svm {
 		case TypeCode::Pointer: return PointerType;
 
 		default:
-			if (code >= TypeCode::Structure) return structures.Get(static_cast<std::uint8_t>(code) - static_cast<std::uint8_t>(TypeCode::Structure))->Type;
+			if (code >= TypeCode::Structure) return structures[static_cast<std::uint8_t>(code) - static_cast<std::uint8_t>(TypeCode::Structure)]->Type;
 			else return NoneType;
 		}
 	}

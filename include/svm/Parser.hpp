@@ -1,17 +1,12 @@
 #pragma once
 
 #include <svm/ByteFile.hpp>
-#include <svm/Instruction.hpp>
-#include <svm/Memory.hpp>
-#include <svm/Object.hpp>
 #include <svm/Structure.hpp>
 
 #include <cstddef>
 #include <cstdint>
 #include <string>
-#include <type_traits>
 #include <unordered_map>
-#include <utility>
 #include <vector>
 
 namespace svm {
@@ -35,12 +30,7 @@ namespace svm {
 		std::vector<std::uint8_t> m_File;
 		std::size_t m_Pos = 0;
 
-		std::string m_Path;
-		ConstantPool m_ConstantPool;
-		Structures m_Structures;
-		Functions m_Functions;
-		Instructions m_EntryPoint;
-
+		ByteFile m_ByteFile;
 		ByteFileVersion m_ByteFileVersion = ByteFileVersion::Latest;
 		ByteCodeVersion m_ByteCodeVersion = ByteCodeVersion::Latest;
 
@@ -62,37 +52,15 @@ namespace svm {
 		bool IsParsed() const noexcept;
 
 		ByteFile GetResult();
-		std::string_view GetPath() const noexcept;
-		const ConstantPool& GetConstantPool() const noexcept;
-		const Structures& GetStructures() const noexcept;
-		const Functions& GetFunctions() const noexcept;
-		const Instructions& GetEntryPoint() const noexcept;
 
 	private:
 		template<typename T>
-		T ReadFile() noexcept {
-			T result = *reinterpret_cast<T*>(&m_File[m_Pos]);
-			m_Pos += sizeof(T);
-
-			if constexpr (sizeof(T) > 1) {
-				return GetEndian() == Endian::Little ? result : ReverseEndian(result);
-			} else return result;
-		}
-		auto ReadFile(std::size_t size) noexcept {
-			const auto begin = m_File.begin() + m_Pos;
-			const auto end = m_File.begin() + m_Pos + size;
-			m_Pos += size;
-			return std::make_pair(begin, end);
-		}
+		T ReadFile() noexcept;
+		inline auto ReadFile(std::size_t size) noexcept;
 
 		void ParseConstantPool();
 		template<typename T>
-		void ParseConstants(std::vector<T>& pool) {
-			static_assert(std::is_base_of_v<Object, T>);
-			for (T& obj : pool) {
-				obj.Value = ReadFile<decltype(obj.Value)>();
-			}
-		}
+		void ParseConstants(std::vector<T>& pool) noexcept;
 		void ParseStructures();
 		void ParseFunctions();
 		Instructions ParseInstructions();
@@ -105,3 +73,5 @@ namespace svm {
 		OpCode ReadOpCode() noexcept;
 	};
 }
+
+#include "detail/impl/Parser.hpp"

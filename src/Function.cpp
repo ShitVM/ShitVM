@@ -20,11 +20,20 @@ namespace svm {
 	std::uint16_t Function::GetArity() const noexcept {
 		return m_Arity;
 	}
+	void Function::SetArity(std::uint16_t newArity) noexcept {
+		m_Arity = newArity;
+	}
 	bool Function::HasResult() const noexcept {
 		return m_HasResult;
 	}
+	void Function::SetHasResult(bool newHasResult) noexcept {
+		m_HasResult = newHasResult;
+	}
 	const Instructions& Function::GetInstructions() const noexcept {
 		return m_Instructions;
+	}
+	void Function::SetInstructions(Instructions&& newInstructions) noexcept {
+		m_Instructions = std::move(newInstructions);
 	}
 
 	std::ostream& operator<<(std::ostream& stream, const Function& function) {
@@ -32,15 +41,16 @@ namespace svm {
 
 		stream << defIndent << "Function:\n"
 			   << defIndent << "\tArity: " << function.GetArity() << '\n'
-			   << defIndent << "\tHasResult: " << std::boolalpha << function.HasResult() << '\n'
+			   << defIndent << "\tHasResult: " << std::boolalpha << function.HasResult() << std::noboolalpha << '\n'
 			   << Indent << Indent << function.GetInstructions() << UnIndent << UnIndent;
 		return stream;
 	}
 	std::ostream& operator<<(std::ostream& stream, const Functions& functions) {
 		const std::string defIndent = detail::MakeTabs(stream);
+		const std::uint32_t funcCount = static_cast<std::uint32_t>(functions.size());
 
-		stream << defIndent << "Functions: " << functions.size() << Indent << Indent;
-		for (std::uint32_t i = 0; i < static_cast<std::uint32_t>(functions.size()); ++i) {
+		stream << defIndent << "Functions: " << funcCount << Indent << Indent;
+		for (std::uint32_t i = 0; i < funcCount; ++i) {
 			stream << '\n' << defIndent << "\t[" << i << "]:\n" << functions[i];
 		}
 		stream << UnIndent << UnIndent;

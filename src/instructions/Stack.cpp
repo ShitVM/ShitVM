@@ -9,12 +9,12 @@
 namespace svm {
 	SVM_NOINLINE_FOR_PROFILING void Interpreter::PushStructure(std::uint32_t code) noexcept {
 #define Structures m_ByteFile.GetStructures()
-		if (code >= Structures.GetCount()) {
+		if (code >= Structures.GetStructureCount()) {
 			OccurException(SVM_IEC_CONSTANTPOOL_OUTOFRANGE);
 			return;
 		}
 
-		const Structure structure = Structures.Get(code);
+		const Structure structure = Structures[code];
 		if (!m_Stack.Add(structure->Type.Size)) {
 			OccurException(SVM_IEC_STACK_OVERFLOW);
 			return;
@@ -30,7 +30,7 @@ namespace svm {
 			Type* const pointer = reinterpret_cast<Type*>(reinterpret_cast<std::uint8_t*>(type) + structure->FieldOffsets[i]);
 
 			if (fieldType.IsStructure()) {
-				InitStructure(m_ByteFile.GetStructures().Get(static_cast<std::uint32_t>(fieldType->Code) - static_cast<std::uint32_t>(TypeCode::Structure)), pointer);
+				InitStructure(m_ByteFile.GetStructures()[static_cast<std::uint32_t>(fieldType->Code) - 10], pointer);
 			} else {
 				*pointer = fieldType;
 			}
