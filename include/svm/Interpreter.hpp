@@ -104,48 +104,57 @@ namespace svm {
 		void InterpretToD() noexcept;
 		void InterpretToP() noexcept;
 
-	private:
-		template<typename T>
-		bool PopTwoSameType(Type& rhsType, T& lhs, T& rhs) noexcept;
-		template<typename T>
-		IntObject CompareTwoSameType(T lhs, T rhs) noexcept;
-		template<typename T>
-		void JumpCondition(std::uint32_t operand);
-
-		void InterpretAdd();
-		void InterpretSub();
-		void InterpretMul();
-		void InterpretIMul();
-		void InterpretDiv();
-		void InterpretIDiv();
-		void InterpretMod();
-		void InterpretIMod();
-		void InterpretNeg();
-		void InterpretIncDec(int delta);
-
-		void InterpretAnd();
-		void InterpretOr();
-		void InterpretXor();
-		void InterpretNot();
-		void InterpretShl();
-		void InterpretSal();
-		void InterpretShr();
-		void InterpretSar();
-
-		void InterpretCmp();
-		void InterpretICmp();
-		void InterpretJmp(std::uint32_t operand);
-		void InterpretJe(std::uint32_t operand);
-		void InterpretJne(std::uint32_t operand);
-		void InterpretJa(std::uint32_t operand);
-		void InterpretJae(std::uint32_t operand);
-		void InterpretJb(std::uint32_t operand);
-		void InterpretJbe(std::uint32_t operand);
-		void InterpretCall(std::uint32_t operand);
-		void InterpretRet();
-
+	private: // Memory
 		void InterpretNull() noexcept;
 		void InterpretNew(std::uint32_t operand) noexcept;
 		void InterpretDelete() noexcept;
+
+	private: // Operation
+		template<typename T>
+		bool PopTwoSameTypeAndPushOne(const Type* rhsTypePtr, T*& lhs, const T*& rhs) noexcept;
+
+		template<typename T>
+		bool PopTwoSameType(const Type* rhsTypePtr, T& lhs, T& rhs) noexcept;
+		template<typename T>
+		IntObject CompareTwoSameType(T lhs, T rhs) noexcept;
+
+	private:
+		void InterpretAdd() noexcept;
+		void InterpretSub() noexcept;
+		void InterpretMul() noexcept;
+		void InterpretIMul() noexcept;
+		void InterpretDiv() noexcept;
+		void InterpretIDiv() noexcept;
+		void InterpretMod() noexcept;
+		void InterpretIMod() noexcept;
+		void InterpretNeg() noexcept;
+		void InterpretIncDec(int delta) noexcept;
+
+		void InterpretAnd() noexcept;
+		void InterpretOr() noexcept;
+		void InterpretXor() noexcept;
+		void InterpretNot() noexcept;
+		void InterpretShl() noexcept;
+		void InterpretSal() noexcept;
+		void InterpretShr() noexcept;
+		void InterpretSar() noexcept;
+
+		void InterpretCmp() noexcept;
+		void InterpretICmp() noexcept;
+
+	private: // Control
+		template<typename T>
+		void JumpCondition(std::uint32_t operand) noexcept;
+
+	private:
+		void InterpretJmp(std::uint32_t operand) noexcept;
+		void InterpretJe(std::uint32_t operand) noexcept;
+		void InterpretJne(std::uint32_t operand) noexcept;
+		void InterpretJa(std::uint32_t operand) noexcept;
+		void InterpretJae(std::uint32_t operand) noexcept;
+		void InterpretJb(std::uint32_t operand) noexcept;
+		void InterpretJbe(std::uint32_t operand) noexcept;
+		void InterpretCall(std::uint32_t operand);
+		void InterpretRet() noexcept;
 	};
 }

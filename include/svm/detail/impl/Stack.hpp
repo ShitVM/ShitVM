@@ -20,14 +20,14 @@ namespace svm {
 	}
 	template<typename T>
 	const T* Stack::Get(std::size_t offset) const noexcept {
-		if (m_Used < offset + sizeof(T)) return nullptr;
+		if (m_Used < offset - sizeof(T)) return nullptr;
 
 		const auto& top = *(m_Data.rbegin() + offset - 1);
 		return reinterpret_cast<const T*>(&top);
 	}
 	template<typename T>
 	T* Stack::Get(std::size_t offset) noexcept {
-		if (m_Used < offset + sizeof(T)) return nullptr;
+		if (m_Used < offset - sizeof(T)) return nullptr;
 
 		auto& top = *(m_Data.rbegin() + offset - 1);
 		return reinterpret_cast<T*>(&top);

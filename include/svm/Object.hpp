@@ -46,7 +46,7 @@ namespace svm {
 
 	public:
 		template<typename T>
-		T Cast() const noexcept;
+		inline T Cast() const noexcept;
 	};
 
 	class LongObject final : public Object {
@@ -66,7 +66,7 @@ namespace svm {
 
 	public:
 		template<typename T>
-		T Cast() const noexcept;
+		inline T Cast() const noexcept;
 	};
 
 	class DoubleObject final : public Object {
@@ -86,7 +86,7 @@ namespace svm {
 
 	public:
 		template<typename T>
-		T Cast() const noexcept;
+		inline T Cast() const noexcept;
 	};
 
 	class PointerObject final : public Object {
@@ -106,7 +106,7 @@ namespace svm {
 
 	public:
 		template<typename T>
-		T Cast() const noexcept;
+		inline T Cast() const noexcept;
 	};
 
 	class StructureObject final : public Object {

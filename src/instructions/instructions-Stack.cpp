@@ -136,6 +136,7 @@ namespace svm {
 
 		if (operand >= constCount) {
 			PushStructure(operand - constCount);
+			return;
 		}
 
 		const Type constType = constantPool.GetConstantType(operand);
