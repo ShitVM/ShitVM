@@ -2,8 +2,6 @@
 
 #include <svm/detail/InterpreterExceptionCode.hpp>
 
-#include <cstdlib>
-
 namespace svm {
 	void Interpreter::InterpretNull() noexcept {
 		if (!m_Stack.Push<PointerObject>(nullptr)) {
@@ -19,16 +17,15 @@ namespace svm {
 		}
 
 		const Type type = GetTypeFromTypeCode(structures, static_cast<TypeCode>(operand));
-		void* address = std::calloc(1, type->Size);
+		void* address = m_Heap.AllocateUnmanagedHeap(type->Size);
 
 		if (!m_Stack.Push<PointerObject>(address)) {
-			std::free(address);
+			m_Heap.DeallocateLastUnmanagedHeap();
 			OccurException(SVM_IEC_STACK_OVERFLOW);
 		}
 
 		if (!address) return;
-
-		if (type.IsFundamentalType()) {
+		else if (type.IsFundamentalType()) {
 			*static_cast<Type*>(address) = type;
 		} else if (type.IsStructure()) {
 			InitStructure(structures, structures[operand - 10], static_cast<Type*>(address));
@@ -49,7 +46,10 @@ namespace svm {
 			return;
 		}
 
-		std::free(reinterpret_cast<const PointerObject*>(typePtr)->Value);
+		if (!m_Heap.DeallocateUnmanagedHeap(reinterpret_cast<const PointerObject*>(typePtr)->Value)) {
+			OccurException(SVM_IEC_POINTER_UNKNOWNADDRESS);
+		}
+
 		m_Stack.Reduce(sizeof(PointerObject));
 	}
 }

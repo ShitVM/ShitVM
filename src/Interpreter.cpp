@@ -13,7 +13,8 @@ namespace svm {
 	Interpreter::Interpreter(Interpreter&& interpreter) noexcept
 		: m_ByteFile(std::move(interpreter.m_ByteFile)), m_Exception(std::move(interpreter.m_Exception)),
 		m_Stack(std::move(interpreter.m_Stack)), m_StackFrame(interpreter.m_StackFrame), m_Depth(interpreter.m_Depth),
-		m_LocalVariables(std::move(interpreter.m_LocalVariables)) {}
+		m_LocalVariables(std::move(interpreter.m_LocalVariables)),
+		m_Heap(std::move(interpreter.m_Heap)) {}
 
 	Interpreter& Interpreter::operator=(Interpreter&& interpreter) noexcept {
 		m_ByteFile = std::move(interpreter.m_ByteFile);
@@ -24,6 +25,8 @@ namespace svm {
 		m_Depth = interpreter.m_Depth;
 
 		m_LocalVariables = std::move(interpreter.m_LocalVariables);
+
+		m_Heap = std::move(interpreter.m_Heap);
 
 		return *this;
 	}
@@ -37,6 +40,8 @@ namespace svm {
 		m_Depth = 0;
 
 		m_LocalVariables.clear();
+
+		m_Heap.Deallocate();
 	}
 	void Interpreter::Load(ByteFile&& byteFile) noexcept {
 		m_ByteFile = std::move(byteFile);

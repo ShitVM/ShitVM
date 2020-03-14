@@ -3,6 +3,7 @@
 #include <svm/ByteFile.hpp>
 #include <svm/Exception.hpp>
 #include <svm/Function.hpp>
+#include <svm/Heap.hpp>
 #include <svm/Instruction.hpp>
 #include <svm/Object.hpp>
 #include <svm/Stack.hpp>
@@ -39,6 +40,8 @@ namespace svm {
 		std::size_t m_Depth = 0;
 
 		std::vector<std::size_t> m_LocalVariables;
+
+		Heap m_Heap;
 
 	public:
 		Interpreter() noexcept = default;
