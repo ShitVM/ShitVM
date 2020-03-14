@@ -1,8 +1,9 @@
 #include <svm/Interpreter.hpp>
 
 #include <svm/Object.hpp>
-#include <svm/Type.hpp>
 #include <svm/detail/InterpreterExceptionCode.hpp>
+
+#include <utility>
 
 namespace svm {
 	Interpreter::Interpreter(ByteFile&& byteFile) noexcept
@@ -10,43 +11,32 @@ namespace svm {
 		m_StackFrame.Instructions = &m_ByteFile.GetEntryPoint();
 	}
 	Interpreter::Interpreter(Interpreter&& interpreter) noexcept
-		: m_ByteFile(std::move(interpreter.m_ByteFile)),
-		m_Stack(std::move(interpreter.m_Stack)), m_StackFrame(interpreter.m_StackFrame), m_Depth(interpreter.m_Depth), m_InstructionIndex(interpreter.m_InstructionIndex),
-		m_LocalVariables(std::move(interpreter.m_LocalVariables)),
-		m_Exception(std::move(interpreter.m_Exception)) {
-		interpreter.m_Depth = 0;
-		interpreter.m_InstructionIndex = 0;
-	}
+		: m_ByteFile(std::move(interpreter.m_ByteFile)), m_Exception(std::move(interpreter.m_Exception)),
+		m_Stack(std::move(interpreter.m_Stack)), m_StackFrame(interpreter.m_StackFrame), m_Depth(interpreter.m_Depth),
+		m_LocalVariables(std::move(interpreter.m_LocalVariables)) {}
 
 	Interpreter& Interpreter::operator=(Interpreter&& interpreter) noexcept {
 		m_ByteFile = std::move(interpreter.m_ByteFile);
+		m_Exception = std::move(interpreter.m_Exception);
 
 		m_Stack = std::move(interpreter.m_Stack);
 		m_StackFrame = interpreter.m_StackFrame;
 		m_Depth = interpreter.m_Depth;
-		m_InstructionIndex = interpreter.m_InstructionIndex;
 
 		m_LocalVariables = std::move(interpreter.m_LocalVariables);
 
-		m_Exception = std::move(interpreter.m_Exception);
-
-		interpreter.m_StackFrame = {};
-		interpreter.m_Depth = 0;
-		interpreter.m_InstructionIndex = 0;
 		return *this;
 	}
 
 	void Interpreter::Clear() noexcept {
 		m_ByteFile.Clear();
+		m_Exception.reset();
 
 		m_Stack.Deallocate();
 		m_StackFrame = {};
 		m_Depth = 0;
-		m_InstructionIndex = 0;
 
 		m_LocalVariables.clear();
-
-		m_Exception.reset();
 	}
 	void Interpreter::Load(ByteFile&& byteFile) noexcept {
 		m_ByteFile = std::move(byteFile);
@@ -63,8 +53,8 @@ namespace svm {
 	}
 
 	bool Interpreter::Interpret() {
-		for (; m_InstructionIndex < m_StackFrame.Instructions->GetInstructionCount(); ++m_InstructionIndex) {
-			const Instruction& inst = m_StackFrame.Instructions->GetInstruction(m_InstructionIndex);
+		for (; m_StackFrame.Caller < m_StackFrame.Instructions->GetInstructionCount(); ++m_StackFrame.Caller) {
+			const Instruction& inst = m_StackFrame.Instructions->GetInstruction(m_StackFrame.Caller);
 			switch (inst.OpCode) {
 			case OpCode::Push: InterpretPush(inst.Operand); break;
 			case OpCode::Pop: InterpretPop(); break;
@@ -127,25 +117,24 @@ namespace svm {
 			return false;
 		} else return true;
 	}
-	const InterpreterException& Interpreter::GetException() const noexcept {
-		return *m_Exception;
-	}
 	Interpreter::Result Interpreter::GetResult() const noexcept {
 		const Type* const typePtr = m_Stack.GetTopType();
 		if (!typePtr) return std::monostate();
 
 		const Type type = *typePtr;
-		if (type == IntType) {
-			return m_Stack.GetTop<IntObject>()->Value;
-		} else if (type == LongType) {
-			return m_Stack.GetTop<LongObject>()->Value;
-		} else if (type == DoubleType) {
-			return m_Stack.GetTop<DoubleObject>()->Value;
-		} else if (type == PointerType) {
-			return m_Stack.GetTop<PointerObject>()->Value;
-		} else if (type.IsStructure()) {
-			return m_Stack.GetTop<StructureObject>();
-		} else return std::monostate();
+		if (type == IntType) return reinterpret_cast<const IntObject*>(typePtr)->Value;
+		else if (type == LongType) return reinterpret_cast<const LongObject*>(typePtr)->Value;
+		else if (type == DoubleType) return reinterpret_cast<const DoubleObject*>(typePtr)->Value;
+		else if (type == PointerType) return reinterpret_cast<const PointerObject*>(typePtr)->Value;
+		else if (type.IsStructure()) return reinterpret_cast<const StructureObject*>(typePtr);
+		else return std::monostate();
+	}
+
+	bool Interpreter::HasException() const noexcept {
+		return m_Exception.has_value();
+	}
+	const InterpreterException& Interpreter::GetException() const noexcept {
+		return *m_Exception;
 	}
 	std::vector<StackFrame> Interpreter::GetCallStacks() const {
 		std::vector<StackFrame> result(m_Depth + 1);
@@ -171,10 +160,11 @@ namespace svm {
 		InterpreterException& e = m_Exception.emplace();
 		e.Function = m_StackFrame.Function;
 		e.Instructions = m_StackFrame.Instructions;
-		e.InstructionIndex = m_InstructionIndex;
+		e.InstructionIndex = m_StackFrame.Caller;
 
 		e.Code = code;
 	}
+
 	bool Interpreter::IsLocalVariable(std::size_t delta) const noexcept {
 		return !m_LocalVariables.empty() && m_LocalVariables.back() == m_Stack.GetUsedSize() - delta;
 	}

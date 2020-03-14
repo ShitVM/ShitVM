@@ -49,7 +49,7 @@ namespace svm {
 		void SetUsedSize(std::size_t newUsedSize) noexcept;
 		std::size_t GetFreeSize() const noexcept;
 
-		void Expand(std::size_t delta) noexcept;
+		bool Expand(std::size_t delta) noexcept;
 		void Reduce(std::size_t delta) noexcept;
 	};
 }

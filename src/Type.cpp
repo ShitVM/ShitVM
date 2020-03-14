@@ -12,7 +12,9 @@ namespace svm {
 
 namespace svm {
 	bool Type::IsFundamentalType() const noexcept {
-		return GetReference().Code < TypeCode::Structure;
+		const TypeCode code = GetReference().Code;
+
+		return code != TypeCode::None && code < TypeCode::Structure;
 	}
 	bool Type::IsStructure() const noexcept {
 		return GetReference().Code >= TypeCode::Structure;

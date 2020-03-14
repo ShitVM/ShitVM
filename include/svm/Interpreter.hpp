@@ -2,15 +2,15 @@
 
 #include <svm/ByteFile.hpp>
 #include <svm/Exception.hpp>
-#include <svm/Macro.hpp>
+#include <svm/Function.hpp>
+#include <svm/Instruction.hpp>
+#include <svm/Object.hpp>
 #include <svm/Stack.hpp>
 #include <svm/Type.hpp>
 
 #include <cstddef>
 #include <cstdint>
-#include <limits>
 #include <optional>
-#include <utility>
 #include <variant>
 #include <vector>
 
@@ -18,8 +18,8 @@ namespace svm {
 	struct StackFrame final {
 		svm::Type Type = NoneType;
 		std::size_t StackBegin = 0;
-		std::size_t VariableBegin = 0;
-		std::size_t Caller = std::numeric_limits<std::size_t>::max();
+		std::uint32_t VariableBegin = 0;
+		std::uint64_t Caller = 0;
 		const svm::Function* Function = nullptr;
 		const svm::Instructions* Instructions = nullptr;
 	};
@@ -32,15 +32,13 @@ namespace svm {
 
 	private:
 		ByteFile m_ByteFile;
+		std::optional<InterpreterException> m_Exception;
 
 		Stack m_Stack;
 		StackFrame m_StackFrame;
 		std::size_t m_Depth = 0;
-		std::uint64_t m_InstructionIndex = 0;
 
 		std::vector<std::size_t> m_LocalVariables;
-
-		std::optional<InterpreterException> m_Exception;
 
 	public:
 		Interpreter() noexcept = default;
@@ -61,40 +59,58 @@ namespace svm {
 		const ByteFile& GetByteFile() const noexcept;
 
 		bool Interpret();
-		const InterpreterException& GetException() const noexcept;
 		Result GetResult() const noexcept;
+
+		bool HasException() const noexcept;
+		const InterpreterException& GetException() const noexcept;
 		std::vector<StackFrame> GetCallStacks() const;
 
 	private:
 		void OccurException(std::uint32_t code) noexcept;
+
 		bool IsLocalVariable(std::size_t delta = 0) const noexcept;
 
+	private: // Stack
 		void PushStructure(std::uint32_t code) noexcept;
-		void InitStructure(Structure structure, Type* type) const noexcept;
+		void InitStructure(const Structures& structures, Structure structure, Type* type) noexcept;
 		void CopyStructure(const Type& type) noexcept;
-		void CopyStructure(const Type& from, Type& to) const noexcept;
+		void CopyStructure(const Type& from, Type& to) noexcept;
+
 		template<typename T>
-		void DRefAndAssign(Type* rhsTypePtr) noexcept;
+		void DRefAndAssign(const Type* rhsTypePtr) noexcept;
+
 		template<typename T>
 		bool GetTwoSameType(Type rhsType, T*& lhs) noexcept;
 
+	private:
+		void InterpretPush(std::uint32_t operand) noexcept;
+		void InterpretPop() noexcept;
+		void InterpretLoad(std::uint32_t operand) noexcept;
+		void InterpretStore(std::uint32_t operand);
+		void InterpretLea(std::uint32_t operand) noexcept;
+		void InterpretFLea(std::uint32_t operand) noexcept;
+		void InterpretTLoad() noexcept;
+		void InterpretTStore() noexcept;
+		void InterpretCopy() noexcept;
+		void InterpretSwap() noexcept;
+
+	private: // Type-cast
+		template<typename F, typename T>
+		void TypeCast(Type* typePtr) noexcept;
+
+	private:
+		void InterpretToI() noexcept;
+		void InterpretToL() noexcept;
+		void InterpretToD() noexcept;
+		void InterpretToP() noexcept;
+
+	private:
 		template<typename T>
 		bool PopTwoSameType(Type& rhsType, T& lhs, T& rhs) noexcept;
 		template<typename T>
 		IntObject CompareTwoSameType(T lhs, T rhs) noexcept;
 		template<typename T>
 		void JumpCondition(std::uint32_t operand);
-
-		void InterpretPush(std::uint32_t operand);
-		void InterpretPop();
-		void InterpretLoad(std::uint32_t operand);
-		void InterpretStore(std::uint32_t operand);
-		void InterpretLea(std::uint32_t operand);
-		void InterpretFLea(std::uint32_t operand);
-		void InterpretTLoad();
-		void InterpretTStore();
-		void InterpretCopy();
-		void InterpretSwap();
 
 		void InterpretAdd();
 		void InterpretSub();
@@ -127,11 +143,6 @@ namespace svm {
 		void InterpretJbe(std::uint32_t operand);
 		void InterpretCall(std::uint32_t operand);
 		void InterpretRet();
-
-		void InterpretToI();
-		void InterpretToL();
-		void InterpretToD();
-		void InterpretToP();
 
 		void InterpretNull() noexcept;
 		void InterpretNew(std::uint32_t operand) noexcept;

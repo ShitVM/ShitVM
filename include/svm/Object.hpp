@@ -43,6 +43,10 @@ namespace svm {
 		IntObject& operator=(const IntObject& object) noexcept;
 		bool operator==(const IntObject&) = delete;
 		bool operator!=(const IntObject&) = delete;
+
+	public:
+		template<typename T>
+		T Cast() const noexcept;
 	};
 
 	class LongObject final : public Object {
@@ -59,6 +63,10 @@ namespace svm {
 		LongObject& operator=(const LongObject& object) noexcept;
 		bool operator==(const LongObject&) = delete;
 		bool operator!=(const LongObject&) = delete;
+
+	public:
+		template<typename T>
+		T Cast() const noexcept;
 	};
 
 	class DoubleObject final : public Object {
@@ -75,6 +83,10 @@ namespace svm {
 		DoubleObject& operator=(const DoubleObject& object) noexcept;
 		bool operator==(const DoubleObject&) = delete;
 		bool operator!=(const DoubleObject&) = delete;
+
+	public:
+		template<typename T>
+		T Cast() const noexcept;
 	};
 
 	class PointerObject final : public Object {
@@ -91,6 +103,10 @@ namespace svm {
 		PointerObject& operator=(const PointerObject& object) noexcept;
 		bool operator==(const PointerObject&) = delete;
 		bool operator!=(const PointerObject&) = delete;
+
+	public:
+		template<typename T>
+		T Cast() const noexcept;
 	};
 
 	class StructureObject final : public Object {
@@ -105,3 +121,5 @@ namespace svm {
 		bool operator!=(const StructureObject&) = delete;
 	};
 }
+
+#include "detail/impl/Object.hpp"

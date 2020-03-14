@@ -47,8 +47,11 @@ namespace svm {
 		return GetSize() - GetUsedSize();
 	}
 
-	void Stack::Expand(std::size_t delta) noexcept {
+	bool Stack::Expand(std::size_t delta) noexcept {
+		if (GetFreeSize() < delta) return false;
+
 		m_Used += delta;
+		return true;
 	}
 	void Stack::Reduce(std::size_t delta) noexcept {
 		m_Used -= delta;

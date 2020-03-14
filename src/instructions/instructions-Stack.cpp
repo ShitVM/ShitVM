@@ -1,6 +1,6 @@
 #include <svm/Interpreter.hpp>
 
-#include <svm/Type.hpp>
+#include <svm/Macro.hpp>
 #include <svm/detail/InterpreterExceptionCode.hpp>
 
 #include <algorithm>
@@ -8,29 +8,31 @@
 
 namespace svm {
 	SVM_NOINLINE_FOR_PROFILING void Interpreter::PushStructure(std::uint32_t code) noexcept {
-#define Structures m_ByteFile.GetStructures()
-		if (code >= Structures.GetStructureCount()) {
+		const Structures& structures = m_ByteFile.GetStructures();
+		if (code >= structures.GetStructureCount()) {
 			OccurException(SVM_IEC_CONSTANTPOOL_OUTOFRANGE);
 			return;
 		}
 
-		const Structure structure = Structures[code];
-		if (!m_Stack.Add(structure->Type.Size)) {
+		const Structure structure = structures[code];
+		if (!m_Stack.Expand(structure->Type.Size)) {
 			OccurException(SVM_IEC_STACK_OVERFLOW);
 			return;
 		}
 
-		InitStructure(structure, m_Stack.GetTopType());
-#undef Structures
+		InitStructure(structures, structure, m_Stack.GetTopType());
 	}
-	SVM_NOINLINE_FOR_PROFILING void Interpreter::InitStructure(Structure structure, Type* type) const noexcept {
+	SVM_NOINLINE_FOR_PROFILING void Interpreter::InitStructure(const Structures& structures, Structure structure, Type* type) noexcept {
+		const std::size_t fieldCount = structure->FieldTypes.size();
+
 		*type = structure->Type;
-		for (std::size_t i = 0; i < structure->FieldTypes.size(); ++i) {
+
+		for (std::size_t i = 0; i < fieldCount; ++i) {
 			const Type fieldType = structure->FieldTypes[i];
 			Type* const pointer = reinterpret_cast<Type*>(reinterpret_cast<std::uint8_t*>(type) + structure->FieldOffsets[i]);
 
 			if (fieldType.IsStructure()) {
-				InitStructure(m_ByteFile.GetStructures()[static_cast<std::uint32_t>(fieldType->Code) - 10], pointer);
+				InitStructure(structures, structures[static_cast<std::uint32_t>(fieldType->Code) - 10], pointer);
 			} else {
 				*pointer = fieldType;
 			}
@@ -39,17 +41,20 @@ namespace svm {
 	SVM_NOINLINE_FOR_PROFILING void Interpreter::CopyStructure(const Type& type) noexcept {
 		CopyStructure(type, *m_Stack.GetTopType());
 	}
-	SVM_NOINLINE_FOR_PROFILING void Interpreter::CopyStructure(const Type& from, Type& to) const noexcept {
+	SVM_NOINLINE_FOR_PROFILING void Interpreter::CopyStructure(const Type& from, Type& to) noexcept {
 		std::memcpy(&to, &from, from->Size);
 	}
+}
+
+namespace svm {
 	template<typename T>
-	SVM_NOINLINE_FOR_PROFILING void Interpreter::DRefAndAssign(Type* rhsTypePtr) noexcept {
+	SVM_NOINLINE_FOR_PROFILING void Interpreter::DRefAndAssign(const Type* rhsTypePtr) noexcept {
 		if (IsLocalVariable() || IsLocalVariable(sizeof(T))) {
 			OccurException(SVM_IEC_STACK_EMPTY);
 			return;
 		}
 
-		Type* const lhsTypePtr = m_Stack.Get<Type>(m_Stack.GetUsedSize() - sizeof(T));
+		const Type* const lhsTypePtr = m_Stack.Get<Type>(m_Stack.GetUsedSize() - sizeof(T));
 		if (!lhsTypePtr) {
 			OccurException(SVM_IEC_STACK_EMPTY);
 			return;
@@ -58,7 +63,7 @@ namespace svm {
 			return;
 		}
 
-		Type* const targetType = static_cast<Type*>(reinterpret_cast<PointerObject*>(lhsTypePtr)->Value);
+		Type* const targetType = static_cast<Type*>(reinterpret_cast<const PointerObject*>(lhsTypePtr)->Value);
 		if (!targetType) {
 			OccurException(SVM_IEC_POINTER_NULLPOINTER);
 			return;
@@ -67,18 +72,19 @@ namespace svm {
 			return;
 		}
 
-		reinterpret_cast<T*>(targetType)->Value = reinterpret_cast<T*>(rhsTypePtr)->Value;
-		m_Stack.Pop<T>();
-		m_Stack.Pop<PointerObject>();
+		reinterpret_cast<T*>(targetType)->Value = reinterpret_cast<const T*>(rhsTypePtr)->Value;
+		m_Stack.Reduce(sizeof(PointerObject) + sizeof(T));
 	}
 	template<>
-	SVM_NOINLINE_FOR_PROFILING void Interpreter::DRefAndAssign<StructureObject>(Type* rhsTypePtr) noexcept {
-		if (IsLocalVariable() || IsLocalVariable((*rhsTypePtr)->Size)) {
+	SVM_NOINLINE_FOR_PROFILING void Interpreter::DRefAndAssign<StructureObject>(const Type* rhsTypePtr) noexcept {
+		const std::size_t structSize = rhsTypePtr->GetReference().Size;
+
+		if (IsLocalVariable() || IsLocalVariable(structSize)) {
 			OccurException(SVM_IEC_STACK_EMPTY);
 			return;
 		}
 
-		Type* const lhsTypePtr = m_Stack.Get<Type>(m_Stack.GetUsedSize() - (*rhsTypePtr)->Size);
+		const Type* const lhsTypePtr = m_Stack.Get<Type>(m_Stack.GetUsedSize() - structSize);
 		if (!lhsTypePtr) {
 			OccurException(SVM_IEC_STACK_EMPTY);
 			return;
@@ -87,7 +93,7 @@ namespace svm {
 			return;
 		}
 
-		Type* const targetType = static_cast<Type*>(reinterpret_cast<PointerObject*>(lhsTypePtr)->Value);
+		Type* const targetType = static_cast<Type*>(reinterpret_cast<const PointerObject*>(lhsTypePtr)->Value);
 		if (!targetType) {
 			OccurException(SVM_IEC_POINTER_NULLPOINTER);
 			return;
@@ -97,8 +103,11 @@ namespace svm {
 		}
 
 		CopyStructure(*rhsTypePtr, *targetType);
-		m_Stack.Remove((*rhsTypePtr)->Size + sizeof(PointerObject));
+		m_Stack.Reduce(sizeof(PointerObject) + structSize);
 	}
+}
+
+namespace svm {
 	template<typename T>
 	SVM_NOINLINE_FOR_PROFILING bool Interpreter::GetTwoSameType(Type rhsType, T*& lhs) noexcept {
 		if (IsLocalVariable() || IsLocalVariable(sizeof(T))) {
@@ -121,56 +130,48 @@ namespace svm {
 }
 
 namespace svm {
-	SVM_NOINLINE_FOR_PROFILING void Interpreter::InterpretPush(std::uint32_t operand) {
-#define ConstantPool m_ByteFile.GetConstantPool()
-		if (operand >= ConstantPool.GetAllCount()) {
-			PushStructure(operand - ConstantPool.GetAllCount());
-			return;
+	SVM_NOINLINE_FOR_PROFILING void Interpreter::InterpretPush(std::uint32_t operand) noexcept {
+		const ConstantPool& constantPool = m_ByteFile.GetConstantPool();
+		const std::uint32_t constCount = constantPool.GetAllCount();
+
+		if (operand >= constCount) {
+			PushStructure(operand - constCount);
 		}
 
-		const Type constType = ConstantPool.GetConstantType(operand);
+		const Type constType = constantPool.GetConstantType(operand);
 		bool isSuccess = false;
 		if (constType == IntType) {
-			isSuccess = m_Stack.Push(ConstantPool.GetConstant<IntObject>(operand));
+			isSuccess = m_Stack.Push(constantPool.GetConstant<IntObject>(operand));
 		} else if (constType == LongType) {
-			isSuccess = m_Stack.Push(ConstantPool.GetConstant<LongObject>(operand));
+			isSuccess = m_Stack.Push(constantPool.GetConstant<LongObject>(operand));
 		} else if (constType == DoubleType) {
-			isSuccess = m_Stack.Push(ConstantPool.GetConstant<DoubleObject>(operand));
+			isSuccess = m_Stack.Push(constantPool.GetConstant<DoubleObject>(operand));
 		}
 
 		if (!isSuccess) {
 			OccurException(SVM_IEC_STACK_OVERFLOW);
 		}
-#undef ConstantPool
 	}
-	SVM_NOINLINE_FOR_PROFILING void Interpreter::InterpretPop() {
+	SVM_NOINLINE_FOR_PROFILING void Interpreter::InterpretPop() noexcept {
 		if (IsLocalVariable()) {
 			m_LocalVariables.erase(m_LocalVariables.end() - 1);
 		}
 
-		Type* const typePtr = m_Stack.GetTopType();
+		const Type* const typePtr = m_Stack.GetTopType();
 		if (!typePtr) {
 			OccurException(SVM_IEC_STACK_EMPTY);
 			return;
 		}
 
 		const Type type = *typePtr;
-		if (type == IntType) {
-			m_Stack.Pop<IntObject>();
-		} else if (type == LongType) {
-			m_Stack.Pop<LongObject>();
-		} else if (type == DoubleType) {
-			m_Stack.Pop<DoubleObject>();
-		} else if (type == PointerType) {
-			m_Stack.Pop<PointerObject>();
-		} else if (type.IsStructure()) {
-			m_Stack.Remove(type->Size);
+		if (type.IsValidType()) {
+			m_Stack.Reduce(type->Size);
 		} else {
 			OccurException(SVM_IEC_STACK_EMPTY);
 		}
 	}
-	SVM_NOINLINE_FOR_PROFILING void Interpreter::InterpretLoad(std::uint32_t operand) {
-		operand += static_cast<std::uint32_t>(m_StackFrame.VariableBegin);
+	SVM_NOINLINE_FOR_PROFILING void Interpreter::InterpretLoad(std::uint32_t operand) noexcept {
+		operand += m_StackFrame.VariableBegin;
 		if (operand >= m_LocalVariables.size()) {
 			OccurException(SVM_IEC_LOCALVARIABLE_OUTOFRANGE);
 			return;
@@ -187,7 +188,7 @@ namespace svm {
 			isSuccess = m_Stack.Push(reinterpret_cast<const DoubleObject&>(*typePtr));
 		} else if (type == PointerType) {
 			isSuccess = m_Stack.Push(reinterpret_cast<const PointerObject&>(*typePtr));
-		} else if (type.IsStructure() && (isSuccess = m_Stack.Add(type->Size))) {
+		} else if (type.IsStructure() && (isSuccess = m_Stack.Expand(type->Size))) {
 			CopyStructure(*typePtr);
 		}
 
@@ -201,12 +202,12 @@ namespace svm {
 			return;
 		}
 
-		operand += static_cast<std::uint32_t>(m_StackFrame.VariableBegin);
+		operand += m_StackFrame.VariableBegin;
 		if (operand > m_LocalVariables.size()) {
 			OccurException(SVM_IEC_LOCALVARIABLE_INVALIDINDEX);
 			return;
 		} else if (operand == m_LocalVariables.size()) {
-			Type* const typePtr = m_Stack.GetTopType();
+			const Type* const typePtr = m_Stack.GetTopType();
 			if (!typePtr || !typePtr->IsValidType()) {
 				OccurException(SVM_IEC_STACK_EMPTY);
 				return;
@@ -216,7 +217,7 @@ namespace svm {
 			return;
 		}
 
-		Type* const typePtr = m_Stack.GetTopType();
+		const Type* const typePtr = m_Stack.GetTopType();
 		if (!typePtr) {
 			OccurException(SVM_IEC_STACK_EMPTY);
 			return;
@@ -230,22 +231,24 @@ namespace svm {
 		}
 
 		if (type == IntType) {
-			reinterpret_cast<IntObject&>(varType) = *m_Stack.Pop<IntObject>();
+			reinterpret_cast<IntObject&>(varType) = reinterpret_cast<const IntObject&>(*typePtr);
 		} else if (type == LongType) {
-			reinterpret_cast<LongObject&>(varType) = *m_Stack.Pop<LongObject>();
+			reinterpret_cast<LongObject&>(varType) = reinterpret_cast<const LongObject&>(*typePtr);
 		} else if (type == DoubleType) {
-			reinterpret_cast<DoubleObject&>(varType) = *m_Stack.Pop<DoubleObject>();
+			reinterpret_cast<DoubleObject&>(varType) = reinterpret_cast<const DoubleObject&>(*typePtr);
 		} else if (type == PointerType) {
-			reinterpret_cast<PointerObject&>(varType) = *m_Stack.Pop<PointerObject>();
+			reinterpret_cast<PointerObject&>(varType) = reinterpret_cast<const PointerObject&>(*typePtr);
 		} else if (type.IsStructure()) {
 			CopyStructure(*typePtr, varType);
-			m_Stack.Remove(type->Size);
 		} else {
 			OccurException(SVM_IEC_STACK_EMPTY);
+			return;
 		}
+
+		m_Stack.Reduce(type->Size);
 	}
-	SVM_NOINLINE_FOR_PROFILING void Interpreter::InterpretLea(std::uint32_t operand) {
-		operand += static_cast<std::uint32_t>(m_StackFrame.VariableBegin);
+	SVM_NOINLINE_FOR_PROFILING void Interpreter::InterpretLea(std::uint32_t operand) noexcept {
+		operand += m_StackFrame.VariableBegin;
 		if (operand >= m_LocalVariables.size()) {
 			OccurException(SVM_IEC_LOCALVARIABLE_OUTOFRANGE);
 			return;
@@ -255,7 +258,7 @@ namespace svm {
 			OccurException(SVM_IEC_STACK_OVERFLOW);
 		}
 	}
-	SVM_NOINLINE_FOR_PROFILING void Interpreter::InterpretFLea(std::uint32_t operand) {
+	SVM_NOINLINE_FOR_PROFILING void Interpreter::InterpretFLea(std::uint32_t operand) noexcept {
 		if (IsLocalVariable()) {
 			OccurException(SVM_IEC_STACK_EMPTY);
 			return;
@@ -266,35 +269,33 @@ namespace svm {
 			OccurException(SVM_IEC_STACK_EMPTY);
 			return;
 		} else if (ptr->GetType() != PointerType) {
-			m_Stack.Push(*ptr);
+			m_Stack.Expand(sizeof(*ptr));
 			OccurException(SVM_IEC_POINTER_NOTPOINTER);
 			return;
 		}
 
 		Type* const targetTypePtr = static_cast<Type*>(ptr->Value);
 		if (!targetTypePtr) {
-			m_Stack.Push(*ptr);
+			m_Stack.Expand(sizeof(*ptr));
 			OccurException(SVM_IEC_POINTER_NULLPOINTER);
 			return;
 		} else if (!targetTypePtr->IsStructure()) {
-			m_Stack.Push(*ptr);
+			m_Stack.Expand(sizeof(*ptr));
 			OccurException(SVM_IEC_STRUCTURE_NOTSTRUCTURE);
 			return;
 		}
 
 		const Structure structure =
-			m_ByteFile.GetStructures()[static_cast<std::uint32_t>(targetTypePtr->GetReference().Code) - static_cast<std::uint32_t>(TypeCode::Structure)];
+			m_ByteFile.GetStructures()[static_cast<std::uint32_t>(targetTypePtr->GetReference().Code) - 10];
 		if (operand >= structure->FieldTypes.size()) {
-			m_Stack.Push(*ptr);
+			m_Stack.Expand(sizeof(*ptr));
 			OccurException(SVM_IEC_STRUCTURE_FIELD_OUTOFRANGE);
 			return;
 		}
 
-		if (!m_Stack.Push(PointerObject(reinterpret_cast<std::uint8_t*>(targetTypePtr) + structure->FieldOffsets[operand]))) {
-			OccurException(SVM_IEC_STACK_OVERFLOW);
-		}
+		m_Stack.Push<PointerObject>(reinterpret_cast<std::uint8_t*>(targetTypePtr) + structure->FieldOffsets[operand]);
 	}
-	SVM_NOINLINE_FOR_PROFILING void Interpreter::InterpretTLoad() {
+	SVM_NOINLINE_FOR_PROFILING void Interpreter::InterpretTLoad() noexcept {
 		if (IsLocalVariable()) {
 			OccurException(SVM_IEC_STACK_EMPTY);
 			return;
@@ -305,38 +306,38 @@ namespace svm {
 			OccurException(SVM_IEC_STACK_EMPTY);
 			return;
 		} else if (ptr->GetType() != PointerType) {
-			m_Stack.Push(*ptr);
+			m_Stack.Expand(sizeof(*ptr));
 			OccurException(SVM_IEC_POINTER_NOTPOINTER);
 			return;
 		}
 
-		Type* const varTypePtr = static_cast<Type*>(ptr->Value);
-		if (!varTypePtr) {
-			m_Stack.Push(*ptr);
+		const Type* const targetTypePtr = static_cast<Type*>(ptr->Value);
+		if (!targetTypePtr) {
+			m_Stack.Expand(sizeof(*ptr));
 			OccurException(SVM_IEC_POINTER_NULLPOINTER);
 			return;
 		}
 
-		const Type varType = *varTypePtr;
+		const Type targetType = *targetTypePtr;
 		bool isSuccess = false;
-		if (varType == IntType) {
-			isSuccess = m_Stack.Push(*reinterpret_cast<IntObject*>(varTypePtr));
-		} else if (varType == LongType) {
-			isSuccess = m_Stack.Push(*reinterpret_cast<LongObject*>(varTypePtr));
-		} else if (varType == DoubleType) {
-			isSuccess = m_Stack.Push(*reinterpret_cast<DoubleObject*>(varTypePtr));
-		} else if (varType == PointerType) {
-			isSuccess = m_Stack.Push(*reinterpret_cast<PointerObject*>(varTypePtr));
-		} else if (varType.IsStructure() && (isSuccess = m_Stack.Add(varType->Size))) {
-			CopyStructure(*varTypePtr);
+		if (targetType == IntType) {
+			isSuccess = m_Stack.Push(reinterpret_cast<const IntObject&>(*targetTypePtr));
+		} else if (targetType == LongType) {
+			isSuccess = m_Stack.Push(reinterpret_cast<const LongObject&>(*targetTypePtr));
+		} else if (targetType == DoubleType) {
+			isSuccess = m_Stack.Push(reinterpret_cast<const DoubleObject&>(*targetTypePtr));
+		} else if (targetType == PointerType) {
+			isSuccess = m_Stack.Push(reinterpret_cast<const PointerObject&>(*targetTypePtr));
+		} else if (targetType.IsStructure() && (isSuccess = m_Stack.Expand(targetType->Size))) {
+			CopyStructure(*targetTypePtr);
 		}
 
 		if (!isSuccess) {
-			m_Stack.Push(*ptr);
+			m_Stack.Expand(sizeof(*ptr));
 			OccurException(SVM_IEC_STACK_OVERFLOW);
 		}
 	}
-	SVM_NOINLINE_FOR_PROFILING void Interpreter::InterpretTStore() {
+	SVM_NOINLINE_FOR_PROFILING void Interpreter::InterpretTStore() noexcept {
 		Type* const rhsTypePtr = m_Stack.GetTopType();
 		if (!rhsTypePtr) {
 			OccurException(SVM_IEC_STACK_EMPTY);
@@ -358,30 +359,32 @@ namespace svm {
 			OccurException(SVM_IEC_STACK_EMPTY);
 		}
 	}
-	SVM_NOINLINE_FOR_PROFILING void Interpreter::InterpretCopy() {
+	SVM_NOINLINE_FOR_PROFILING void Interpreter::InterpretCopy() noexcept {
 		if (IsLocalVariable()) {
 			OccurException(SVM_IEC_STACK_EMPTY);
 			return;
 		}
 
-		Type* const typePtr = m_Stack.GetTopType();
+		const Type* const typePtr = m_Stack.GetTopType();
 		if (!typePtr) {
 			OccurException(SVM_IEC_STACK_EMPTY);
 			return;
 		}
 
-		const Type& type = *typePtr;
+		const Type type = *typePtr;
 		bool isSuccess = false;
 		if (type == IntType) {
-			isSuccess = m_Stack.Push(reinterpret_cast<const IntObject&>(type));
+			isSuccess = m_Stack.Push(reinterpret_cast<const IntObject&>(*typePtr));
 		} else if (type == LongType) {
-			isSuccess = m_Stack.Push(reinterpret_cast<const LongObject&>(type));
+			isSuccess = m_Stack.Push(reinterpret_cast<const LongObject&>(*typePtr));
 		} else if (type == DoubleType) {
-			isSuccess = m_Stack.Push(reinterpret_cast<const DoubleObject&>(type));
+			isSuccess = m_Stack.Push(reinterpret_cast<const DoubleObject&>(*typePtr));
 		} else if (type == PointerType) {
-			isSuccess = m_Stack.Push(reinterpret_cast<const PointerObject&>(type));
-		} else if (type.IsStructure() && (isSuccess = m_Stack.Add(type->Size))) {
-			CopyStructure(type);
+			isSuccess = m_Stack.Push(reinterpret_cast<const PointerObject&>(*typePtr));
+		} else if (type.IsStructure()) {
+			if (isSuccess = m_Stack.Expand(type->Size)) {
+				CopyStructure(type);
+			}
 		} else {
 			OccurException(SVM_IEC_STACK_EMPTY);
 		}
@@ -390,7 +393,7 @@ namespace svm {
 			OccurException(SVM_IEC_STACK_OVERFLOW);
 		}
 	}
-	SVM_NOINLINE_FOR_PROFILING void Interpreter::InterpretSwap() {
+	SVM_NOINLINE_FOR_PROFILING void Interpreter::InterpretSwap() noexcept {
 		Type* const firstTypePtr = m_Stack.GetTopType();
 		if (!firstTypePtr) {
 			OccurException(SVM_IEC_STACK_EMPTY);
@@ -428,141 +431,6 @@ namespace svm {
 			}
 		} else {
 			OccurException(SVM_IEC_STACK_EMPTY);
-		}
-	}
-}
-
-namespace svm {
-	SVM_NOINLINE_FOR_PROFILING void Interpreter::InterpretToI() {
-		Type* const typePtr = m_Stack.GetTopType();
-		if (!typePtr) {
-			OccurException(SVM_IEC_STACK_EMPTY);
-			return;
-		} else if (!m_LocalVariables.empty() && m_Stack.Get<Type>(m_LocalVariables.back()) == typePtr) {
-			OccurException(SVM_IEC_STACK_EMPTY);
-			return;
-		}
-
-		const Type type = *typePtr;
-		bool isSuccess = false;
-		if (type == IntType) {
-			return;
-		} else if (type == LongType) {
-			const LongObject value = *m_Stack.Pop<LongObject>();
-			isSuccess = m_Stack.Push<IntObject>(static_cast<std::uint32_t>(value.Value));
-		} else if (type == DoubleType) {
-			const DoubleObject value = *m_Stack.Pop<DoubleObject>();
-			isSuccess = m_Stack.Push<IntObject>(static_cast<std::uint32_t>(value.Value));
-		} else if (type == PointerType) {
-			const PointerObject value = *m_Stack.Pop<PointerObject>();
-			isSuccess = m_Stack.Push<IntObject>(static_cast<std::uint32_t>(reinterpret_cast<std::uintptr_t>(value.Value)));
-		} else if (type.IsStructure()) {
-			OccurException(SVM_IEC_STRUCTURE_INVALIDFORSTRUCTURE);
-		} else {
-			OccurException(SVM_IEC_STACK_EMPTY);
-		}
-
-		if (!isSuccess) {
-			OccurException(SVM_IEC_STACK_OVERFLOW);
-		}
-	}
-	SVM_NOINLINE_FOR_PROFILING void Interpreter::InterpretToL() {
-		Type* const typePtr = m_Stack.GetTopType();
-		if (!typePtr) {
-			OccurException(SVM_IEC_STACK_EMPTY);
-			return;
-		} else if (!m_LocalVariables.empty() && m_Stack.Get<Type>(m_LocalVariables.back()) == typePtr) {
-			OccurException(SVM_IEC_STACK_EMPTY);
-			return;
-		}
-
-		const Type type = *typePtr;
-		bool isSuccess = false;
-		if (type == IntType) {
-			const IntObject value = *m_Stack.Pop<IntObject>();
-			isSuccess = m_Stack.Push<LongObject>(value.Value);
-		} else if (type == LongType) {
-			return;
-		} else if (type == DoubleType) {
-			const DoubleObject value = *m_Stack.Pop<DoubleObject>();
-			isSuccess = m_Stack.Push<LongObject>(static_cast<std::uint64_t>(value.Value));
-		} else if (type == PointerType) {
-			const PointerObject value = *m_Stack.Pop<PointerObject>();
-			isSuccess = m_Stack.Push<LongObject>(static_cast<std::uint64_t>(reinterpret_cast<std::uintptr_t>(value.Value)));
-		} else if (type.IsStructure()) {
-			OccurException(SVM_IEC_STRUCTURE_INVALIDFORSTRUCTURE);
-		} else {
-			OccurException(SVM_IEC_STACK_EMPTY);
-		}
-
-		if (!isSuccess) {
-			OccurException(SVM_IEC_STACK_OVERFLOW);
-		}
-	}
-	SVM_NOINLINE_FOR_PROFILING void Interpreter::InterpretToD() {
-		Type* const typePtr = m_Stack.GetTopType();
-		if (!typePtr) {
-			OccurException(SVM_IEC_STACK_EMPTY);
-			return;
-		} else if (!m_LocalVariables.empty() && m_Stack.Get<Type>(m_LocalVariables.back()) == typePtr) {
-			OccurException(SVM_IEC_STACK_EMPTY);
-			return;
-		}
-
-		const Type type = *typePtr;
-		bool isSuccess = false;
-		if (type == IntType) {
-			const IntObject value = *m_Stack.Pop<IntObject>();
-			isSuccess = m_Stack.Push<DoubleObject>(value.Value);
-		} else if (type == LongType) {
-			const LongObject value = *m_Stack.Pop<LongObject>();
-			isSuccess = m_Stack.Push<DoubleObject>(static_cast<double>(value.Value));
-		} else if (type == DoubleType) {
-			return;
-		} else if (type == PointerType) {
-			const PointerObject value = *m_Stack.Pop<PointerObject>();
-			isSuccess = m_Stack.Push<DoubleObject>(static_cast<double>(reinterpret_cast<std::uintptr_t>(value.Value)));
-		} else if (type.IsStructure()) {
-			OccurException(SVM_IEC_STRUCTURE_INVALIDFORSTRUCTURE);
-		} else {
-			OccurException(SVM_IEC_STACK_EMPTY);
-		}
-
-		if (!isSuccess) {
-			OccurException(SVM_IEC_STACK_OVERFLOW);
-		}
-	}
-	SVM_NOINLINE_FOR_PROFILING void Interpreter::InterpretToP() {
-		Type* const typePtr = m_Stack.GetTopType();
-		if (!typePtr) {
-			OccurException(SVM_IEC_STACK_EMPTY);
-			return;
-		} else if (!m_LocalVariables.empty() && m_Stack.Get<Type>(m_LocalVariables.back()) == typePtr) {
-			OccurException(SVM_IEC_STACK_EMPTY);
-			return;
-		}
-
-		const Type type = *typePtr;
-		bool isSuccess = false;
-		if (type == IntType) {
-			const IntObject value = *m_Stack.Pop<IntObject>();
-			isSuccess = m_Stack.Push<PointerObject>(reinterpret_cast<void*>(static_cast<std::uintptr_t>(value.Value)));
-		} else if (type == LongType) {
-			const LongObject value = *m_Stack.Pop<LongObject>();
-			isSuccess = m_Stack.Push<PointerObject>(reinterpret_cast<void*>(static_cast<std::uintptr_t>(value.Value)));
-		} else if (type == DoubleType) {
-			const DoubleObject value = *m_Stack.Pop<DoubleObject>();
-			isSuccess = m_Stack.Push<PointerObject>(reinterpret_cast<void*>(static_cast<std::uintptr_t>(value.Value)));
-		} else if (type == PointerType) {
-			return;
-		} else if (type.IsStructure()) {
-			OccurException(SVM_IEC_STRUCTURE_INVALIDFORSTRUCTURE);
-		} else {
-			OccurException(SVM_IEC_STACK_EMPTY);
-		}
-
-		if (!isSuccess) {
-			OccurException(SVM_IEC_STACK_OVERFLOW);
 		}
 	}
 }
