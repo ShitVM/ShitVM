@@ -3,6 +3,7 @@
 #include <svm/ByteFile.hpp>
 #include <svm/Exception.hpp>
 #include <svm/Macro.hpp>
+#include <svm/Stack.hpp>
 #include <svm/Type.hpp>
 
 #include <cstddef>
@@ -14,68 +15,6 @@
 #include <vector>
 
 namespace svm {
-	class Stack final {
-	private:
-		std::vector<std::uint8_t> m_Data;
-		std::size_t m_Used = 0;
-
-	public:
-		Stack() noexcept = default;
-		explicit Stack(std::size_t size);
-		Stack(Stack&& stack) noexcept;
-		~Stack() = default;
-
-	public:
-		Stack& operator=(Stack&& stack) noexcept;
-
-	public:
-		void Allocate(std::size_t size);
-		void Reallocate(std::size_t newSize);
-		void Deallocate() noexcept;
-
-		template<typename T>
-		bool Push(const T& value) noexcept {
-			if (GetFreeSize() < sizeof(T)) return false;
-
-			*reinterpret_cast<T*>(&*(m_Data.rbegin() + (m_Used += sizeof(T)) - 1)) = value;
-			return true;
-		}
-		template<typename T>
-		std::optional<T> Pop() noexcept {
-			T* result = GetTop<T>();
-			if (!result) return std::nullopt;
-
-			m_Used -= sizeof(T);
-			return *result;
-		}
-		template<typename T>
-		const T* Get(std::size_t offset) const noexcept {
-			if (m_Used < offset - sizeof(T)) return nullptr;
-			else return reinterpret_cast<const T*>(&*(m_Data.rbegin() + offset - 1));
-		}
-		template<typename T>
-		T* Get(std::size_t offset) noexcept {
-			if (m_Used < offset - sizeof(T)) return nullptr;
-			else return reinterpret_cast<T*>(&*(m_Data.rbegin() + offset - 1));
-		}
-		template<typename T>
-		const T* GetTop() const noexcept {
-			return Get<T>(m_Used);
-		}
-		template<typename T>
-		T* GetTop() noexcept {
-			return Get<T>(m_Used);
-		}
-		const Type* GetTopType() const noexcept;
-		Type* GetTopType() noexcept;
-		std::size_t GetSize() const noexcept;
-		std::size_t GetUsedSize() const noexcept;
-		std::size_t GetFreeSize() const noexcept;
-		void RemoveTo(std::size_t newSize) noexcept;
-		void Remove(std::size_t delta) noexcept;
-		bool Add(std::size_t delta) noexcept;
-	};
-
 	struct StackFrame final {
 		svm::Type Type = NoneType;
 		std::size_t StackBegin = 0;

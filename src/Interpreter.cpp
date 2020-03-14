@@ -5,64 +5,6 @@
 #include <svm/detail/InterpreterExceptionCode.hpp>
 
 namespace svm {
-	Stack::Stack(std::size_t size) {
-		Allocate(size);
-	}
-	Stack::Stack(Stack&& stack) noexcept
-		: m_Data(std::move(stack.m_Data)), m_Used(stack.m_Used) {}
-
-	Stack& Stack::operator=(Stack&& stack) noexcept {
-		m_Data = std::move(stack.m_Data);
-		m_Used = stack.m_Used;
-		return *this;
-	}
-
-	void Stack::Allocate(std::size_t size) {
-		m_Data.resize(size);
-		m_Used = 0;
-	}
-	void Stack::Reallocate(std::size_t newSize) {
-		if (m_Used > newSize) throw std::runtime_error("Failed to resize the stack. Smaller size than the used size.");
-
-		std::vector<std::uint8_t> newData(newSize);
-		std::copy(m_Data.rbegin(), m_Data.rbegin() + m_Used, newData.rbegin());
-
-		m_Data = std::move(newData);
-	}
-	void Stack::Deallocate() noexcept {
-		m_Data.clear();
-		m_Used = 0;
-	}
-
-	const Type* Stack::GetTopType() const noexcept {
-		return Get<Type>(m_Used);
-	}
-	Type* Stack::GetTopType() noexcept {
-		return Get<Type>(m_Used);
-	}
-	std::size_t Stack::GetSize() const noexcept {
-		return m_Data.size();
-	}
-	std::size_t Stack::GetUsedSize() const noexcept {
-		return m_Used;
-	}
-	std::size_t Stack::GetFreeSize() const noexcept {
-		return GetSize() - m_Used;
-	}
-	void Stack::RemoveTo(std::size_t newSize) noexcept {
-		m_Used = newSize;
-	}
-	void Stack::Remove(std::size_t delta) noexcept {
-		m_Used -= delta;
-	}
-	bool Stack::Add(std::size_t delta) noexcept {
-		if (GetFreeSize() < delta) return false;
-		m_Used += delta;
-		return true;
-	}
-}
-
-namespace svm {
 	Interpreter::Interpreter(ByteFile&& byteFile) noexcept
 		: m_ByteFile(std::move(byteFile)) {
 		m_StackFrame.Instructions = &m_ByteFile.GetEntryPoint();
