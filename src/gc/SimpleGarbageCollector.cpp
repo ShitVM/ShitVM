@@ -1,15 +1,47 @@
 #include <svm/gc/SimpleGarbageCollector.hpp>
 
+#include <svm/Macro.hpp>
+
+#include <algorithm>
 #include <cassert>
 #include <cstdlib>
 #include <utility>
 
 namespace svm {
-	SimpleGarbageCollector::SimpleGarbageCollector(std::size_t youngGenerationSize) {
-		Initialize(youngGenerationSize);
+	ManagedHeapGeneration::ManagedHeapGeneration(std::size_t defaultBlockSize) {
+		Initialize(defaultBlockSize);
+	}
+	ManagedHeapGeneration::ManagedHeapGeneration(ManagedHeapGeneration&& generation) noexcept
+		: m_Blocks(std::move(generation.m_Blocks)), m_CurrentBlock(generation.m_CurrentBlock), m_DefaultBlockSize(generation.m_DefaultBlockSize) {}
+
+	ManagedHeapGeneration& ManagedHeapGeneration::operator=(ManagedHeapGeneration&& generation) noexcept {
+		m_Blocks = std::move(generation.m_Blocks);
+		m_CurrentBlock = generation.m_CurrentBlock;
+		m_DefaultBlockSize = generation.m_DefaultBlockSize;
+		return *this;
+	}
+
+	void ManagedHeapGeneration::Reset() noexcept {
+		m_Blocks.clear();
+	}
+	void ManagedHeapGeneration::Initialize(std::size_t defaultBlockSize) {
+		assert(!IsInitalized());
+
+		m_Blocks.emplace_back(defaultBlockSize);
+		m_CurrentBlock = m_Blocks.begin();
+		m_DefaultBlockSize = defaultBlockSize;
+	}
+	bool ManagedHeapGeneration::IsInitalized() const noexcept {
+		return !m_Blocks.empty();
+	}
+}
+
+namespace svm {
+	SimpleGarbageCollector::SimpleGarbageCollector(std::size_t youngGenerationSize, std::size_t oldGenerationSize) {
+		Initialize(youngGenerationSize, oldGenerationSize);
 	}
 	SimpleGarbageCollector::SimpleGarbageCollector(SimpleGarbageCollector&& gc) noexcept
-		: m_YoungGenerations(std::move(gc.m_YoungGenerations)), m_Hospital(gc.m_Hospital), m_OldGeneration(std::move(gc.m_OldGeneration)) {}
+		: m_YoungGeneration(std::move(gc.m_YoungGeneration)), m_OldGeneration(std::move(gc.m_OldGeneration)) {}
 	SimpleGarbageCollector::~SimpleGarbageCollector() {
 		Reset();
 	}
@@ -17,61 +49,24 @@ namespace svm {
 	SimpleGarbageCollector& SimpleGarbageCollector::operator=(SimpleGarbageCollector&& gc) noexcept {
 		Reset();
 
-		m_YoungGenerations = std::move(gc.m_YoungGenerations);
-		m_Hospital = gc.m_Hospital;
+		m_YoungGeneration = std::move(gc.m_YoungGeneration);
 		m_OldGeneration = std::move(gc.m_OldGeneration);
 		return *this;
 	}
 
 	void SimpleGarbageCollector::Reset() noexcept {
-		for (const auto& [address, info] : m_OldGeneration) {
-			std::free(address);
-		}
-
-		m_YoungGenerations.clear();
-		m_OldGeneration.clear();
+		m_YoungGeneration.Reset();
+		m_OldGeneration.Reset();
 	}
-	void SimpleGarbageCollector::Initialize(std::size_t youngGenerationSize) {
-		assert(IsEmpty());
+	void SimpleGarbageCollector::Initialize(std::size_t youngGenerationSize, std::size_t oldGenerationSize) {
+		assert(!IsInitialized());
+		assert(youngGenerationSize % 512 == 0);
+		assert(oldGenerationSize % 512 == 0);
 
-		m_YoungGenerations.emplace_back(youngGenerationSize);
-		m_YoungGenerations.emplace_back(youngGenerationSize);
-		m_Hospital = m_YoungGenerations.begin();
+		m_YoungGeneration.Initialize(youngGenerationSize);
+		m_OldGeneration.Initialize(oldGenerationSize + oldGenerationSize / 512);
 	}
-	bool SimpleGarbageCollector::IsEmpty() const noexcept {
-		return m_YoungGenerations.size() == 0;
-	}
-
-	void* SimpleGarbageCollector::Allocate(std::size_t size) {
-		size += sizeof(ManagedHeapInfo);
-
-		if (m_Hospital->GetFreeSize() < size) {
-			GC(size);
-		}
-
-		m_Hospital->Expand(size);
-		ManagedHeapInfo* const address = m_Hospital->GetTop<ManagedHeapInfo>();
-		address->Size = size;
-		address->Age = 0;
-
-		return address;
-	}
-
-	void SimpleGarbageCollector::GC(std::size_t size) {
-		// TODO
-	}
-	void SimpleGarbageCollector::MinorGC() {
-
-	}
-	void SimpleGarbageCollector::MajorGC() {
-		// TODO
-	}
-
-	std::list<Stack>::iterator SimpleGarbageCollector::GetNextHosptial() noexcept {
-		auto iter = m_Hospital;
-		++iter;
-
-		if (iter == m_YoungGenerations.end()) return m_YoungGenerations.begin();
-		else return iter;
+	bool SimpleGarbageCollector::IsInitialized() const noexcept {
+		return !m_YoungGeneration.IsInitalized() && m_YoungGeneration.IsInitalized();
 	}
 }
