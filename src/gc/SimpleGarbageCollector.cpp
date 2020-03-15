@@ -245,7 +245,7 @@ namespace svm {
 			std::size_t offset = block->GetUsedSize();
 			while (offset) {
 				ManagedHeapInfo* const info = block->Get<ManagedHeapInfo>(offset);
-				offset -= MarkYoungGCObject(interpreter, pointerTable, info);
+				offset -= MarkYoungGCObject(interpreter, pointerTable, info) + sizeof(ManagedHeapInfo);
 			}
 		}
 
