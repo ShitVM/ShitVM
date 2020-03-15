@@ -28,6 +28,16 @@ namespace svm {
 		void Reset() noexcept;
 		void Initialize(std::size_t defaultBlockSize);
 		bool IsInitalized() const noexcept;
+
+		void* Allocate(std::size_t size) noexcept;
+
+		void* CreateNewBlock(std::size_t size);
+
+		std::size_t GetCurrentBlockSize() const noexcept;
+		std::size_t GetCurrnetBlockUsedSize() const noexcept;
+		std::size_t GetCurrentBlockFreeSize() const noexcept;
+
+		std::size_t GetDefaultBlockSize() const noexcept;
 	};
 }
 
@@ -54,5 +64,9 @@ namespace svm {
 		bool IsInitialized() const noexcept;
 
 		virtual void* Allocate(std::size_t size) override;
+
+	private:
+		void MajorGC() noexcept;
+		void MinorGC() noexcept;
 	};
 }
