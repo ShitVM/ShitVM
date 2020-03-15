@@ -63,6 +63,8 @@ namespace svm {
 		Null,
 		New,
 		Delete,
+		GCNull,
+		GCNew,
 	};
 
 	static constexpr const char* Mnemonics[] = {
@@ -72,7 +74,7 @@ namespace svm {
 		"and", "or", "xor", "not", "shl", "shr", "sal", "sar",
 		"cmp", "icmp", "jmp", "je", "jne", "ja", "jae", "jb", "jbe", "call", "ret",
 		"tob", "tos", "toi", "tol", "tof", "tod", "top",
-		"null", "new", "delete",
+		"null", "new", "delete", "gcnull", "gcnew",
 	};
 
 	static constexpr bool HasOperand[] = {
@@ -82,7 +84,7 @@ namespace svm {
 		false/*and*/, false/*or*/, false/*xor*/, false/*not*/, false/*shl*/, false/*shr*/, false/*sal*/, false/*sar*/,
 		false/*cmp*/, false/*icmp*/, true/*jmp*/, true/*je*/, true/*jne*/, true/*ja*/, true/*jae*/, true/*jb*/, true/*jbe*/, true/*call*/, false/*ret*/,
 		false/*tob*/, false/*tos*/, false/*toi*/, false/*tol*/, false/*tof*/, false/*tod*/, false/*top*/,
-		false/*null*/, true/*new*/, false/*delete*/,
+		false/*null*/, true/*new*/, false/*delete*/, false/*gcnull*/, true/*gcnew*/,
 	};
 }
 
