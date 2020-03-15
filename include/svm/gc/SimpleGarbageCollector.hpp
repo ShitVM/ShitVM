@@ -5,6 +5,7 @@
 
 #include <cstddef>
 #include <list>
+#include <vector>
 
 namespace svm {
 	class ManagedHeapGeneration final {
@@ -46,6 +47,7 @@ namespace svm {
 	private:
 		ManagedHeapGeneration m_YoungGeneration;
 		ManagedHeapGeneration m_OldGeneration;
+		std::vector<std::uint8_t> m_CardTable;
 
 	public:
 		SimpleGarbageCollector() = default;
@@ -64,9 +66,15 @@ namespace svm {
 		bool IsInitialized() const noexcept;
 
 		virtual void* Allocate(std::size_t size) override;
+		virtual void MakeDirty(void* address) noexcept override;
 
 	private:
+		void* AllocateOnYoungGeneration(std::size_t size);
+		void* AllocateOnOldGeneration(std::size_t size);
+
 		void MajorGC() noexcept;
 		void MinorGC() noexcept;
+
+		std::size_t CalcCardTableSize(std::size_t newBlockSize) const noexcept;
 	};
 }

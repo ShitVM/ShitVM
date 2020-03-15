@@ -1,6 +1,7 @@
 #include <svm/Interpreter.hpp>
 #include <svm/IO.hpp>
 #include <svm/Parser.hpp>
+#include <svm/gc/SimpleGarbageCollector.hpp>
 
 #include <algorithm>
 #include <chrono>
@@ -40,6 +41,7 @@ int main(int argc, char* argv[]) {
 
 	svm::Interpreter i(std::move(byteFile));
 	i.AllocateStack();
+	i.SetGarbageCollector(std::make_unique<svm::SimpleGarbageCollector>(8 * 1024 * 1024, 32 * 1024 * 1024));
 	const bool success = i.Interpret();
 
 	const auto endInterpreting = std::chrono::system_clock::now();
@@ -65,18 +67,19 @@ int main(int argc, char* argv[]) {
 		}
 		std::cout << "\nCallStacks:\n";
 		for (const auto& frame : callStacks) {
+			using namespace svm;
+
 			if (frame.Function == nullptr) {
 				std::cout << "\tentrypoint";
 			} else {
 				const auto iter = std::find_if(funcs.begin(), funcs.end(), [&](const auto& func) {
 					return &func == frame.Function;
-					});
+				});
 				const auto dis = std::distance(funcs.begin(), iter);
 				std::cout << "\t[" << dis << ']';
 			}
 			std::cout << '(' << frame.Caller
-					  << '(' << std::hex << std::uppercase << std::setw(16) << std::setfill('0') << frame.Instructions->GetInstruction(frame.Caller).Offset
-					  << std::dec << std::nouppercase << "))";
+					  << '(' << QWord(frame.Instructions->GetInstruction(frame.Caller).Offset) << "))";
 			if (frame.Function != nullptr) {
 				std::cout << " at\n";
 			}
@@ -86,7 +89,7 @@ int main(int argc, char* argv[]) {
 	}
 
 	std::cout << "Interpreted in " << std::fixed << std::setprecision(6) << interpreting.count() << "s!\n"
-			  << "Result: ";
+			  << std::defaultfloat << "Result: ";
 
 	const auto result = i.GetResult();
 	if (std::holds_alternative<std::monostate>(result)) {

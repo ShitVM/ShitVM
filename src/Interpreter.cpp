@@ -47,14 +47,18 @@ namespace svm {
 		m_ByteFile = std::move(byteFile);
 		m_StackFrame.Instructions = &m_ByteFile.GetEntryPoint();
 	}
+	const ByteFile& Interpreter::GetByteFile() const noexcept {
+		return m_ByteFile;
+	}
+
 	void Interpreter::AllocateStack(std::size_t size) {
 		m_Stack.Allocate(size);
 	}
 	void Interpreter::ReallocateStack(std::size_t newSize) {
 		m_Stack.Reallocate(newSize);
 	}
-	const ByteFile& Interpreter::GetByteFile() const noexcept {
-		return m_ByteFile;
+	void Interpreter::SetGarbageCollector(std::unique_ptr<GarbageCollector>&& gc) noexcept {
+		m_Heap.SetGarbageCollector(std::move(gc));
 	}
 
 	bool Interpreter::Interpret() {

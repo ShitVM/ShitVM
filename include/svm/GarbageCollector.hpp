@@ -33,5 +33,6 @@ namespace svm {
 
 	public:
 		virtual void* Allocate(std::size_t size) = 0;
+		virtual void MakeDirty(void* address) noexcept = 0;
 	};
 }

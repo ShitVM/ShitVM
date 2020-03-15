@@ -4,6 +4,7 @@
 
 #include <algorithm>
 #include <cassert>
+#include <cstdint>
 #include <utility>
 
 namespace {
@@ -80,7 +81,7 @@ namespace svm {
 		Initialize(youngGenerationSize, oldGenerationSize);
 	}
 	SimpleGarbageCollector::SimpleGarbageCollector(SimpleGarbageCollector&& gc) noexcept
-		: m_YoungGeneration(std::move(gc.m_YoungGeneration)), m_OldGeneration(std::move(gc.m_OldGeneration)) {}
+		: m_YoungGeneration(std::move(gc.m_YoungGeneration)), m_OldGeneration(std::move(gc.m_OldGeneration)), m_CardTable(std::move(gc.m_CardTable)) {}
 	SimpleGarbageCollector::~SimpleGarbageCollector() {
 		Reset();
 	}
@@ -90,12 +91,14 @@ namespace svm {
 
 		m_YoungGeneration = std::move(gc.m_YoungGeneration);
 		m_OldGeneration = std::move(gc.m_OldGeneration);
+		m_CardTable = std::move(gc.m_CardTable);
 		return *this;
 	}
 
 	void SimpleGarbageCollector::Reset() noexcept {
 		m_YoungGeneration.Reset();
 		m_OldGeneration.Reset();
+		m_CardTable.clear();
 	}
 	void SimpleGarbageCollector::Initialize(std::size_t youngGenerationSize, std::size_t oldGenerationSize) {
 		assert(!IsInitialized());
@@ -104,29 +107,26 @@ namespace svm {
 
 		m_YoungGeneration.Initialize(youngGenerationSize);
 		m_OldGeneration.Initialize(oldGenerationSize + oldGenerationSize / 512);
+		m_CardTable.resize(CalcCardTableSize(oldGenerationSize));
 	}
 	bool SimpleGarbageCollector::IsInitialized() const noexcept {
 		return !m_YoungGeneration.IsInitalized() && m_YoungGeneration.IsInitalized();
 	}
 
 	void* SimpleGarbageCollector::Allocate(std::size_t size) {
-		const std::size_t youngBlockSize = m_YoungGeneration.GetDefaultBlockSize();
-		const std::size_t oldBlockSize = m_OldGeneration.GetDefaultBlockSize();
+		if (size > m_YoungGeneration.GetDefaultBlockSize()) return AllocateOnOldGeneration(size);
+		else return AllocateOnYoungGeneration(size);
+	}
+	void SimpleGarbageCollector::MakeDirty(void* address) noexcept {
+		const std::uintptr_t addressInt = reinterpret_cast<std::uintptr_t>(address);
+		const std::size_t byte = static_cast<std::size_t>(addressInt / 512);
+		const int bit = static_cast<int>((addressInt - byte) / 8);
 
-		if (size > youngBlockSize) {
-			if (size > oldBlockSize) return m_OldGeneration.CreateNewBlock(size);
+		std::uint8_t& card = m_CardTable[reinterpret_cast<std::uintptr_t>(address) / 512];
+		card |= (1 << bit);
+	}
 
-			if (size > m_OldGeneration.GetCurrentBlockFreeSize()) {
-				MajorGC();
-			}
-
-			void* address = m_OldGeneration.Allocate(size);
-			if (!address) {
-				address = m_OldGeneration.CreateNewBlock(size);
-			}
-			return address;
-		}
-
+	void* SimpleGarbageCollector::AllocateOnYoungGeneration(std::size_t size) {
 		if (size > m_YoungGeneration.GetCurrentBlockFreeSize()) {
 			MinorGC();
 		}
@@ -137,11 +137,35 @@ namespace svm {
 		}
 		return address;
 	}
+	void* SimpleGarbageCollector::AllocateOnOldGeneration(std::size_t size) {
+		if (size > m_OldGeneration.GetDefaultBlockSize()) {
+			void* const address = m_OldGeneration.CreateNewBlock(size);
+			m_CardTable.resize(m_CardTable.size() + CalcCardTableSize(size));
+			return address;
+		}
+
+		if (size > m_OldGeneration.GetCurrentBlockFreeSize()) {
+			MajorGC();
+		}
+
+		void* address = m_OldGeneration.Allocate(size);
+		if (!address) {
+			address = m_OldGeneration.CreateNewBlock(size);
+			m_CardTable.emplace_back();
+		}
+		return address;
+	}
 
 	void SimpleGarbageCollector::MajorGC() noexcept {
 		// TODO
 	}
 	void SimpleGarbageCollector::MinorGC() noexcept {
 		// TODO
+	}
+
+	std::size_t SimpleGarbageCollector::CalcCardTableSize(std::size_t newBlockSize) const noexcept {
+		const auto temp = newBlockSize / 512;
+		if (newBlockSize == temp * 512) return temp;
+		else return temp + 1;
 	}
 }

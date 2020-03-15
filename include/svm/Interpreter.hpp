@@ -3,6 +3,7 @@
 #include <svm/ByteFile.hpp>
 #include <svm/Exception.hpp>
 #include <svm/Function.hpp>
+#include <svm/GarbageCollector.hpp>
 #include <svm/Heap.hpp>
 #include <svm/Instruction.hpp>
 #include <svm/Object.hpp>
@@ -11,6 +12,7 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <memory>
 #include <optional>
 #include <variant>
 #include <vector>
@@ -57,9 +59,11 @@ namespace svm {
 	public:
 		void Clear() noexcept;
 		void Load(ByteFile&& byteFile) noexcept;
+		const ByteFile& GetByteFile() const noexcept;
+
 		void AllocateStack(std::size_t size = 1 * 1024 * 1024);
 		void ReallocateStack(std::size_t newSize);
-		const ByteFile& GetByteFile() const noexcept;
+		void SetGarbageCollector(std::unique_ptr<GarbageCollector>&& gc) noexcept;
 
 		bool Interpret();
 		Result GetResult() const noexcept;
