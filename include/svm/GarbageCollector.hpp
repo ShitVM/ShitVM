@@ -1,6 +1,25 @@
 #pragma once
 
+#include <svm/Type.hpp>
+
 #include <cstddef>
+
+namespace svm {
+	struct ManagedHeapInfo final {
+		std::size_t Size = 0;
+		int Age = 0;
+		Type Object;
+
+		explicit ManagedHeapInfo(std::size_t size) noexcept;
+		ManagedHeapInfo(std::size_t size, Type type) noexcept;
+		ManagedHeapInfo(const ManagedHeapInfo& info) noexcept;
+		~ManagedHeapInfo() = default;
+
+		ManagedHeapInfo& operator=(const ManagedHeapInfo& info) noexcept;
+		bool operator==(const ManagedHeapInfo&) = delete;
+		bool operator!=(const ManagedHeapInfo&) = delete;
+	};
+}
 
 namespace svm {
 	class GarbageCollector {
