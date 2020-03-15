@@ -109,6 +109,22 @@ namespace svm {
 		inline T Cast() const noexcept;
 	};
 
+	class GCPointerObject final : public Object {
+	public:
+		void* Value = nullptr;
+
+	public:
+		GCPointerObject() noexcept;
+		GCPointerObject(void* value) noexcept;
+		GCPointerObject(const GCPointerObject& object) noexcept;
+		~GCPointerObject() = default;
+
+	public:
+		GCPointerObject& operator=(const GCPointerObject& object) noexcept;
+		bool operator==(const GCPointerObject&) = delete;
+		bool operator!=(const GCPointerObject&) = delete;
+	};
+
 	class StructureObject final : public Object {
 	public:
 		StructureObject(Type type) noexcept;

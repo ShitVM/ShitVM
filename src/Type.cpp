@@ -29,6 +29,7 @@ namespace svm {
 		static const TypeInfo s_LongType(TypeCode::Long, "long", sizeof(LongObject));
 		static const TypeInfo s_DoubleType(TypeCode::Double, "double", sizeof(DoubleObject));
 		static const TypeInfo s_PointerType(TypeCode::Pointer, "pointer", sizeof(PointerObject));
+		static const TypeInfo s_GCPointerType(TypeCode::GCPointer, "gcpointer", sizeof(GCPointerObject));
 	}
 
 	const Type NoneType = s_NoneType;
@@ -36,6 +37,7 @@ namespace svm {
 	const Type LongType = s_LongType;
 	const Type DoubleType = s_DoubleType;
 	const Type PointerType = s_PointerType;
+	const Type GCPointerType = s_GCPointerType;
 
 	Type GetTypeFromTypeCode(const std::vector<StructureInfo>& structures, TypeCode code) noexcept {
 		switch (code) {
@@ -43,6 +45,7 @@ namespace svm {
 		case TypeCode::Long: return LongType;
 		case TypeCode::Double: return DoubleType;
 		case TypeCode::Pointer: return PointerType;
+		case TypeCode::GCPointer: return GCPointerType;
 
 		default:
 			if (code >= TypeCode::Structure) return structures[static_cast<std::uint8_t>(code) - static_cast<std::uint8_t>(TypeCode::Structure)].Type;
@@ -55,6 +58,7 @@ namespace svm {
 		case TypeCode::Long: return LongType;
 		case TypeCode::Double: return DoubleType;
 		case TypeCode::Pointer: return PointerType;
+		case TypeCode::GCPointer: return GCPointerType;
 
 		default:
 			if (code >= TypeCode::Structure) return structures[static_cast<std::uint8_t>(code) - static_cast<std::uint8_t>(TypeCode::Structure)]->Type;
