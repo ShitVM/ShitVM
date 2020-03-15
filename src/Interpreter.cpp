@@ -165,6 +165,16 @@ namespace svm {
 		return result;
 	}
 
+	const Type* Interpreter::GetLocalVariable(std::uint32_t index) const noexcept {
+		return m_Stack.Get<Type>(m_LocalVariables[index]);
+	}
+	Type* Interpreter::GetLocalVariable(std::uint32_t index) noexcept {
+		return m_Stack.Get<Type>(m_LocalVariables[index]);
+	}
+	std::uint32_t Interpreter::GetLocalVariableCount() const noexcept {
+		return static_cast<std::uint32_t>(m_LocalVariables.size());
+	}
+
 	void Interpreter::OccurException(std::uint32_t code) noexcept {
 		InterpreterException& e = m_Exception.emplace();
 		e.Function = m_StackFrame.Function;

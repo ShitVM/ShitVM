@@ -5,13 +5,17 @@
 
 #include <cstddef>
 #include <list>
+#include <unordered_map>
 #include <vector>
 
 namespace svm {
 	class ManagedHeapGeneration final {
+	public:
+		using Block = std::list<Stack>::iterator;
+
 	private:
 		std::list<Stack> m_Blocks;
-		std::list<Stack>::iterator m_CurrentBlock;
+		Block m_CurrentBlock;
 		std::size_t m_DefaultBlockSize = 0;
 
 	public:
@@ -33,10 +37,16 @@ namespace svm {
 		void* Allocate(std::size_t size) noexcept;
 
 		void* CreateNewBlock(std::size_t size);
+		Block GetEmptyBlock();
 
+		Block GetCurrentBlock() noexcept;
 		std::size_t GetCurrentBlockSize() const noexcept;
 		std::size_t GetCurrnetBlockUsedSize() const noexcept;
 		std::size_t GetCurrentBlockFreeSize() const noexcept;
+
+		Block FirstBlock() noexcept;
+		Block NoBlock() noexcept;
+		Block FindBlock(const void* address) noexcept;
 
 		std::size_t GetDefaultBlockSize() const noexcept;
 	};
@@ -65,16 +75,19 @@ namespace svm {
 		void Initialize(std::size_t youngGenerationSize, std::size_t oldGenerationSize);
 		bool IsInitialized() const noexcept;
 
-		virtual void* Allocate(std::size_t size) override;
-		virtual void MakeDirty(void* address) noexcept override;
+		virtual void* Allocate(Interpreter& interpreter, std::size_t size) override;
+		virtual void MakeDirty(const void* address) noexcept override;
 
 	private:
-		void* AllocateOnYoungGeneration(std::size_t size);
-		void* AllocateOnOldGeneration(std::size_t size);
+		void* AllocateOnYoungGeneration(Interpreter& interpreter, std::size_t size);
+		void* AllocateOnOldGeneration(Interpreter& interpreter, std::size_t size);
 
-		void MajorGC() noexcept;
-		void MinorGC() noexcept;
+		void MajorGC(Interpreter& interpreter);
+		void MinorGC(Interpreter& interpreter);
+
+		std::size_t MarkYoungGCObject(Interpreter& interpreter, std::unordered_map<void*, std::vector<void**>>& pointerTable, ManagedHeapInfo* info);
 
 		std::size_t CalcCardTableSize(std::size_t newBlockSize) const noexcept;
+		bool IsDirty(const void* address) const noexcept;
 	};
 }

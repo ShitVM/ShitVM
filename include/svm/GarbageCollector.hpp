@@ -1,11 +1,12 @@
 #pragma once
 
 #include <cstddef>
+#include <cstdint>
 
 namespace svm {
 	struct ManagedHeapInfo final {
 		std::size_t Size = 0;
-		int Age = 0;
+		std::uint8_t Age = 0;
 
 		explicit ManagedHeapInfo(std::size_t size) noexcept;
 		ManagedHeapInfo(const ManagedHeapInfo& info) noexcept;
@@ -18,6 +19,8 @@ namespace svm {
 }
 
 namespace svm {
+	class Interpreter;
+
 	class GarbageCollector {
 	protected:
 		GarbageCollector() noexcept = default;
@@ -32,7 +35,7 @@ namespace svm {
 		bool operator!=(const GarbageCollector&) = delete;
 
 	public:
-		virtual void* Allocate(std::size_t size) = 0;
-		virtual void MakeDirty(void* address) noexcept = 0;
+		virtual void* Allocate(Interpreter& interpreter, std::size_t size) = 0;
+		virtual void MakeDirty(const void* address) noexcept = 0;
 	};
 }

@@ -72,6 +72,11 @@ namespace svm {
 		const InterpreterException& GetException() const noexcept;
 		std::vector<StackFrame> GetCallStacks() const;
 
+	public:
+		const Type* GetLocalVariable(std::uint32_t index) const noexcept;
+		Type* GetLocalVariable(std::uint32_t index) noexcept;
+		std::uint32_t GetLocalVariableCount() const noexcept;
+
 	private:
 		void OccurException(std::uint32_t code) noexcept;
 

@@ -52,7 +52,7 @@ namespace svm {
 	void Heap::SetGarbageCollector(std::unique_ptr<GarbageCollector>&& gc) noexcept {
 		m_GarbageCollector = std::move(gc);
 	}
-	void* Heap::AllocateManagedHeap(std::size_t size) {
-		return m_GarbageCollector->Allocate(size);
+	void* Heap::AllocateManagedHeap(Interpreter& interpreter, std::size_t size) {
+		return m_GarbageCollector->Allocate(interpreter, size);
 	}
 }

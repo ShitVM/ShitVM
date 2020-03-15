@@ -8,6 +8,8 @@
 #include <unordered_map>
 
 namespace svm {
+	class Interpreter;
+
 	class Heap final {
 	private:
 		std::unordered_map<void*, std::size_t> m_UnmanagedHeap;
@@ -30,6 +32,6 @@ namespace svm {
 		bool DeallocateUnmanagedHeap(void* address) noexcept;
 		
 		void SetGarbageCollector(std::unique_ptr<GarbageCollector>&& gc) noexcept;
-		void* AllocateManagedHeap(std::size_t size);
+		void* AllocateManagedHeap(Interpreter& interpreter, std::size_t size);
 	};
 }
