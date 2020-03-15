@@ -1,7 +1,6 @@
 #include <svm/Heap.hpp>
 
 #include <algorithm>
-#include <cassert>
 #include <cstdlib>
 #include <memory>
 #include <utility>
@@ -42,9 +41,10 @@ namespace svm {
 		}
 
 		m_UnmanagedHeap.clear();
+		m_GarbageCollector.reset();
 	}
 
-	void* Heap::AllocateUnmanagedHeap(std::size_t size) noexcept {
+	void* Heap::AllocateUnmanagedHeap(std::size_t size) {
 		struct Deleter final {
 			void operator()(void* address) noexcept {
 				std::free(address);
@@ -66,11 +66,8 @@ namespace svm {
 		m_UnmanagedHeap.erase(iter);
 		return true;
 	}
-	void Heap::DeallocateLastUnmanagedHeap() noexcept {
-		assert(m_UnmanagedHeap.size() != 0);
 
-		const auto iter = m_UnmanagedHeap.end() - 1;
-		std::free(iter->Address);
-		m_UnmanagedHeap.erase(iter);
+	void* Heap::AllocateManagedHeap(std::size_t size) {
+		m_GarbageCollector->Allocate(size);
 	}
 }

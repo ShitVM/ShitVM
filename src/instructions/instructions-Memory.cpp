@@ -16,13 +16,15 @@ namespace svm {
 			return;
 		}
 
+		if (m_Stack.GetFreeSize() < sizeof(PointerObject)) {
+			OccurException(SVM_IEC_STACK_OVERFLOW);
+			return;
+		}
+
 		const Type type = GetTypeFromTypeCode(structures, static_cast<TypeCode>(operand));
 		void* address = m_Heap.AllocateUnmanagedHeap(type->Size);
 
-		if (!m_Stack.Push<PointerObject>(address)) {
-			m_Heap.DeallocateLastUnmanagedHeap();
-			OccurException(SVM_IEC_STACK_OVERFLOW);
-		}
+		m_Stack.Push<PointerObject>(address);
 
 		if (!address) return;
 		else if (type.IsFundamentalType()) {

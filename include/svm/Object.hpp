@@ -10,13 +10,13 @@ namespace svm {
 	private:
 		Type m_Type;
 
-	public:
-		Object() noexcept = default;
-		~Object() = default;
-
 	protected:
+		Object() noexcept = default;
 		Object(Type type) noexcept;
 		Object(const Object& object) noexcept;
+
+	public:
+		~Object() = default;
 
 	protected:
 		Object& operator=(const Object& object) noexcept;

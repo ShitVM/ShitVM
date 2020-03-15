@@ -1,7 +1,10 @@
 #pragma once
 
+#include <svm/GarbageCollector.hpp>
+
 #include <cstddef>
 #include <cstdint>
+#include <memory>
 #include <vector>
 
 namespace svm {
@@ -26,6 +29,7 @@ namespace svm {
 	class Heap final {
 	private:
 		std::vector<HeapInfo> m_UnmanagedHeap;
+		std::unique_ptr<GarbageCollector> m_GarbageCollector;
 
 	public:
 		Heap() noexcept = default;
@@ -40,8 +44,9 @@ namespace svm {
 	public:
 		void Deallocate() noexcept;
 
-		void* AllocateUnmanagedHeap(std::size_t size) noexcept;
+		void* AllocateUnmanagedHeap(std::size_t size);
 		bool DeallocateUnmanagedHeap(void* address) noexcept;
-		void DeallocateLastUnmanagedHeap() noexcept;
+		
+		void* AllocateManagedHeap(std::size_t size);
 	};
 }
