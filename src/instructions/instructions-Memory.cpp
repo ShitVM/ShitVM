@@ -1,5 +1,6 @@
 #include <svm/Interpreter.hpp>
 
+#include <svm/gc/SimpleGarbageCollector.hpp>
 #include <svm/detail/InterpreterExceptionCode.hpp>
 
 namespace svm {
@@ -74,15 +75,16 @@ namespace svm {
 		}
 
 		const Type type = GetTypeFromTypeCode(structures, static_cast<TypeCode>(operand));
-		void* address = m_Heap.AllocateManagedHeap(*this, type->Size);
+		void* const address = m_Heap.AllocateManagedHeap(*this, type->Size);
+		Type* const addressReal = reinterpret_cast<Type*>(static_cast<ManagedHeapInfo*>(address) + 1);
 
 		m_Stack.Push<PointerObject>(address);
 
 		if (!address) return;
 		else if (type.IsFundamentalType()) {
-			*static_cast<Type*>(address) = type;
+			*addressReal = type;
 		} else if (type.IsStructure()) {
-			InitStructure(structures, structures[operand - 10], static_cast<Type*>(address));
+			InitStructure(structures, structures[operand - 10], addressReal);
 		}
 	}
 }

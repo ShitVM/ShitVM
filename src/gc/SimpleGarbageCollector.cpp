@@ -12,6 +12,8 @@
 #include <iterator>
 #include <utility>
 
+#include <iostream> // For developing
+
 namespace {
 	using Any = std::uint8_t;
 }
@@ -142,6 +144,8 @@ namespace svm {
 	}
 
 	void* SimpleGarbageCollector::Allocate(Interpreter& interpreter, std::size_t size) {
+		size += sizeof(ManagedHeapInfo);
+
 		ManagedHeapInfo* address = nullptr;
 		if (size > m_YoungGeneration.GetDefaultBlockSize()) {
 			address = static_cast<ManagedHeapInfo*>(AllocateOnOldGeneration(interpreter, size));
@@ -193,9 +197,11 @@ namespace svm {
 	}
 
 	void SimpleGarbageCollector::MajorGC(Interpreter& interpreter) {
-		// TODO
+		std::cout << "MajorGC\n";
 	}
 	void SimpleGarbageCollector::MinorGC(Interpreter& interpreter) {
+		std::cout << "MinorGC\n";
+
 		// Mark
 		const std::uint32_t varCount = interpreter.GetLocalVariableCount();
 		const auto noBlock = m_YoungGeneration.NoBlock();
