@@ -116,6 +116,8 @@ namespace svm {
 			case OpCode::Null: InterpretNull(); break;
 			case OpCode::New: InterpretNew(inst.Operand); break;
 			case OpCode::Delete: InterpretDelete(); break;
+			case OpCode::GCNull: InterpretGCNull(); break;
+			case OpCode::GCNew: InterpretGCNew(inst.Operand); break;
 			}
 
 			if (m_Exception.has_value()) return false;

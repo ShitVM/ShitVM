@@ -118,8 +118,10 @@ namespace svm {
 
 	private: // Memory
 		void InterpretNull() noexcept;
-		void InterpretNew(std::uint32_t operand) noexcept;
+		void InterpretNew(std::uint32_t operand);
 		void InterpretDelete() noexcept;
+		void InterpretGCNull() noexcept;
+		void InterpretGCNew(std::uint32_t operand);
 
 	private: // Operation
 		template<typename T>

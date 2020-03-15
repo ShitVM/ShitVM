@@ -8,7 +8,7 @@ namespace svm {
 			OccurException(SVM_IEC_STACK_OVERFLOW);
 		}
 	}
-	void Interpreter::InterpretNew(std::uint32_t operand) noexcept {
+	void Interpreter::InterpretNew(std::uint32_t operand) {
 		const Structures& structures = m_ByteFile.GetStructures();
 
 		if (operand >= structures.GetStructureCount() + 10) {
@@ -54,5 +54,35 @@ namespace svm {
 		}
 
 		m_Stack.Reduce(sizeof(PointerObject));
+	}
+	void Interpreter::InterpretGCNull() noexcept {
+		if (!m_Stack.Push<GCPointerObject>(nullptr)) {
+			OccurException(SVM_IEC_STACK_OVERFLOW);
+		}
+	}
+	void Interpreter::InterpretGCNew(std::uint32_t operand) {
+		const Structures& structures = m_ByteFile.GetStructures();
+
+		if (operand >= structures.GetStructureCount() + 10) {
+			OccurException(SVM_IEC_TYPE_OUTOFRANGE);
+			return;
+		}
+
+		if (m_Stack.GetFreeSize() < sizeof(PointerObject)) {
+			OccurException(SVM_IEC_STACK_OVERFLOW);
+			return;
+		}
+
+		const Type type = GetTypeFromTypeCode(structures, static_cast<TypeCode>(operand));
+		void* address = m_Heap.AllocateManagedHeap(*this, type->Size);
+
+		m_Stack.Push<PointerObject>(address);
+
+		if (!address) return;
+		else if (type.IsFundamentalType()) {
+			*static_cast<Type*>(address) = type;
+		} else if (type.IsStructure()) {
+			InitStructure(structures, structures[operand - 10], static_cast<Type*>(address));
+		}
 	}
 }
