@@ -49,6 +49,7 @@ namespace svm {
 		Block FindBlock(const void* address) noexcept;
 
 		std::size_t GetDefaultBlockSize() const noexcept;
+		std::size_t GetBlockCount() const noexcept;
 	};
 }
 

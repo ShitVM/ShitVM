@@ -8,6 +8,7 @@
 #include <algorithm>
 #include <cassert>
 #include <cstdint>
+#include <cstring>
 #include <iterator>
 #include <utility>
 
@@ -97,6 +98,9 @@ namespace svm {
 
 	std::size_t ManagedHeapGeneration::GetDefaultBlockSize() const noexcept {
 		return m_DefaultBlockSize;
+	}
+	std::size_t ManagedHeapGeneration::GetBlockCount() const noexcept {
+		return m_Blocks.size();
 	}
 }
 
@@ -245,7 +249,44 @@ namespace svm {
 			}
 		}
 
-		// TODO: Sweep
+		// Sweep
+		auto emptyBlock = m_YoungGeneration.GetEmptyBlock();
+		for (std::size_t i = 0; i < m_YoungGeneration.GetBlockCount(); ++i) {
+			auto currentBlock = std::next(emptyBlock);
+			if (currentBlock == noBlock) {
+				currentBlock = m_YoungGeneration.FirstBlock();
+			}
+
+			while (currentBlock->GetUsedSize()) {
+				ManagedHeapInfo* const info = currentBlock->GetTop<ManagedHeapInfo>();
+				if (info->Age >> 7 == 0) {
+					currentBlock->Reduce(info->Size);
+					continue;
+				}
+
+				info->Age &= 0b00 << 6;
+				info->Age += 1;
+
+				void* newAddress = nullptr;
+				if ((info->Age & 0b00111111) == 32) {
+					newAddress = AllocateOnOldGeneration(interpreter, info->Size);
+				} else {
+					if (!emptyBlock->Expand(info->Size)) {
+						emptyBlock = m_YoungGeneration.GetEmptyBlock();
+						emptyBlock->Expand(info->Size);
+					}
+					newAddress = emptyBlock->GetTop<Any>();
+				}
+
+				const std::vector<void**>& pointers = pointerTable[info];
+				for (void** pointer : pointers) {
+					*pointer = newAddress;
+				}
+
+				std::memcpy(newAddress, info, info->Size);
+				currentBlock->Reduce(info->Size);
+			}
+		}
 	}
 
 	std::size_t SimpleGarbageCollector::MarkYoungGCObject(Interpreter& interpreter, std::unordered_map<void*, std::vector<void**>>& pointerTable, ManagedHeapInfo* info) {
