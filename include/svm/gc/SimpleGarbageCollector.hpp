@@ -86,16 +86,19 @@ namespace svm {
 
 	private:
 		void* AllocateOnYoungGeneration(Interpreter& interpreter, std::size_t size);
-		void* AllocateOnOldGeneration(Interpreter& interpreter, std::size_t size);
+		void* AllocateOnOldGeneration(Interpreter& interpreter, PointerTable* minorPointerTable, std::size_t size);
 
-		void MajorGC(Interpreter& interpreter);
+		void MajorGC(Interpreter& interpreter, PointerTable* minorPointerTable);
 		void MinorGC(Interpreter& interpreter);
 
 		void MarkGCRoot(Interpreter& interpreter, ManagedHeapGeneration* generation, PointerTable& pointerTable);
-		void MarkGCObject(Interpreter& interpreter, ManagedHeapGeneration* generation, PointerTable& pointerTable);
+		void MarkGCObject(Interpreter& interpreter, ManagedHeapGeneration* targetGeneration,
+			ManagedHeapGeneration* generation, PointerTable& pointerTable);
 		std::size_t MarkGCObject(Interpreter& interpreter, ManagedHeapGeneration* generation, PointerTable& pointerTable, ManagedHeapInfo* info);
 		void CheckCardTable(Interpreter& interpreter, ManagedHeapGeneration* generation, PointerTable& pointerTable);
 		void UpdateCardTable(const Interpreter& interpreter, const PointerList& promoted);
+		void UpdateCardTable(void* oldAddress, void* newAddress);
+		void UpdateMinorPointerTable(PointerTable& minorPointerTable, void* oldAddress, void* newAddress);
 		void MoveSurvived(const PointerTable& pointerTable);
 
 		bool IsDirty(const void* address) const noexcept;

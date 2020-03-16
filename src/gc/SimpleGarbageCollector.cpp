@@ -151,7 +151,7 @@ namespace svm {
 
 		ManagedHeapInfo* address = nullptr;
 		if (size > m_YoungGeneration.GetDefaultBlockSize()) {
-			address = static_cast<ManagedHeapInfo*>(AllocateOnOldGeneration(interpreter, size));
+			address = static_cast<ManagedHeapInfo*>(AllocateOnOldGeneration(interpreter, nullptr, size));
 		} else {
 			address = static_cast<ManagedHeapInfo*>(AllocateOnYoungGeneration(interpreter, size));
 		}
@@ -181,14 +181,14 @@ namespace svm {
 		}
 		return address;
 	}
-	void* SimpleGarbageCollector::AllocateOnOldGeneration(Interpreter& interpreter, std::size_t size) {
+	void* SimpleGarbageCollector::AllocateOnOldGeneration(Interpreter& interpreter, PointerTable* minorPointerTable, std::size_t size) {
 		if (size > m_OldGeneration.GetDefaultBlockSize()) {
 			void* const address = m_OldGeneration.CreateNewBlock(size);
 			return address;
 		}
 
 		if (size > m_OldGeneration.GetCurrentBlockFreeSize()) {
-			MajorGC(interpreter);
+			MajorGC(interpreter, minorPointerTable);
 		}
 
 		void* address = m_OldGeneration.Allocate(size);
@@ -210,8 +210,54 @@ namespace svm {
 		}
 	}
 
-	void SimpleGarbageCollector::MajorGC(Interpreter& interpreter) {
+	void SimpleGarbageCollector::MajorGC(Interpreter& interpreter, PointerTable* minorPointerTable) {
 		std::cout << "MajorGC\n";
+
+		PointerTable pointerTable;
+
+		// Mark
+		MarkGCRoot(interpreter, &m_OldGeneration, pointerTable);
+		MarkGCObject(interpreter, &m_YoungGeneration, &m_OldGeneration, pointerTable);
+		MarkGCObject(interpreter, &m_OldGeneration, &m_OldGeneration, pointerTable);
+
+		// Sweep
+		auto emptyBlock = m_OldGeneration.GetEmptyBlock();
+		auto currentBlock = Prev(m_OldGeneration, emptyBlock);
+		const auto firstBlock = emptyBlock;
+
+		do {
+			while (currentBlock->GetUsedSize()) {
+				ManagedHeapInfo* const info = currentBlock->GetTop<ManagedHeapInfo>();
+				if (info->Age >> 7 == 0) {
+					currentBlock->Reduce(info->Size);
+					continue;
+				}
+
+				info->Age &= 0b00111111;
+
+				void* newAddress = nullptr;
+				if (!emptyBlock->Expand(info->Size)) {
+					(emptyBlock = Prev(m_YoungGeneration, emptyBlock))->Expand(info->Size);
+				}
+				newAddress = emptyBlock->GetTop<Any>();
+
+				auto& pointers = pointerTable[info];
+				for (const auto pointer : pointers) {
+					*pointer = newAddress;
+				}
+
+				pointers[0] = static_cast<void**>(newAddress);
+				currentBlock->Reduce(info->Size);
+
+				if (minorPointerTable) {
+					UpdateMinorPointerTable(*minorPointerTable, info, newAddress);
+				}
+				UpdateCardTable(info, newAddress);
+			}
+		} while (firstBlock != currentBlock);
+
+		m_OldGeneration.SetCurrentBlock(emptyBlock);
+		MoveSurvived(pointerTable);
 	}
 	void SimpleGarbageCollector::MinorGC(Interpreter& interpreter) {
 		std::cout << "MinorGC\n";
@@ -222,7 +268,7 @@ namespace svm {
 		// Mark
 		MarkGCRoot(interpreter, &m_YoungGeneration, pointerTable);
 		CheckCardTable(interpreter, &m_YoungGeneration, pointerTable);
-		MarkGCObject(interpreter, &m_YoungGeneration, pointerTable);
+		MarkGCObject(interpreter, &m_YoungGeneration, &m_YoungGeneration, pointerTable);
 
 		// Sweep
 		auto emptyBlock = m_YoungGeneration.GetEmptyBlock();
@@ -242,8 +288,7 @@ namespace svm {
 
 				void* newAddress = nullptr;
 				if (info->Age == 32) {
-					// TODO
-					newAddress = AllocateOnOldGeneration(interpreter, info->Size);
+					newAddress = AllocateOnOldGeneration(interpreter, &pointerTable, info->Size);
 					if (reinterpret_cast<Type*>(info + 1)->IsStructure()) {
 						promoted.push_back(newAddress);
 					}
@@ -283,12 +328,13 @@ namespace svm {
 			pointerTable[info].push_back(&var->Value);
 		}
 	}
-	void SimpleGarbageCollector::MarkGCObject(Interpreter& interpreter, ManagedHeapGeneration* generation, PointerTable& pointerTable) {
-		for (auto block = generation->Begin(); block != generation->End(); ++block) {
+	void SimpleGarbageCollector::MarkGCObject(Interpreter& interpreter, ManagedHeapGeneration* targetGeneration,
+		ManagedHeapGeneration* generation, PointerTable& pointerTable) {
+		for (auto block = targetGeneration->Begin(); block != targetGeneration->End(); ++block) {
 			std::size_t offset = block->GetUsedSize();
 			while (offset) {
 				ManagedHeapInfo* const info = block->Get<ManagedHeapInfo>(offset);
-				offset -= MarkGCObject(interpreter, generation, pointerTable, info) + sizeof(ManagedHeapInfo);
+				offset -= MarkGCObject(interpreter, generation, pointerTable, info);
 			}
 		}
 	}
@@ -372,6 +418,34 @@ namespace svm {
 
 				MakeDirty(address);
 				break;
+			}
+		}
+	}
+	void SimpleGarbageCollector::UpdateCardTable(void* oldAddress, void* newAddress) {
+		const std::uintptr_t oldAddressInt = reinterpret_cast<std::uintptr_t>(oldAddress);
+		const std::uintptr_t oldByte = oldAddressInt / 512;
+		const int oldBit = static_cast<int>((oldAddressInt - oldByte) / 8);
+		const auto oldIter = m_CardTable.find(oldByte);
+		if (oldIter != m_CardTable.end()) {
+			const bool isDirty = oldIter->second >> oldBit & 0b1;
+			if (isDirty) {
+				MakeDirty(newAddress);
+			} else if (oldIter->second == 0) {
+				m_CardTable.erase(oldIter);
+			}
+		}
+	}
+	void SimpleGarbageCollector::UpdateMinorPointerTable(PointerTable& minorPointerTable, void* oldAddress, void* newAddress) {
+		ManagedHeapInfo* const info = static_cast<ManagedHeapInfo*>(oldAddress);
+		void* const begin = info + 1;
+		void* const end = static_cast<std::uint8_t*>(oldAddress) + info->Size;
+		const std::uintptr_t distance = static_cast<std::uint8_t*>(newAddress) - static_cast<std::uint8_t*>(oldAddress);
+
+		for (auto& [young, pointers] : minorPointerTable) {
+			for (auto& pointer : pointers) {
+				if (begin <= pointer && pointer < end) {
+					pointer = reinterpret_cast<void**>(reinterpret_cast<std::uint8_t*>(pointer) + distance);
+				}
 			}
 		}
 	}
