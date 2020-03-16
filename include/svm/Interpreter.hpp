@@ -66,7 +66,9 @@ namespace svm {
 		bool Interpret();
 		const Object* GetResult() const noexcept;
 		void PrintObject(std::ostream& stream, const Object& object) const;
+		void PrintObject(std::ostream& stream, const Object& object, bool printPointerTarget) const;
 		void PrintObject(std::ostream& stream, const Object* object) const;
+		void PrintObject(std::ostream& stream, const Object* object, bool printPointerTarget) const;
 
 		bool HasException() const noexcept;
 		const InterpreterException& GetException() const noexcept;
@@ -76,6 +78,9 @@ namespace svm {
 		const Type* GetLocalVariable(std::uint32_t index) const noexcept;
 		Type* GetLocalVariable(std::uint32_t index) noexcept;
 		std::uint32_t GetLocalVariableCount() const noexcept;
+
+	private:
+		void PrintPointerTaget(std::ostream& stream, const Object& object) const;
 
 	private:
 		void OccurException(std::uint32_t code) noexcept;

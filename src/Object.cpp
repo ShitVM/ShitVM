@@ -14,20 +14,6 @@ namespace svm {
 	Type Object::GetType() const noexcept {
 		return m_Type;
 	}
-
-	std::ostream& operator<<(std::ostream& stream, const Object& object) {
-		const Type type = object.GetType();
-
-		if (type == IntType) return stream << static_cast<const IntObject&>(object).Value;
-		else if (type == LongType) return stream << static_cast<const LongObject&>(object).Value;
-		else if (type == DoubleType) return stream << static_cast<const DoubleObject&>(object).Value;
-		else if (type == PointerType) return stream << static_cast<const PointerObject&>(object).Value;
-		else if (type == GCPointerType) return stream << static_cast<const GCPointerObject&>(object).Value;
-		else return stream;
-	}
-	std::ostream& operator<<(std::ostream& stream, const Object* object) {
-		return stream << *object;
-	}
 }
 
 namespace svm {

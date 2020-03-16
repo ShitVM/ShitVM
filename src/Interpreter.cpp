@@ -132,9 +132,23 @@ namespace svm {
 		return m_Stack.GetTop<Object>();
 	}
 	void Interpreter::PrintObject(std::ostream& stream, const Object& object) const {
+		PrintObject(stream, object, false);
+	}
+	void Interpreter::PrintObject(std::ostream& stream, const Object& object, bool printPointerTarget) const {
 		const Type type = object.GetType();
 		if (type.IsFundamentalType()) {
-			stream << object;
+			if (type == IntType) {
+				stream << static_cast<const IntObject&>(object).Value;
+			} else if (type == LongType) {
+				stream << static_cast<const LongObject&>(object).Value;
+			} else if (type == DoubleType) {
+				stream << static_cast<const DoubleObject&>(object).Value;
+			} else if (type == PointerType || type == GCPointerType) {
+				stream << static_cast<const PointerObject&>(object).Value;
+				if (printPointerTarget) {
+					PrintPointerTaget(stream, object);
+				}
+			}
 			return;
 		}
 
@@ -147,13 +161,16 @@ namespace svm {
 			if (i != 0) {
 				stream << ", ";
 			}
-			stream << reinterpret_cast<const Object*>(reinterpret_cast<const std::uint8_t*>(&object) + structure->FieldOffsets[i]);
+			PrintObject(stream, reinterpret_cast<const Object*>(reinterpret_cast<const std::uint8_t*>(&object) + structure->FieldOffsets[i]), printPointerTarget);
 		}
 
 		stream << ')';
 	}
 	void Interpreter::PrintObject(std::ostream& stream, const Object* object) const {
-		PrintObject(stream, *object);
+		PrintObject(stream, *object, false);
+	}
+	void Interpreter::PrintObject(std::ostream& stream, const Object* object, bool printPointerTarget) const {
+		PrintObject(stream, *object, printPointerTarget);
 	}
 
 	bool Interpreter::HasException() const noexcept {
@@ -193,6 +210,24 @@ namespace svm {
 	}
 	std::uint32_t Interpreter::GetLocalVariableCount() const noexcept {
 		return static_cast<std::uint32_t>(m_LocalVariables.size());
+	}
+
+	void Interpreter::PrintPointerTaget(std::ostream& stream, const Object& object) const {
+		if (object.GetType() == PointerType) {
+			const PointerObject& pointer = static_cast<const PointerObject&>(object);
+			if (pointer.Value) {
+				stream << '(';
+				PrintObject(stream, static_cast<const Object*>(pointer.Value), true);
+				stream << ')';
+			}
+		} else if (object.GetType() == GCPointerType) {
+			const GCPointerObject& pointer = static_cast<const GCPointerObject&>(object);
+			if (pointer.Value) {
+				stream << '(';
+				PrintObject(stream, reinterpret_cast<const Object*>(static_cast<const ManagedHeapInfo*>(pointer.Value) + 1), true);
+				stream << ')';
+			}
+		}
 	}
 
 	void Interpreter::OccurException(std::uint32_t code) noexcept {

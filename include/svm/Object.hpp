@@ -30,9 +30,6 @@ namespace svm {
 		Type GetType() const noexcept;
 	};
 
-	std::ostream& operator<<(std::ostream& stream, const Object& object);
-	std::ostream& operator<<(std::ostream& stream, const Object* object);
-
 	class IntObject final : public Object {
 	public:
 		std::uint32_t Value = 0;

@@ -79,7 +79,7 @@ int main(int argc, char* argv[]) {
 			  << "Result: " << std::defaultfloat;
 
 	const svm::Object* result = interpreter.GetResult();
-	interpreter.PrintObject(std::cout, result);
+	interpreter.PrintObject(std::cout, result, true);
 
 	std::cout << "\n----------------------------------------\n"
 			  << "Total used: " << std::fixed << std::setprecision(6) << parsing.count() + interpreting.count() << "s\n";
