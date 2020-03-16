@@ -128,17 +128,32 @@ namespace svm {
 			return false;
 		} else return true;
 	}
-	Interpreter::Result Interpreter::GetResult() const noexcept {
-		const Type* const typePtr = m_Stack.GetTopType();
-		if (!typePtr) return std::monostate();
+	const Object* Interpreter::GetResult() const noexcept {
+		return m_Stack.GetTop<Object>();
+	}
+	void Interpreter::PrintObject(std::ostream& stream, const Object& object) const {
+		const Type type = object.GetType();
+		if (type.IsFundamentalType()) {
+			stream << object;
+			return;
+		}
 
-		const Type type = *typePtr;
-		if (type == IntType) return reinterpret_cast<const IntObject*>(typePtr)->Value;
-		else if (type == LongType) return reinterpret_cast<const LongObject*>(typePtr)->Value;
-		else if (type == DoubleType) return reinterpret_cast<const DoubleObject*>(typePtr)->Value;
-		else if (type == PointerType) return reinterpret_cast<const PointerObject*>(typePtr)->Value;
-		else if (type.IsStructure()) return reinterpret_cast<const StructureObject*>(typePtr);
-		else return std::monostate();
+		const Structure structure = m_ByteFile.GetStructures()[static_cast<std::uint32_t>(type->Code) - 10];
+		const std::uint32_t fieldCount = static_cast<std::uint32_t>(structure->FieldTypes.size());
+
+		stream << type->Name << '(';
+
+		for (std::uint32_t i = 0; i < fieldCount; ++i) {
+			if (i != 0) {
+				stream << ", ";
+			}
+			stream << reinterpret_cast<const Object*>(reinterpret_cast<const std::uint8_t*>(&object) + structure->FieldOffsets[i]);
+		}
+
+		stream << ')';
+	}
+	void Interpreter::PrintObject(std::ostream& stream, const Object* object) const {
+		PrintObject(stream, *object);
 	}
 
 	bool Interpreter::HasException() const noexcept {
@@ -164,6 +179,9 @@ namespace svm {
 			result[i + 1] = *frame;
 		}
 
+		if (HasException()) {
+			result[0].Caller = static_cast<std::size_t>(m_Exception->InstructionIndex);
+		}
 		return result;
 	}
 

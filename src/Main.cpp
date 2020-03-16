@@ -16,8 +16,6 @@ int main(int argc, char* argv[]) {
 		return EXIT_FAILURE;
 	}
 
-	const auto defaultPrecision = std::cout.precision();
-
 	const auto startParsing = std::chrono::system_clock::now();
 
 	svm::Parser parser;
@@ -39,40 +37,29 @@ int main(int argc, char* argv[]) {
 
 	const auto startInterpreting = std::chrono::system_clock::now();
 
-	svm::Interpreter i(std::move(byteFile));
-	i.AllocateStack();
-	i.SetGarbageCollector(std::make_unique<svm::SimpleGarbageCollector>(8 * 1024 * 1024, 32 * 1024 * 1024));
-	const bool success = i.Interpret();
+	svm::Interpreter interpreter(std::move(byteFile));
+	interpreter.AllocateStack();
+	interpreter.SetGarbageCollector(std::make_unique<svm::SimpleGarbageCollector>(8 * 1024 * 1024, 32 * 1024 * 1024));
+	const bool success = interpreter.Interpret();
 
 	const auto endInterpreting = std::chrono::system_clock::now();
 	const std::chrono::duration<double> interpreting = endInterpreting - startInterpreting;
 
 	if (!success) {
-		const auto& exception = i.GetException();
-		auto callStacks = i.GetCallStacks();
-		callStacks[0].Caller = static_cast<std::size_t>(exception.InstructionIndex);
-		const auto& funcs = i.GetByteFile().GetFunctions();
+		const auto& exception = interpreter.GetException();
+		const auto callStacks = interpreter.GetCallStacks();
+		const auto& funcs = interpreter.GetByteFile().GetFunctions();
 
 		std::cout << "Occured exception!\n"
 				  << "Message: \"" << svm::GetInterpreterExceptionMessage(exception.Code) << "\"\n"
-				  << "Function: ";
-		if (exception.Function == nullptr) {
-			std::cout << "entrypoint";
-		} else {
-			const auto iter = std::find_if(funcs.begin(), funcs.end(), [&](const auto& func) {
-				return &func == exception.Function;
-			});
-			const auto dis = std::distance(funcs.begin(), iter);
-			std::cout << '[' << dis << ']';
-		}
-		std::cout << "\nCallStacks:\n";
+				  << "CallStacks:\n";
 		for (const auto& frame : callStacks) {
 			using namespace svm;
 
 			if (frame.Function == nullptr) {
 				std::cout << "\tentrypoint";
 			} else {
-				const auto iter = std::find_if(funcs.begin(), funcs.end(), [&](const auto& func) {
+				const auto iter = std::find_if(funcs.begin(), funcs.end(), [&frame](const auto& func) {
 					return &func == frame.Function;
 				});
 				const auto dis = std::distance(funcs.begin(), iter);
@@ -89,20 +76,10 @@ int main(int argc, char* argv[]) {
 	}
 
 	std::cout << "Interpreted in " << std::fixed << std::setprecision(6) << interpreting.count() << "s!\n"
-			  << std::defaultfloat << "Result: ";
+			  << "Result: " << std::defaultfloat;
 
-	const auto result = i.GetResult();
-	if (std::holds_alternative<std::monostate>(result)) {
-		std::cout << "none";
-	} else if (std::holds_alternative<std::uint32_t>(result)) {
-		std::cout << std::get<std::uint32_t>(result);
-	} else if (std::holds_alternative<std::uint64_t>(result)) {
-		std::cout << std::get<std::uint64_t>(result);
-	} else if (std::holds_alternative<double>(result)) {
-		std::cout << std::get<double>(result);
-	} else if (std::holds_alternative<const svm::StructureObject*>(result)) {
-		std::cout << std::get<const svm::StructureObject*>(result)->GetType()->Name;
-	}
+	const svm::Object* result = interpreter.GetResult();
+	interpreter.PrintObject(std::cout, result);
 
 	std::cout << "\n----------------------------------------\n"
 			  << "Total used: " << std::fixed << std::setprecision(6) << parsing.count() + interpreting.count() << "s\n";

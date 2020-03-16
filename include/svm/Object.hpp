@@ -4,6 +4,7 @@
 #include <svm/Type.hpp>
 
 #include <cstdint>
+#include <ostream>
 
 namespace svm {
 	class Object {
@@ -28,6 +29,9 @@ namespace svm {
 	public:
 		Type GetType() const noexcept;
 	};
+
+	std::ostream& operator<<(std::ostream& stream, const Object& object);
+	std::ostream& operator<<(std::ostream& stream, const Object* object);
 
 	class IntObject final : public Object {
 	public:

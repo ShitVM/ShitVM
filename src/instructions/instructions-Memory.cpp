@@ -1,6 +1,5 @@
 #include <svm/Interpreter.hpp>
 
-#include <svm/gc/SimpleGarbageCollector.hpp>
 #include <svm/detail/InterpreterExceptionCode.hpp>
 
 namespace svm {

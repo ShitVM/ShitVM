@@ -14,6 +14,7 @@
 #include <cstdint>
 #include <memory>
 #include <optional>
+#include <ostream>
 #include <variant>
 #include <vector>
 
@@ -30,9 +31,6 @@ namespace svm {
 
 namespace svm {
 	class Interpreter final {
-	public:
-		using Result = std::variant<std::monostate, std::uint32_t, std::uint64_t, double, void*, const StructureObject*>;
-
 	private:
 		ByteFile m_ByteFile;
 		std::optional<InterpreterException> m_Exception;
@@ -66,7 +64,9 @@ namespace svm {
 		void SetGarbageCollector(std::unique_ptr<GarbageCollector>&& gc) noexcept;
 
 		bool Interpret();
-		Result GetResult() const noexcept;
+		const Object* GetResult() const noexcept;
+		void PrintObject(std::ostream& stream, const Object& object) const;
+		void PrintObject(std::ostream& stream, const Object* object) const;
 
 		bool HasException() const noexcept;
 		const InterpreterException& GetException() const noexcept;

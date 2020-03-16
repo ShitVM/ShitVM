@@ -47,6 +47,12 @@ namespace svm {
 				m_StackFrame.Caller = m_StackFrame.Instructions->GetLabel(operand) - 1;
 				m_Stack.Reduce(sizeof(PointerObject));
 			}
+		} else if (type == GCPointerType) {
+			const GCPointerObject* value = reinterpret_cast<const GCPointerObject*>(typePtr);
+			if (T::Compare(value->Value)) {
+				m_StackFrame.Caller = m_StackFrame.Instructions->GetLabel(operand) - 1;
+				m_Stack.Reduce(sizeof(GCPointerObject));
+			}
 		} else if (type.IsStructure()) {
 			OccurException(SVM_IEC_STRUCTURE_INVALIDFORSTRUCTURE);
 		} else {
@@ -150,31 +156,21 @@ namespace svm {
 			return;
 		}
 
-		Result result;
+		const Type* result = nullptr;
 		if (m_StackFrame.Function->HasResult()) {
 			if (IsLocalVariable()) {
 				OccurException(SVM_IEC_STACK_EMPTY);
 				return;
 			}
 
-			const Type* const typePtr = m_Stack.GetTopType();
-			if (!typePtr) {
+			result = m_Stack.GetTopType();
+			if (!result) {
 				OccurException(SVM_IEC_STACK_EMPTY);
 				return;
 			}
 
-			const Type type = *typePtr;
-			if (type == IntType) {
-				result = reinterpret_cast<const IntObject*>(typePtr)->Value;
-			} else if (type == LongType) {
-				result = reinterpret_cast<const LongObject*>(typePtr)->Value;
-			} else if (type == DoubleType) {
-				result = reinterpret_cast<const DoubleObject*>(typePtr)->Value;
-			} else if (type == PointerType) {
-				result = reinterpret_cast<const PointerObject*>(typePtr)->Value;
-			} else if (type.IsStructure()) {
-				result = reinterpret_cast<const StructureObject*>(typePtr);
-			} else {
+			const Type type = *result;
+			if (!type.IsValidType()) {
 				OccurException(SVM_IEC_STACK_EMPTY);
 				return;
 			}
@@ -194,20 +190,11 @@ namespace svm {
 		}
 
 		--m_Depth;
-		if (std::holds_alternative<std::monostate>(result)) {
-			return;
-		} else if (std::holds_alternative<std::uint32_t>(result)) {
-			m_Stack.Push<IntObject>(std::get<std::uint32_t>(result));
-		} else if (std::holds_alternative<std::uint64_t>(result)) {
-			m_Stack.Push<LongObject>(std::get<std::uint64_t>(result));
-		} else if (std::holds_alternative<double>(result)) {
-			m_Stack.Push<DoubleObject>(std::get<double>(result));
-		} else if (std::holds_alternative<void*>(result)) {
-			m_Stack.Push<PointerObject>(std::get<void*>(result));
-		} else if (std::holds_alternative<const StructureObject*>(result)) {
-			const StructureObject* const structure = std::get<const StructureObject*>(result);
-			m_Stack.Expand(structure->GetType()->Size);
-			std::memmove(m_Stack.GetTopType(), structure, structure->GetType()->Size);
+		if (result) {
+			const std::size_t size = result->GetReference().Size;
+
+			m_Stack.Expand(size);
+			std::memmove(m_Stack.GetTopType(), result, size);
 		}
 	}
 }
