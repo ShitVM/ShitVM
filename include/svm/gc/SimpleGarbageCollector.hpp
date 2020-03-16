@@ -57,6 +57,10 @@ namespace svm {
 namespace svm {
 	class SimpleGarbageCollector final : public GarbageCollector {
 	private:
+		using PointerTable = std::unordered_map<void*, std::vector<void**>>;
+		using PointerList = std::vector<void*>;
+
+	private:
 		ManagedHeapGeneration m_YoungGeneration;
 		ManagedHeapGeneration m_OldGeneration;
 		std::unordered_map<std::uintptr_t, std::uint8_t> m_CardTable;
@@ -87,9 +91,13 @@ namespace svm {
 		void MajorGC(Interpreter& interpreter);
 		void MinorGC(Interpreter& interpreter);
 
-		std::size_t MarkYoungGCObject(Interpreter& interpreter, std::unordered_map<void*, std::vector<void**>>& pointerTable, ManagedHeapInfo* info);
+		void MarkGCRoot(Interpreter& interpreter, ManagedHeapGeneration* generation, PointerTable& pointerTable);
+		void MarkGCObject(Interpreter& interpreter, ManagedHeapGeneration* generation, PointerTable& pointerTable);
+		std::size_t MarkGCObject(Interpreter& interpreter, ManagedHeapGeneration* generation, PointerTable& pointerTable, ManagedHeapInfo* info);
+		void CheckCardTable(Interpreter& interpreter, ManagedHeapGeneration* generation, PointerTable& pointerTable);
+		void UpdateCardTable(const Interpreter& interpreter, const PointerList& promoted);
+		void MoveSurvived(const PointerTable& pointerTable);
 
-		std::size_t CalcCardTableSize(std::size_t newBlockSize) const noexcept;
 		bool IsDirty(const void* address) const noexcept;
 	};
 }
