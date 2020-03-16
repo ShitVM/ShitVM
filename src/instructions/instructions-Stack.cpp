@@ -322,7 +322,7 @@ namespace svm {
 		if (!ptr) {
 			OccurException(SVM_IEC_STACK_EMPTY);
 			return;
-		} else if (ptr->GetType() != PointerType || ptr->GetType() != GCPointerType) {
+		} else if (ptr->GetType() != PointerType && ptr->GetType() != GCPointerType) {
 			m_Stack.Expand(sizeof(*ptr));
 			OccurException(SVM_IEC_POINTER_NOTPOINTER);
 			return;
