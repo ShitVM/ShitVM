@@ -429,14 +429,14 @@ namespace svm {
 		}
 
 		Type* targetTypePtr = static_cast<Type*>(reinterpret_cast<const PointerObject*>(typePtr)->Value);
-		if (*typePtr == GCPointerType) {
-			targetTypePtr = reinterpret_cast<Type*>(reinterpret_cast<ManagedHeapInfo*>(targetTypePtr) + 1);
-		}
-
 		if (!targetTypePtr) {
 			OccurException(SVM_IEC_POINTER_NULLPOINTER);
 			return;
-		} else if (targetTypePtr->IsStructure()) {
+		} else if (*typePtr == GCPointerType) {
+			targetTypePtr = reinterpret_cast<Type*>(reinterpret_cast<ManagedHeapInfo*>(targetTypePtr) + 1);
+		}
+
+		if (targetTypePtr->IsStructure()) {
 			OccurException(SVM_IEC_STRUCTURE_INVALIDFORSTRUCTURE);
 			return;
 		}

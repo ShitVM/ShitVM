@@ -64,14 +64,14 @@ namespace svm {
 		}
 
 		Type* targetType = static_cast<Type*>(reinterpret_cast<const PointerObject*>(lhsTypePtr)->Value);
-		if (*lhsTypePtr == GCPointerType) {
-			targetType = reinterpret_cast<Type*>(reinterpret_cast<ManagedHeapInfo*>(targetType) + 1);
-		}
-
 		if (!targetType) {
 			OccurException(SVM_IEC_POINTER_NULLPOINTER);
 			return;
-		} else if (*targetType != *rhsTypePtr) {
+		} else if (*lhsTypePtr == GCPointerType) {
+			targetType = reinterpret_cast<Type*>(reinterpret_cast<ManagedHeapInfo*>(targetType) + 1);
+		}
+
+		if (*targetType != *rhsTypePtr) {
 			OccurException(SVM_IEC_STACK_DIFFERENTTYPE);
 			return;
 		}
@@ -98,14 +98,14 @@ namespace svm {
 		}
 
 		Type* targetType = static_cast<Type*>(reinterpret_cast<const PointerObject*>(lhsTypePtr)->Value);
-		if (*lhsTypePtr == GCPointerType) {
-			targetType = reinterpret_cast<Type*>(reinterpret_cast<ManagedHeapInfo*>(targetType) + 1);
-		}
-
 		if (!targetType) {
 			OccurException(SVM_IEC_POINTER_NULLPOINTER);
 			return;
-		} else if (*targetType != *rhsTypePtr) {
+		} else if (*lhsTypePtr == GCPointerType) {
+			targetType = reinterpret_cast<Type*>(reinterpret_cast<ManagedHeapInfo*>(targetType) + 1);
+		}
+
+		if (*targetType != *rhsTypePtr) {
 			OccurException(SVM_IEC_STACK_DIFFERENTTYPE);
 			return;
 		}
@@ -288,15 +288,15 @@ namespace svm {
 		}
 
 		Type* targetTypePtr = static_cast<Type*>(ptr->Value);
-		if (ptr->GetType() == GCPointerType) {
-			targetTypePtr = reinterpret_cast<Type*>(reinterpret_cast<ManagedHeapInfo*>(targetTypePtr) + 1);
-		}
-
 		if (!targetTypePtr) {
 			m_Stack.Expand(sizeof(*ptr));
 			OccurException(SVM_IEC_POINTER_NULLPOINTER);
 			return;
-		} else if (!targetTypePtr->IsStructure()) {
+		} else if (ptr->GetType() == GCPointerType) {
+			targetTypePtr = reinterpret_cast<Type*>(reinterpret_cast<ManagedHeapInfo*>(targetTypePtr) + 1);
+		}
+
+		if (!targetTypePtr->IsStructure()) {
 			m_Stack.Expand(sizeof(*ptr));
 			OccurException(SVM_IEC_STRUCTURE_NOTSTRUCTURE);
 			return;
@@ -329,14 +329,12 @@ namespace svm {
 		}
 
 		const Type* targetTypePtr = static_cast<Type*>(ptr->Value);
-		if (ptr->GetType() == GCPointerType) {
-			targetTypePtr = reinterpret_cast<const Type*>(reinterpret_cast<const ManagedHeapInfo*>(targetTypePtr) + 1);
-		}
-
 		if (!targetTypePtr) {
 			m_Stack.Expand(sizeof(*ptr));
 			OccurException(SVM_IEC_POINTER_NULLPOINTER);
 			return;
+		} else if (ptr->GetType() == GCPointerType) {
+			targetTypePtr = reinterpret_cast<const Type*>(reinterpret_cast<const ManagedHeapInfo*>(targetTypePtr) + 1);
 		}
 
 		const Type targetType = *targetTypePtr;
