@@ -56,4 +56,11 @@ namespace svm {
 	void Stack::Reduce(std::size_t delta) noexcept {
 		m_Used -= delta;
 	}
+
+	const std::uint8_t* Stack::Begin() const noexcept {
+		return &*m_Data.begin();
+	}
+	const std::uint8_t* Stack::Last() const noexcept {
+		return &*(m_Data.end() - 1);
+	}
 }

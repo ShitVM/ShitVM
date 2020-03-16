@@ -40,12 +40,13 @@ namespace svm {
 		Block GetEmptyBlock();
 
 		Block GetCurrentBlock() noexcept;
+		void SetCurrentBlock(Block newCurrentBlock) noexcept;
 		std::size_t GetCurrentBlockSize() const noexcept;
 		std::size_t GetCurrnetBlockUsedSize() const noexcept;
 		std::size_t GetCurrentBlockFreeSize() const noexcept;
 
-		Block FirstBlock() noexcept;
-		Block NoBlock() noexcept;
+		Block Begin() noexcept;
+		Block End() noexcept;
 		Block FindBlock(const void* address) noexcept;
 
 		std::size_t GetDefaultBlockSize() const noexcept;
@@ -58,7 +59,7 @@ namespace svm {
 	private:
 		ManagedHeapGeneration m_YoungGeneration;
 		ManagedHeapGeneration m_OldGeneration;
-		std::vector<std::uint8_t> m_CardTable;
+		std::unordered_map<std::uintptr_t, std::uint8_t> m_CardTable;
 
 	public:
 		SimpleGarbageCollector() = default;
