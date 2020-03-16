@@ -423,12 +423,16 @@ namespace svm {
 		if (!typePtr) {
 			OccurException(SVM_IEC_STACK_EMPTY);
 			return;
-		} else if (*typePtr != PointerType) {
+		} else if (*typePtr != PointerType && *typePtr != GCPointerType) {
 			OccurException(SVM_IEC_POINTER_NOTPOINTER);
 			return;
 		}
 
-		Type* const targetTypePtr = static_cast<Type*>(reinterpret_cast<const PointerObject*>(typePtr)->Value);
+		Type* targetTypePtr = static_cast<Type*>(reinterpret_cast<const PointerObject*>(typePtr)->Value);
+		if (*typePtr == GCPointerType) {
+			targetTypePtr = reinterpret_cast<Type*>(reinterpret_cast<ManagedHeapInfo*>(targetTypePtr) + 1);
+		}
+
 		if (!targetTypePtr) {
 			OccurException(SVM_IEC_POINTER_NULLPOINTER);
 			return;

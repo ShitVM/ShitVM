@@ -63,7 +63,11 @@ namespace svm {
 			return;
 		}
 
-		Type* const targetType = static_cast<Type*>(reinterpret_cast<const PointerObject*>(lhsTypePtr)->Value);
+		Type* targetType = static_cast<Type*>(reinterpret_cast<const PointerObject*>(lhsTypePtr)->Value);
+		if (*lhsTypePtr == GCPointerType) {
+			targetType = reinterpret_cast<Type*>(reinterpret_cast<ManagedHeapInfo*>(targetType) + 1);
+		}
+
 		if (!targetType) {
 			OccurException(SVM_IEC_POINTER_NULLPOINTER);
 			return;
@@ -93,7 +97,11 @@ namespace svm {
 			return;
 		}
 
-		Type* const targetType = static_cast<Type*>(reinterpret_cast<const PointerObject*>(lhsTypePtr)->Value);
+		Type* targetType = static_cast<Type*>(reinterpret_cast<const PointerObject*>(lhsTypePtr)->Value);
+		if (*lhsTypePtr == GCPointerType) {
+			targetType = reinterpret_cast<Type*>(reinterpret_cast<ManagedHeapInfo*>(targetType) + 1);
+		}
+
 		if (!targetType) {
 			OccurException(SVM_IEC_POINTER_NULLPOINTER);
 			return;
@@ -316,7 +324,11 @@ namespace svm {
 			return;
 		}
 
-		const Type* const targetTypePtr = static_cast<Type*>(ptr->Value);
+		const Type* targetTypePtr = static_cast<Type*>(ptr->Value);
+		if (ptr->GetType() == GCPointerType) {
+			targetTypePtr = reinterpret_cast<const Type*>(reinterpret_cast<const ManagedHeapInfo*>(targetTypePtr) + 1);
+		}
+
 		if (!targetTypePtr) {
 			m_Stack.Expand(sizeof(*ptr));
 			OccurException(SVM_IEC_POINTER_NULLPOINTER);
