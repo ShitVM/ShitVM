@@ -27,6 +27,8 @@ namespace svm {
 			TypeCast<IntObject, DoubleObject>(typePtr);
 		} else if (type == PointerType) {
 			TypeCast<IntObject, PointerObject>(typePtr);
+		} else if (type == GCPointerType) {
+			OccurException(SVM_IEC_POINTER_INVALIDFORPOINTER);
 		} else if (type.IsStructure()) {
 			OccurException(SVM_IEC_STRUCTURE_INVALIDFORSTRUCTURE);
 		} else {
@@ -54,6 +56,8 @@ namespace svm {
 			TypeCast<LongObject, DoubleObject>(typePtr);
 		} else if (type == PointerType) {
 			TypeCast<LongObject, PointerObject>(typePtr);
+		} else if (type == GCPointerType) {
+			OccurException(SVM_IEC_POINTER_INVALIDFORPOINTER);
 		} else if (type.IsStructure()) {
 			OccurException(SVM_IEC_STRUCTURE_INVALIDFORSTRUCTURE);
 		} else {
@@ -81,6 +85,8 @@ namespace svm {
 			TypeCast<DoubleObject, DoubleObject>(typePtr);
 		} else if (type == PointerType) {
 			TypeCast<DoubleObject, PointerObject>(typePtr);
+		} else if (type == GCPointerType) {
+			OccurException(SVM_IEC_POINTER_INVALIDFORPOINTER);
 		} else if (type.IsStructure()) {
 			OccurException(SVM_IEC_STRUCTURE_INVALIDFORSTRUCTURE);
 		} else {
@@ -108,6 +114,8 @@ namespace svm {
 			TypeCast<PointerObject, DoubleObject>(typePtr);
 		} else if (type == PointerType) {
 			TypeCast<PointerObject, PointerObject>(typePtr);
+		} else if (type == GCPointerType) {
+			OccurException(SVM_IEC_POINTER_INVALIDFORPOINTER);
 		} else if (type.IsStructure()) {
 			OccurException(SVM_IEC_STRUCTURE_INVALIDFORSTRUCTURE);
 		} else {
