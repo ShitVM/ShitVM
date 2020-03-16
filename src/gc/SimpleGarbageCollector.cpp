@@ -254,6 +254,8 @@ namespace svm {
 				}
 				UpdateCardTable(info, newAddress);
 			}
+
+			currentBlock = Prev(m_OldGeneration, currentBlock);
 		} while (firstBlock != currentBlock);
 
 		m_OldGeneration.SetCurrentBlock(emptyBlock);
@@ -307,7 +309,9 @@ namespace svm {
 				pointers[0] = static_cast<void**>(newAddress);
 				currentBlock->Reduce(info->Size);
 			}
-		} while (firstBlock != emptyBlock);
+
+			currentBlock = Prev(m_YoungGeneration, currentBlock);
+		} while (firstBlock != currentBlock);
 
 		m_YoungGeneration.SetCurrentBlock(emptyBlock);
 		MoveSurvived(pointerTable);
@@ -334,7 +338,7 @@ namespace svm {
 			std::size_t offset = block->GetUsedSize();
 			while (offset) {
 				ManagedHeapInfo* const info = block->Get<ManagedHeapInfo>(offset);
-				offset -= MarkGCObject(interpreter, generation, pointerTable, info);
+				offset -= MarkGCObject(interpreter, generation, pointerTable, info) + sizeof(ManagedHeapInfo);
 			}
 		}
 	}
