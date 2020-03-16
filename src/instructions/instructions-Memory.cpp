@@ -77,7 +77,7 @@ namespace svm {
 		void* const address = m_Heap.AllocateManagedHeap(*this, type->Size);
 		Type* const addressReal = reinterpret_cast<Type*>(static_cast<ManagedHeapInfo*>(address) + 1);
 
-		m_Stack.Push<PointerObject>(address);
+		m_Stack.Push<GCPointerObject>(address);
 
 		if (!address) return;
 		else if (type.IsFundamentalType()) {

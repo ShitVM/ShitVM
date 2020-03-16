@@ -281,13 +281,17 @@ namespace svm {
 		if (!ptr) {
 			OccurException(SVM_IEC_STACK_EMPTY);
 			return;
-		} else if (ptr->GetType() != PointerType) {
+		} else if (ptr->GetType() != PointerType && ptr->GetType() != GCPointerType) {
 			m_Stack.Expand(sizeof(*ptr));
 			OccurException(SVM_IEC_POINTER_NOTPOINTER);
 			return;
 		}
 
-		Type* const targetTypePtr = static_cast<Type*>(ptr->Value);
+		Type* targetTypePtr = static_cast<Type*>(ptr->Value);
+		if (ptr->GetType() == GCPointerType) {
+			targetTypePtr = reinterpret_cast<Type*>(reinterpret_cast<ManagedHeapInfo*>(targetTypePtr) + 1);
+		}
+
 		if (!targetTypePtr) {
 			m_Stack.Expand(sizeof(*ptr));
 			OccurException(SVM_IEC_POINTER_NULLPOINTER);
