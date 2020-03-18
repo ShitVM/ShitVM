@@ -13,8 +13,6 @@
 #include <iterator>
 #include <utility>
 
-#include <iostream> // For developing
-
 namespace {
 	using Any = std::uint8_t;
 }
@@ -53,11 +51,15 @@ namespace svm {
 	}
 
 	void* ManagedHeapGeneration::CreateNewBlock(std::size_t size) {
-		Stack newBlock(std::max(size, m_DefaultBlockSize));
-		newBlock.SetUsedSize(size);
+		try {
+			Stack newBlock(std::max(size, m_DefaultBlockSize));
+			newBlock.SetUsedSize(size);
 
-		const auto result = m_Blocks.insert(std::next(m_CurrentBlock), std::move(newBlock))->GetTop<Any>();
-		return ++m_CurrentBlock, result;
+			const auto result = m_Blocks.insert(std::next(m_CurrentBlock), std::move(newBlock))->GetTop<Any>();
+			return ++m_CurrentBlock, result;
+		} catch (...) {
+			return nullptr;
+		}
 	}
 	ManagedHeapGeneration::Block ManagedHeapGeneration::GetEmptyBlock() {
 		Block iter = std::next(m_CurrentBlock);
@@ -67,6 +69,18 @@ namespace svm {
 
 		if (iter->GetUsedSize() != 0) return m_Blocks.insert(iter, Stack(m_DefaultBlockSize));
 		else return iter;
+	}
+	void ManagedHeapGeneration::DeleteEmptyBlocks() {
+		std::vector<Block> blocks;
+		for (auto iter = m_Blocks.begin(); iter != m_Blocks.end(); ++iter) {
+			if (iter->GetUsedSize() == 0) {
+				blocks.push_back(iter);
+			}
+		}
+
+		for (std::size_t i = 8; i < blocks.size(); ++i) {
+			m_Blocks.erase(blocks[i]);
+		}
 	}
 
 	ManagedHeapGeneration::Block ManagedHeapGeneration::GetCurrentBlock() noexcept {
@@ -212,8 +226,6 @@ namespace svm {
 	}
 
 	void SimpleGarbageCollector::MajorGC(Interpreter& interpreter, PointerTable* minorPointerTable) {
-		std::cout << "MajorGC\n";
-
 		PointerTable pointerTable;
 
 		// Mark
@@ -261,10 +273,9 @@ namespace svm {
 
 		m_OldGeneration.SetCurrentBlock(emptyBlock);
 		MoveSurvived(m_OldGeneration, firstBlock, pointerTable);
+		m_OldGeneration.DeleteEmptyBlocks();
 	}
 	void SimpleGarbageCollector::MinorGC(Interpreter& interpreter) {
-		std::cout << "MinorGC\n";
-
 		PointerTable pointerTable;
 		PointerList promoted;
 
@@ -317,6 +328,7 @@ namespace svm {
 		m_YoungGeneration.SetCurrentBlock(emptyBlock);
 		MoveSurvived(m_YoungGeneration, firstBlock, pointerTable);
 		UpdateCardTable(interpreter, promoted);
+		m_OldGeneration.DeleteEmptyBlocks();
 	}
 
 	void SimpleGarbageCollector::MarkGCRoot(Interpreter& interpreter, ManagedHeapGeneration* generation, PointerTable& pointerTable) {

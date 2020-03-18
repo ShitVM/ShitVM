@@ -38,6 +38,7 @@ namespace svm {
 
 		void* CreateNewBlock(std::size_t size);
 		Block GetEmptyBlock();
+		void DeleteEmptyBlocks();
 
 		Block GetCurrentBlock() noexcept;
 		void SetCurrentBlock(Block newCurrentBlock) noexcept;
