@@ -1,7 +1,6 @@
 #include <svm/gc/SimpleGarbageCollector.hpp>
 
 #include <svm/Interpreter.hpp>
-#include <svm/Macro.hpp>
 #include <svm/Object.hpp>
 #include <svm/Structure.hpp>
 #include <svm/Type.hpp>
