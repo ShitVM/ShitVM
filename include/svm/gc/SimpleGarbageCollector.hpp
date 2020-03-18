@@ -4,56 +4,9 @@
 #include <svm/Stack.hpp>
 
 #include <cstddef>
-#include <list>
+#include <cstdint>
 #include <unordered_map>
 #include <vector>
-
-namespace svm {
-	class ManagedHeapGeneration final {
-	public:
-		using Block = std::list<Stack>::iterator;
-
-	private:
-		std::list<Stack> m_Blocks;
-		Block m_CurrentBlock;
-		std::size_t m_DefaultBlockSize = 0;
-
-	public:
-		ManagedHeapGeneration() = default;
-		explicit ManagedHeapGeneration(std::size_t defaultBlockSize);
-		ManagedHeapGeneration(ManagedHeapGeneration&& generation) noexcept;
-		~ManagedHeapGeneration() = default;
-
-	public:
-		ManagedHeapGeneration& operator=(ManagedHeapGeneration&& generation) noexcept;
-		bool operator==(const ManagedHeapGeneration&) = delete;
-		bool operator!=(const ManagedHeapGeneration&) = delete;
-
-	public:
-		void Reset() noexcept;
-		void Initialize(std::size_t defaultBlockSize);
-		bool IsInitalized() const noexcept;
-
-		void* Allocate(std::size_t size) noexcept;
-
-		void* CreateNewBlock(std::size_t size);
-		Block GetEmptyBlock();
-		void DeleteEmptyBlocks();
-
-		Block GetCurrentBlock() noexcept;
-		void SetCurrentBlock(Block newCurrentBlock) noexcept;
-		std::size_t GetCurrentBlockSize() const noexcept;
-		std::size_t GetCurrnetBlockUsedSize() const noexcept;
-		std::size_t GetCurrentBlockFreeSize() const noexcept;
-
-		Block Begin() noexcept;
-		Block End() noexcept;
-		Block FindBlock(const void* address) noexcept;
-
-		std::size_t GetDefaultBlockSize() const noexcept;
-		std::size_t GetBlockCount() const noexcept;
-	};
-}
 
 namespace svm {
 	class SimpleGarbageCollector final : public GarbageCollector {

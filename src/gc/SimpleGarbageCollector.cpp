@@ -5,124 +5,11 @@
 #include <svm/Structure.hpp>
 #include <svm/Type.hpp>
 
-#include <algorithm>
 #include <cassert>
-#include <cstdint>
 #include <cstring>
-#include <iterator>
 #include <utility>
 
-namespace {
-	using Any = std::uint8_t;
-}
-
-namespace svm {
-	ManagedHeapGeneration::ManagedHeapGeneration(std::size_t defaultBlockSize) {
-		Initialize(defaultBlockSize);
-	}
-	ManagedHeapGeneration::ManagedHeapGeneration(ManagedHeapGeneration&& generation) noexcept
-		: m_Blocks(std::move(generation.m_Blocks)), m_CurrentBlock(generation.m_CurrentBlock), m_DefaultBlockSize(generation.m_DefaultBlockSize) {}
-
-	ManagedHeapGeneration& ManagedHeapGeneration::operator=(ManagedHeapGeneration&& generation) noexcept {
-		m_Blocks = std::move(generation.m_Blocks);
-		m_CurrentBlock = generation.m_CurrentBlock;
-		m_DefaultBlockSize = generation.m_DefaultBlockSize;
-		return *this;
-	}
-
-	void ManagedHeapGeneration::Reset() noexcept {
-		m_Blocks.clear();
-	}
-	void ManagedHeapGeneration::Initialize(std::size_t defaultBlockSize) {
-		assert(!IsInitalized());
-
-		m_Blocks.emplace_back(defaultBlockSize);
-		m_CurrentBlock = m_Blocks.begin();
-		m_DefaultBlockSize = defaultBlockSize;
-	}
-	bool ManagedHeapGeneration::IsInitalized() const noexcept {
-		return !m_Blocks.empty();
-	}
-
-	void* ManagedHeapGeneration::Allocate(std::size_t size) noexcept {
-		if (!m_CurrentBlock->Expand(size)) return nullptr;
-		else return m_CurrentBlock->GetTop<Any>();
-	}
-
-	void* ManagedHeapGeneration::CreateNewBlock(std::size_t size) {
-		try {
-			Stack newBlock(std::max(size, m_DefaultBlockSize));
-			newBlock.SetUsedSize(size);
-
-			const auto result = m_Blocks.insert(std::next(m_CurrentBlock), std::move(newBlock))->GetTop<Any>();
-			return ++m_CurrentBlock, result;
-		} catch (...) {
-			return nullptr;
-		}
-	}
-	ManagedHeapGeneration::Block ManagedHeapGeneration::GetEmptyBlock() {
-		Block iter = std::next(m_CurrentBlock);
-		if (iter == m_Blocks.end()) {
-			iter = m_Blocks.begin();
-		}
-
-		if (iter->GetUsedSize() != 0) return m_Blocks.insert(iter, Stack(m_DefaultBlockSize));
-		else return iter;
-	}
-	void ManagedHeapGeneration::DeleteEmptyBlocks() {
-		std::vector<Block> blocks;
-		for (auto iter = m_Blocks.begin(); iter != m_Blocks.end(); ++iter) {
-			if (iter->GetUsedSize() == 0) {
-				blocks.push_back(iter);
-			}
-		}
-
-		for (std::size_t i = 8; i < blocks.size(); ++i) {
-			m_Blocks.erase(blocks[i]);
-		}
-	}
-
-	ManagedHeapGeneration::Block ManagedHeapGeneration::GetCurrentBlock() noexcept {
-		return m_CurrentBlock;
-	}
-	void ManagedHeapGeneration::SetCurrentBlock(Block newCurrentBlock) noexcept {
-		m_CurrentBlock = newCurrentBlock;
-	}
-	std::size_t ManagedHeapGeneration::GetCurrentBlockSize() const noexcept {
-		return m_CurrentBlock->GetSize();
-	}
-	std::size_t ManagedHeapGeneration::GetCurrnetBlockUsedSize() const noexcept {
-		return m_CurrentBlock->GetUsedSize();
-	}
-	std::size_t ManagedHeapGeneration::GetCurrentBlockFreeSize() const noexcept {
-		return m_CurrentBlock->GetFreeSize();
-	}
-
-	ManagedHeapGeneration::Block ManagedHeapGeneration::Begin() noexcept {
-		return m_Blocks.begin();
-	}
-	ManagedHeapGeneration::Block ManagedHeapGeneration::End() noexcept {
-		return m_Blocks.end();
-	}
-	ManagedHeapGeneration::Block ManagedHeapGeneration::FindBlock(const void* address) noexcept {
-		const Any* ptr = static_cast<const Any*>(address);
-
-		for (Block iter = m_Blocks.begin(); iter != m_Blocks.end(); ++iter) {
-			const Any* begin = iter->Begin();
-			const Any* last = iter->Last();
-			if (begin <= ptr && ptr <= last) return iter;
-		}
-
-		return m_Blocks.end();
-	}
-
-	std::size_t ManagedHeapGeneration::GetDefaultBlockSize() const noexcept {
-		return m_DefaultBlockSize;
-	}
-	std::size_t ManagedHeapGeneration::GetBlockCount() const noexcept {
-		return m_Blocks.size();
-	}
-}
+#include <iostream> // For developing
 
 namespace svm {
 	SimpleGarbageCollector::SimpleGarbageCollector(std::size_t youngGenerationSize, std::size_t oldGenerationSize) {
@@ -181,7 +68,7 @@ namespace svm {
 		const int bit = static_cast<int>((addressInt - byte) / 8);
 
 		std::uint8_t& card = m_CardTable[byte];
-		card |= (1 << bit);
+		card |= 1 << bit;
 	}
 
 	void* SimpleGarbageCollector::AllocateOnYoungGeneration(Interpreter& interpreter, std::size_t size) {
@@ -196,12 +83,8 @@ namespace svm {
 		return address;
 	}
 	void* SimpleGarbageCollector::AllocateOnOldGeneration(Interpreter& interpreter, PointerTable* minorPointerTable, std::size_t size) {
-		if (size > m_OldGeneration.GetDefaultBlockSize()) {
-			void* const address = m_OldGeneration.CreateNewBlock(size);
-			return address;
-		}
-
-		if (size > m_OldGeneration.GetCurrentBlockFreeSize()) {
+		if (size > m_OldGeneration.GetDefaultBlockSize()) return m_OldGeneration.CreateNewBlock(size);
+		else if (size > m_OldGeneration.GetCurrentBlockFreeSize()) {
 			MajorGC(interpreter, minorPointerTable);
 		}
 
@@ -212,19 +95,9 @@ namespace svm {
 		return address;
 	}
 
-	namespace {
-		ManagedHeapGeneration::Block Next(ManagedHeapGeneration& generation, ManagedHeapGeneration::Block iterator) noexcept {
-			const auto result = std::next(iterator);
-			if (result == generation.End()) return generation.Begin();
-			else return result;
-		}
-		ManagedHeapGeneration::Block Prev(ManagedHeapGeneration& generation, ManagedHeapGeneration::Block iterator) noexcept {
-			if (iterator == generation.Begin()) return std::prev(generation.End());
-			else return std::prev(iterator);
-		}
-	}
-
 	void SimpleGarbageCollector::MajorGC(Interpreter& interpreter, PointerTable* minorPointerTable) {
+		std::cout << "MajorGC\n";
+
 		PointerTable pointerTable;
 
 		// Mark
@@ -234,7 +107,7 @@ namespace svm {
 
 		// Sweep
 		auto emptyBlock = m_OldGeneration.GetEmptyBlock();
-		auto currentBlock = Prev(m_OldGeneration, emptyBlock);
+		auto currentBlock = m_OldGeneration.Prev(emptyBlock);
 		const auto firstBlock = emptyBlock;
 
 		do {
@@ -249,9 +122,9 @@ namespace svm {
 
 				void* newAddress = nullptr;
 				if (!emptyBlock->Expand(info->Size)) {
-					(emptyBlock = Prev(m_YoungGeneration, emptyBlock))->Expand(info->Size);
+					(emptyBlock = m_YoungGeneration.Prev(emptyBlock))->Expand(info->Size);
 				}
-				newAddress = emptyBlock->GetTop<Any>();
+				newAddress = emptyBlock->GetTop<std::uint8_t>();
 
 				auto& pointers = pointerTable[&*currentBlock][info];
 				for (const auto pointer : pointers) {
@@ -267,7 +140,7 @@ namespace svm {
 				UpdateCardTable(info, newAddress);
 			}
 
-			currentBlock = Prev(m_OldGeneration, currentBlock);
+			currentBlock = m_OldGeneration.Prev(currentBlock);
 		} while (firstBlock != currentBlock);
 
 		m_OldGeneration.SetCurrentBlock(emptyBlock);
@@ -275,6 +148,8 @@ namespace svm {
 		m_OldGeneration.DeleteEmptyBlocks();
 	}
 	void SimpleGarbageCollector::MinorGC(Interpreter& interpreter) {
+		std::cout << "MinorGC\n";
+
 		PointerTable pointerTable;
 		PointerList promoted;
 
@@ -285,7 +160,7 @@ namespace svm {
 
 		// Sweep
 		auto emptyBlock = m_YoungGeneration.GetEmptyBlock();
-		auto currentBlock = Prev(m_YoungGeneration, emptyBlock);
+		auto currentBlock = m_YoungGeneration.Prev(emptyBlock);
 		const auto firstBlock = emptyBlock;
 
 		do {
@@ -307,9 +182,9 @@ namespace svm {
 					}
 				} else {
 					if (!emptyBlock->Expand(info->Size)) {
-						(emptyBlock = Prev(m_YoungGeneration, emptyBlock))->Expand(info->Size);
+						(emptyBlock = m_YoungGeneration.Prev(emptyBlock))->Expand(info->Size);
 					}
-					newAddress = emptyBlock->GetTop<Any>();
+					newAddress = emptyBlock->GetTop<std::uint8_t>();
 				}
 
 				auto& pointers = pointerTable[&*currentBlock][info];
@@ -321,7 +196,7 @@ namespace svm {
 				currentBlock->Reduce(info->Size);
 			}
 
-			currentBlock = Prev(m_YoungGeneration, currentBlock);
+			currentBlock = m_YoungGeneration.Prev(currentBlock);
 		} while (firstBlock != currentBlock);
 
 		m_YoungGeneration.SetCurrentBlock(emptyBlock);
@@ -475,7 +350,7 @@ namespace svm {
 		}
 	}
 	void SimpleGarbageCollector::MoveSurvived(ManagedHeapGeneration& generation, ManagedHeapGeneration::Block firstBlock, const PointerTable& pointerTable) {
-		auto currentBlock = Prev(generation, firstBlock);
+		auto currentBlock = generation.Prev(firstBlock);
 		do {
 			const auto iter = pointerTable.find(&*currentBlock);
 			if (iter != pointerTable.end()) {
@@ -484,7 +359,7 @@ namespace svm {
 					std::memcpy(to.back(), from, static_cast<ManagedHeapInfo*>(from)->Size);
 				}
 			}
-			currentBlock = Prev(generation, currentBlock);
+			currentBlock = generation.Prev(currentBlock);
 		} while (firstBlock != currentBlock);
 	}
 
