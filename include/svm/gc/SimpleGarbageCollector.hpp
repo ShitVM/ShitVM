@@ -57,7 +57,7 @@ namespace svm {
 namespace svm {
 	class SimpleGarbageCollector final : public GarbageCollector {
 	private:
-		using PointerTable = std::unordered_map<void*, std::vector<void**>>;
+		using PointerTable = std::unordered_map<Stack*, std::unordered_map<void*, std::vector<void**>>>;
 		using PointerList = std::vector<void*>;
 
 	private:
@@ -99,7 +99,7 @@ namespace svm {
 		void UpdateCardTable(const Interpreter& interpreter, const PointerList& promoted);
 		void UpdateCardTable(void* oldAddress, void* newAddress);
 		void UpdateMinorPointerTable(PointerTable& minorPointerTable, void* oldAddress, void* newAddress);
-		void MoveSurvived(const PointerTable& pointerTable);
+		void MoveSurvived(ManagedHeapGeneration& generation, ManagedHeapGeneration::Block firstBlock, const PointerTable& pointerTable);
 
 		bool IsDirty(const void* address) const noexcept;
 	};
