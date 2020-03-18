@@ -4,19 +4,20 @@
 #include <svm/Type.hpp>
 
 #include <cstdint>
+#include <ostream>
 
 namespace svm {
 	class Object {
 	private:
 		Type m_Type;
 
-	public:
-		Object() noexcept = default;
-		~Object() = default;
-
 	protected:
+		Object() noexcept = default;
 		Object(Type type) noexcept;
 		Object(const Object& object) noexcept;
+
+	public:
+		~Object() = default;
 
 	protected:
 		Object& operator=(const Object& object) noexcept;
@@ -107,6 +108,22 @@ namespace svm {
 	public:
 		template<typename T>
 		inline T Cast() const noexcept;
+	};
+
+	class GCPointerObject final : public Object {
+	public:
+		void* Value = nullptr;
+
+	public:
+		GCPointerObject() noexcept;
+		GCPointerObject(void* value) noexcept;
+		GCPointerObject(const GCPointerObject& object) noexcept;
+		~GCPointerObject() = default;
+
+	public:
+		GCPointerObject& operator=(const GCPointerObject& object) noexcept;
+		bool operator==(const GCPointerObject&) = delete;
+		bool operator!=(const GCPointerObject&) = delete;
 	};
 
 	class StructureObject final : public Object {

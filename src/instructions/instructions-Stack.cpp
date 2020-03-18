@@ -58,16 +58,20 @@ namespace svm {
 		if (!lhsTypePtr) {
 			OccurException(SVM_IEC_STACK_EMPTY);
 			return;
-		} else if (*lhsTypePtr != PointerType) {
+		} else if (*lhsTypePtr != PointerType && *lhsTypePtr != GCPointerType) {
 			OccurException(SVM_IEC_POINTER_NOTPOINTER);
 			return;
 		}
 
-		Type* const targetType = static_cast<Type*>(reinterpret_cast<const PointerObject*>(lhsTypePtr)->Value);
+		Type* targetType = static_cast<Type*>(reinterpret_cast<const PointerObject*>(lhsTypePtr)->Value);
 		if (!targetType) {
 			OccurException(SVM_IEC_POINTER_NULLPOINTER);
 			return;
-		} else if (*targetType != *rhsTypePtr) {
+		} else if (*lhsTypePtr == GCPointerType) {
+			targetType = reinterpret_cast<Type*>(reinterpret_cast<ManagedHeapInfo*>(targetType) + 1);
+		}
+
+		if (*targetType != *rhsTypePtr) {
 			OccurException(SVM_IEC_STACK_DIFFERENTTYPE);
 			return;
 		}
@@ -88,16 +92,20 @@ namespace svm {
 		if (!lhsTypePtr) {
 			OccurException(SVM_IEC_STACK_EMPTY);
 			return;
-		} else if (*lhsTypePtr != PointerType) {
+		} else if (*lhsTypePtr != PointerType && *lhsTypePtr != GCPointerType) {
 			OccurException(SVM_IEC_POINTER_NOTPOINTER);
 			return;
 		}
 
-		Type* const targetType = static_cast<Type*>(reinterpret_cast<const PointerObject*>(lhsTypePtr)->Value);
+		Type* targetType = static_cast<Type*>(reinterpret_cast<const PointerObject*>(lhsTypePtr)->Value);
 		if (!targetType) {
 			OccurException(SVM_IEC_POINTER_NULLPOINTER);
 			return;
-		} else if (*targetType != *rhsTypePtr) {
+		} else if (*lhsTypePtr == GCPointerType) {
+			targetType = reinterpret_cast<Type*>(reinterpret_cast<ManagedHeapInfo*>(targetType) + 1);
+		}
+
+		if (*targetType != *rhsTypePtr) {
 			OccurException(SVM_IEC_STACK_DIFFERENTTYPE);
 			return;
 		}
@@ -189,6 +197,8 @@ namespace svm {
 			isSuccess = m_Stack.Push(reinterpret_cast<const DoubleObject&>(*typePtr));
 		} else if (type == PointerType) {
 			isSuccess = m_Stack.Push(reinterpret_cast<const PointerObject&>(*typePtr));
+		} else if (type == GCPointerType) {
+			isSuccess = m_Stack.Push(reinterpret_cast<const GCPointerObject&>(*typePtr));
 		} else if (type.IsStructure() && (isSuccess = m_Stack.Expand(type->Size))) {
 			CopyStructure(*typePtr);
 		}
@@ -239,6 +249,8 @@ namespace svm {
 			reinterpret_cast<DoubleObject&>(varType) = reinterpret_cast<const DoubleObject&>(*typePtr);
 		} else if (type == PointerType) {
 			reinterpret_cast<PointerObject&>(varType) = reinterpret_cast<const PointerObject&>(*typePtr);
+		} else if (type == GCPointerType) {
+			reinterpret_cast<GCPointerObject&>(varType) = reinterpret_cast<const GCPointerObject&>(*typePtr);
 		} else if (type.IsStructure()) {
 			CopyStructure(*typePtr, varType);
 		} else {
@@ -269,18 +281,22 @@ namespace svm {
 		if (!ptr) {
 			OccurException(SVM_IEC_STACK_EMPTY);
 			return;
-		} else if (ptr->GetType() != PointerType) {
+		} else if (ptr->GetType() != PointerType && ptr->GetType() != GCPointerType) {
 			m_Stack.Expand(sizeof(*ptr));
 			OccurException(SVM_IEC_POINTER_NOTPOINTER);
 			return;
 		}
 
-		Type* const targetTypePtr = static_cast<Type*>(ptr->Value);
+		Type* targetTypePtr = static_cast<Type*>(ptr->Value);
 		if (!targetTypePtr) {
 			m_Stack.Expand(sizeof(*ptr));
 			OccurException(SVM_IEC_POINTER_NULLPOINTER);
 			return;
-		} else if (!targetTypePtr->IsStructure()) {
+		} else if (ptr->GetType() == GCPointerType) {
+			targetTypePtr = reinterpret_cast<Type*>(reinterpret_cast<ManagedHeapInfo*>(targetTypePtr) + 1);
+		}
+
+		if (!targetTypePtr->IsStructure()) {
 			m_Stack.Expand(sizeof(*ptr));
 			OccurException(SVM_IEC_STRUCTURE_NOTSTRUCTURE);
 			return;
@@ -306,17 +322,19 @@ namespace svm {
 		if (!ptr) {
 			OccurException(SVM_IEC_STACK_EMPTY);
 			return;
-		} else if (ptr->GetType() != PointerType) {
+		} else if (ptr->GetType() != PointerType && ptr->GetType() != GCPointerType) {
 			m_Stack.Expand(sizeof(*ptr));
 			OccurException(SVM_IEC_POINTER_NOTPOINTER);
 			return;
 		}
 
-		const Type* const targetTypePtr = static_cast<Type*>(ptr->Value);
+		const Type* targetTypePtr = static_cast<Type*>(ptr->Value);
 		if (!targetTypePtr) {
 			m_Stack.Expand(sizeof(*ptr));
 			OccurException(SVM_IEC_POINTER_NULLPOINTER);
 			return;
+		} else if (ptr->GetType() == GCPointerType) {
+			targetTypePtr = reinterpret_cast<const Type*>(reinterpret_cast<const ManagedHeapInfo*>(targetTypePtr) + 1);
 		}
 
 		const Type targetType = *targetTypePtr;
@@ -329,6 +347,8 @@ namespace svm {
 			isSuccess = m_Stack.Push(reinterpret_cast<const DoubleObject&>(*targetTypePtr));
 		} else if (targetType == PointerType) {
 			isSuccess = m_Stack.Push(reinterpret_cast<const PointerObject&>(*targetTypePtr));
+		} else if (targetType == GCPointerType) {
+			isSuccess = m_Stack.Push(reinterpret_cast<const GCPointerObject&>(*targetTypePtr));
 		} else if (targetType.IsStructure() && (isSuccess = m_Stack.Expand(targetType->Size))) {
 			CopyStructure(*targetTypePtr);
 		}
@@ -354,6 +374,8 @@ namespace svm {
 			DRefAndAssign<DoubleObject>(rhsTypePtr);
 		} else if (rhsType == PointerType) {
 			DRefAndAssign<PointerObject>(rhsTypePtr);
+		} else if (rhsType == GCPointerType) {
+			DRefAndAssign<GCPointerObject>(rhsTypePtr);
 		} else if (rhsType.IsStructure()) {
 			DRefAndAssign<StructureObject>(rhsTypePtr);
 		} else {
@@ -382,6 +404,8 @@ namespace svm {
 			isSuccess = m_Stack.Push(reinterpret_cast<const DoubleObject&>(*typePtr));
 		} else if (type == PointerType) {
 			isSuccess = m_Stack.Push(reinterpret_cast<const PointerObject&>(*typePtr));
+		} else if (type == GCPointerType) {
+			isSuccess = m_Stack.Push(reinterpret_cast<const GCPointerObject&>(*typePtr));
 		} else if (type.IsStructure()) {
 			if (isSuccess = m_Stack.Expand(type->Size)) {
 				CopyStructure(type);
@@ -418,6 +442,10 @@ namespace svm {
 			PointerObject* second = nullptr;
 			if (!GetTwoSameType(firstType, second)) return;
 			std::iter_swap(reinterpret_cast<PointerObject*>(firstTypePtr), second);
+		} else if (firstType == GCPointerType) {
+			GCPointerObject* second = nullptr;
+			if (!GetTwoSameType(firstType, second)) return;
+			std::iter_swap(reinterpret_cast<GCPointerObject*>(firstTypePtr), second);
 		} else if (firstType.IsStructure()) {
 			if (IsLocalVariable() || IsLocalVariable(firstType->Size)) {
 				OccurException(SVM_IEC_STACK_EMPTY);

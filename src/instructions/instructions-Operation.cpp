@@ -89,7 +89,7 @@ namespace svm {
 			if (!PopTwoSameTypeAndPushOne(rhsTypePtr, lhs, rhs)) return;
 
 			lhs->Value += rhs->Value;
-		} else if (rhsType == PointerType) {
+		} else if (rhsType == PointerType || rhsType == GCPointerType) {
 			OccurException(SVM_IEC_POINTER_INVALIDFORPOINTER);
 		} else if (rhsType.IsStructure()) {
 			OccurException(SVM_IEC_STRUCTURE_INVALIDFORSTRUCTURE);
@@ -123,7 +123,7 @@ namespace svm {
 			if (!PopTwoSameTypeAndPushOne(rhsTypePtr, lhs, rhs)) return;
 
 			lhs->Value -= rhs->Value;
-		} else if (rhsType == PointerType) {
+		} else if (rhsType == PointerType || rhsType == GCPointerType) {
 			OccurException(SVM_IEC_POINTER_INVALIDFORPOINTER);
 		} else if (rhsType.IsStructure()) {
 			OccurException(SVM_IEC_STRUCTURE_INVALIDFORSTRUCTURE);
@@ -157,7 +157,7 @@ namespace svm {
 			if (!PopTwoSameTypeAndPushOne(rhsTypePtr, lhs, rhs)) return;
 
 			lhs->Value *= rhs->Value;
-		} else if (rhsType == PointerType) {
+		} else if (rhsType == PointerType || rhsType == GCPointerType) {
 			OccurException(SVM_IEC_POINTER_INVALIDFORPOINTER);
 		} else if (rhsType.IsStructure()) {
 			OccurException(SVM_IEC_STRUCTURE_INVALIDFORSTRUCTURE);
@@ -191,7 +191,7 @@ namespace svm {
 			if (!PopTwoSameTypeAndPushOne(rhsTypePtr, lhs, rhs)) return;
 
 			lhs->Value *= rhs->Value;
-		} else if (rhsType == PointerType) {
+		} else if (rhsType == PointerType || rhsType == GCPointerType) {
 			OccurException(SVM_IEC_POINTER_INVALIDFORPOINTER);
 		} else if (rhsType.IsStructure()) {
 			OccurException(SVM_IEC_STRUCTURE_INVALIDFORSTRUCTURE);
@@ -237,7 +237,7 @@ namespace svm {
 			}
 
 			lhs->Value /= rhs->Value;
-		} else if (rhsType == PointerType) {
+		} else if (rhsType == PointerType || rhsType == GCPointerType) {
 			OccurException(SVM_IEC_POINTER_INVALIDFORPOINTER);
 		} else if (rhsType.IsStructure()) {
 			OccurException(SVM_IEC_STRUCTURE_INVALIDFORSTRUCTURE);
@@ -283,7 +283,7 @@ namespace svm {
 			}
 
 			lhs->Value /= rhs->Value;
-		} else if (rhsType == PointerType) {
+		} else if (rhsType == PointerType || rhsType == GCPointerType) {
 			OccurException(SVM_IEC_POINTER_INVALIDFORPOINTER);
 		} else if (rhsType.IsStructure()) {
 			OccurException(SVM_IEC_STRUCTURE_INVALIDFORSTRUCTURE);
@@ -329,7 +329,7 @@ namespace svm {
 			}
 
 			lhs->Value = std::fmod(lhs->Value, rhs->Value);
-		} else if (rhsType == PointerType) {
+		} else if (rhsType == PointerType || rhsType == GCPointerType) {
 			OccurException(SVM_IEC_POINTER_INVALIDFORPOINTER);
 		} else if (rhsType.IsStructure()) {
 			OccurException(SVM_IEC_STRUCTURE_INVALIDFORSTRUCTURE);
@@ -375,7 +375,7 @@ namespace svm {
 			}
 
 			lhs->Value = std::fmod(lhs->Value, rhs->Value);
-		} else if (rhsType == PointerType) {
+		} else if (rhsType == PointerType || rhsType == GCPointerType) {
 			OccurException(SVM_IEC_POINTER_INVALIDFORPOINTER);
 		} else if (rhsType.IsStructure()) {
 			OccurException(SVM_IEC_STRUCTURE_INVALIDFORSTRUCTURE);
@@ -405,7 +405,7 @@ namespace svm {
 		} else if (type == DoubleType) {
 			DoubleObject& top = reinterpret_cast<DoubleObject&>(*typePtr);
 			top.Value = -top.Value;
-		} else if (type == PointerType) {
+		} else if (type == PointerType || type == GCPointerType) {
 			OccurException(SVM_IEC_POINTER_INVALIDFORPOINTER);
 		} else if (type.IsStructure()) {
 			OccurException(SVM_IEC_STRUCTURE_INVALIDFORSTRUCTURE);
@@ -423,16 +423,20 @@ namespace svm {
 		if (!typePtr) {
 			OccurException(SVM_IEC_STACK_EMPTY);
 			return;
-		} else if (*typePtr != PointerType) {
+		} else if (*typePtr != PointerType && *typePtr != GCPointerType) {
 			OccurException(SVM_IEC_POINTER_NOTPOINTER);
 			return;
 		}
 
-		Type* const targetTypePtr = static_cast<Type*>(reinterpret_cast<const PointerObject*>(typePtr)->Value);
+		Type* targetTypePtr = static_cast<Type*>(reinterpret_cast<const PointerObject*>(typePtr)->Value);
 		if (!targetTypePtr) {
 			OccurException(SVM_IEC_POINTER_NULLPOINTER);
 			return;
-		} else if (targetTypePtr->IsStructure()) {
+		} else if (*typePtr == GCPointerType) {
+			targetTypePtr = reinterpret_cast<Type*>(reinterpret_cast<ManagedHeapInfo*>(targetTypePtr) + 1);
+		}
+
+		if (targetTypePtr->IsStructure()) {
 			OccurException(SVM_IEC_STRUCTURE_INVALIDFORSTRUCTURE);
 			return;
 		}
@@ -444,7 +448,7 @@ namespace svm {
 			reinterpret_cast<LongObject*>(targetTypePtr)->Value += delta;
 		} else if (targetType == DoubleType) {
 			reinterpret_cast<DoubleObject*>(targetTypePtr)->Value += delta;
-		} else if (targetType == PointerType) {
+		} else if (targetType == PointerType || targetType == GCPointerType) {
 			OccurException(SVM_IEC_POINTER_INVALIDFORPOINTER);
 		} else {
 			OccurException(SVM_IEC_STACK_EMPTY);
@@ -475,7 +479,7 @@ namespace svm {
 			if (!PopTwoSameTypeAndPushOne(rhsTypePtr, lhs, rhs)) return;
 
 			lhs->Value &= rhs->Value;
-		} else if (rhsType == PointerType) {
+		} else if (rhsType == PointerType || rhsType == GCPointerType) {
 			OccurException(SVM_IEC_POINTER_INVALIDFORPOINTER);
 		} else if (rhsType.IsStructure()) {
 			OccurException(SVM_IEC_STRUCTURE_INVALIDFORSTRUCTURE);
@@ -503,7 +507,7 @@ namespace svm {
 			if (!PopTwoSameTypeAndPushOne(rhsTypePtr, lhs, rhs)) return;
 
 			lhs->Value |= rhs->Value;
-		} else if (rhsType == PointerType) {
+		} else if (rhsType == PointerType || rhsType == GCPointerType) {
 			OccurException(SVM_IEC_POINTER_INVALIDFORPOINTER);
 		} else if (rhsType.IsStructure()) {
 			OccurException(SVM_IEC_STRUCTURE_INVALIDFORSTRUCTURE);
@@ -531,7 +535,7 @@ namespace svm {
 			if (!PopTwoSameTypeAndPushOne(rhsTypePtr, lhs, rhs)) return;
 
 			lhs->Value ^= rhs->Value;
-		} else if (rhsType == PointerType) {
+		} else if (rhsType == PointerType || rhsType == GCPointerType) {
 			OccurException(SVM_IEC_POINTER_INVALIDFORPOINTER);
 		} else if (rhsType.IsStructure()) {
 			OccurException(SVM_IEC_STRUCTURE_INVALIDFORSTRUCTURE);
@@ -558,7 +562,7 @@ namespace svm {
 		} else if (type == LongType || type == DoubleType) {
 			LongObject& top = reinterpret_cast<LongObject&>(*typePtr);
 			top.Value = ~top.Value;
-		} else if (type == PointerType) {
+		} else if (type == PointerType || type == GCPointerType) {
 			OccurException(SVM_IEC_POINTER_INVALIDFORPOINTER);
 		} else if (type.IsStructure()) {
 			OccurException(SVM_IEC_STRUCTURE_INVALIDFORSTRUCTURE);
@@ -586,7 +590,7 @@ namespace svm {
 			if (!PopTwoSameTypeAndPushOne(rhsTypePtr, lhs, rhs)) return;
 
 			lhs->Value <<= rhs->Value;
-		} else if (rhsType == PointerType) {
+		} else if (rhsType == PointerType || rhsType == GCPointerType) {
 			OccurException(SVM_IEC_POINTER_INVALIDFORPOINTER);
 		} else if (rhsType.IsStructure()) {
 			OccurException(SVM_IEC_STRUCTURE_INVALIDFORSTRUCTURE);
@@ -617,7 +621,7 @@ namespace svm {
 			if (!PopTwoSameTypeAndPushOne(rhsTypePtr, lhs, rhs)) return;
 
 			lhs->Value >>= rhs->Value;
-		} else if (rhsType == PointerType) {
+		} else if (rhsType == PointerType || rhsType == GCPointerType) {
 			OccurException(SVM_IEC_POINTER_INVALIDFORPOINTER);
 		} else if (rhsType.IsStructure()) {
 			OccurException(SVM_IEC_STRUCTURE_INVALIDFORSTRUCTURE);
@@ -645,7 +649,7 @@ namespace svm {
 			if (!PopTwoSameTypeAndPushOne(rhsTypePtr, lhs, rhs)) return;
 
 			lhs->Value = static_cast<std::int64_t>(lhs->Value) >> static_cast<std::int64_t>(rhs->Value);
-		} else if (rhsType == PointerType) {
+		} else if (rhsType == PointerType || rhsType == GCPointerType) {
 			OccurException(SVM_IEC_POINTER_INVALIDFORPOINTER);
 		} else if (rhsType.IsStructure()) {
 			OccurException(SVM_IEC_STRUCTURE_INVALIDFORSTRUCTURE);
@@ -676,7 +680,7 @@ namespace svm {
 			DoubleObject lhs, rhs;
 			if (!PopTwoSameType(rhsTypePtr, lhs, rhs)) return;
 			m_Stack.Push(CompareTwoSameType(lhs.Value, rhs.Value));
-		} else if (rhsType == PointerType) {
+		} else if (rhsType == PointerType || rhsType == GCPointerType) {
 			PointerObject lhs, rhs;
 			if (!PopTwoSameType(rhsTypePtr, lhs, rhs)) return;
 			m_Stack.Push(CompareTwoSameType(lhs.Value, rhs.Value));
@@ -706,7 +710,7 @@ namespace svm {
 			DoubleObject lhs, rhs;
 			if (!PopTwoSameType(rhsTypePtr, lhs, rhs)) return;
 			m_Stack.Push(CompareTwoSameType(lhs.Value, rhs.Value));
-		} else if (rhsType == PointerType) {
+		} else if (rhsType == PointerType || rhsType == GCPointerType) {
 			PointerObject lhs, rhs;
 			if (!PopTwoSameType(rhsTypePtr, lhs, rhs)) return;
 			m_Stack.Push(CompareTwoSameType(lhs.Value, rhs.Value));

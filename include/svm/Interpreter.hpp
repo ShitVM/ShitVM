@@ -3,6 +3,8 @@
 #include <svm/ByteFile.hpp>
 #include <svm/Exception.hpp>
 #include <svm/Function.hpp>
+#include <svm/GarbageCollector.hpp>
+#include <svm/Heap.hpp>
 #include <svm/Instruction.hpp>
 #include <svm/Object.hpp>
 #include <svm/Stack.hpp>
@@ -10,7 +12,9 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <memory>
 #include <optional>
+#include <ostream>
 #include <variant>
 #include <vector>
 
@@ -27,9 +31,6 @@ namespace svm {
 
 namespace svm {
 	class Interpreter final {
-	public:
-		using Result = std::variant<std::monostate, std::uint32_t, std::uint64_t, double, void*, const StructureObject*>;
-
 	private:
 		ByteFile m_ByteFile;
 		std::optional<InterpreterException> m_Exception;
@@ -39,6 +40,8 @@ namespace svm {
 		std::size_t m_Depth = 0;
 
 		std::vector<std::size_t> m_LocalVariables;
+
+		Heap m_Heap;
 
 	public:
 		Interpreter() noexcept = default;
@@ -54,16 +57,30 @@ namespace svm {
 	public:
 		void Clear() noexcept;
 		void Load(ByteFile&& byteFile) noexcept;
-		void AllocateStack(std::size_t size = 1 * 1024 * 1024);
-		void ReallocateStack(std::size_t newSize);
 		const ByteFile& GetByteFile() const noexcept;
 
+		void AllocateStack(std::size_t size = 1 * 1024 * 1024);
+		void ReallocateStack(std::size_t newSize);
+		void SetGarbageCollector(std::unique_ptr<GarbageCollector>&& gc) noexcept;
+
 		bool Interpret();
-		Result GetResult() const noexcept;
+		const Object* GetResult() const noexcept;
+		void PrintObject(std::ostream& stream, const Object& object) const;
+		void PrintObject(std::ostream& stream, const Object& object, bool printPointerTarget) const;
+		void PrintObject(std::ostream& stream, const Object* object) const;
+		void PrintObject(std::ostream& stream, const Object* object, bool printPointerTarget) const;
 
 		bool HasException() const noexcept;
 		const InterpreterException& GetException() const noexcept;
 		std::vector<StackFrame> GetCallStacks() const;
+
+	public:
+		const Type* GetLocalVariable(std::uint32_t index) const noexcept;
+		Type* GetLocalVariable(std::uint32_t index) noexcept;
+		std::uint32_t GetLocalVariableCount() const noexcept;
+
+	private:
+		void PrintPointerTaget(std::ostream& stream, const Object& object) const;
 
 	private:
 		void OccurException(std::uint32_t code) noexcept;
@@ -106,8 +123,10 @@ namespace svm {
 
 	private: // Memory
 		void InterpretNull() noexcept;
-		void InterpretNew(std::uint32_t operand) noexcept;
+		void InterpretNew(std::uint32_t operand);
 		void InterpretDelete() noexcept;
+		void InterpretGCNull() noexcept;
+		void InterpretGCNew(std::uint32_t operand);
 
 	private: // Operation
 		template<typename T>

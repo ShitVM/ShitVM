@@ -81,6 +81,22 @@ namespace svm {
 }
 
 namespace svm {
+	GCPointerObject::GCPointerObject() noexcept
+		: Object(GCPointerType) {}
+	GCPointerObject::GCPointerObject(void* value) noexcept
+		: Object(GCPointerType), Value(value) {}
+	GCPointerObject::GCPointerObject(const GCPointerObject& object) noexcept
+		: Object(object), Value(object.Value) {}
+
+	GCPointerObject& GCPointerObject::operator=(const GCPointerObject& object) noexcept {
+		Object::operator=(object);
+
+		Value = object.Value;
+		return *this;
+	}
+}
+
+namespace svm {
 	StructureObject::StructureObject(Type type) noexcept
 		: Object(type) {}
 }

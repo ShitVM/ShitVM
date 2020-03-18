@@ -18,7 +18,7 @@ namespace svm {
 		Float,				// Not supported
 		Double,
 		Pointer,
-		GCPointer,			// Not supported
+		GCPointer,
 		Array,				// Not supported
 		Structure,
 	};
@@ -61,6 +61,7 @@ namespace svm {
 	extern const Type LongType;
 	extern const Type DoubleType;
 	extern const Type PointerType;
+	extern const Type GCPointerType;
 
 	Type GetTypeFromTypeCode(const std::vector<StructureInfo>& structures, TypeCode code) noexcept;
 	Type GetTypeFromTypeCode(const Structures& structures, TypeCode code) noexcept;

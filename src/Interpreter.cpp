@@ -13,7 +13,8 @@ namespace svm {
 	Interpreter::Interpreter(Interpreter&& interpreter) noexcept
 		: m_ByteFile(std::move(interpreter.m_ByteFile)), m_Exception(std::move(interpreter.m_Exception)),
 		m_Stack(std::move(interpreter.m_Stack)), m_StackFrame(interpreter.m_StackFrame), m_Depth(interpreter.m_Depth),
-		m_LocalVariables(std::move(interpreter.m_LocalVariables)) {}
+		m_LocalVariables(std::move(interpreter.m_LocalVariables)),
+		m_Heap(std::move(interpreter.m_Heap)) {}
 
 	Interpreter& Interpreter::operator=(Interpreter&& interpreter) noexcept {
 		m_ByteFile = std::move(interpreter.m_ByteFile);
@@ -24,6 +25,8 @@ namespace svm {
 		m_Depth = interpreter.m_Depth;
 
 		m_LocalVariables = std::move(interpreter.m_LocalVariables);
+
+		m_Heap = std::move(interpreter.m_Heap);
 
 		return *this;
 	}
@@ -37,19 +40,25 @@ namespace svm {
 		m_Depth = 0;
 
 		m_LocalVariables.clear();
+
+		m_Heap.Deallocate();
 	}
 	void Interpreter::Load(ByteFile&& byteFile) noexcept {
 		m_ByteFile = std::move(byteFile);
 		m_StackFrame.Instructions = &m_ByteFile.GetEntryPoint();
 	}
+	const ByteFile& Interpreter::GetByteFile() const noexcept {
+		return m_ByteFile;
+	}
+
 	void Interpreter::AllocateStack(std::size_t size) {
 		m_Stack.Allocate(size);
 	}
 	void Interpreter::ReallocateStack(std::size_t newSize) {
 		m_Stack.Reallocate(newSize);
 	}
-	const ByteFile& Interpreter::GetByteFile() const noexcept {
-		return m_ByteFile;
+	void Interpreter::SetGarbageCollector(std::unique_ptr<GarbageCollector>&& gc) noexcept {
+		m_Heap.SetGarbageCollector(std::move(gc));
 	}
 
 	bool Interpreter::Interpret() {
@@ -107,6 +116,8 @@ namespace svm {
 			case OpCode::Null: InterpretNull(); break;
 			case OpCode::New: InterpretNew(inst.Operand); break;
 			case OpCode::Delete: InterpretDelete(); break;
+			case OpCode::GCNull: InterpretGCNull(); break;
+			case OpCode::GCNew: InterpretGCNew(inst.Operand); break;
 			}
 
 			if (m_Exception.has_value()) return false;
@@ -117,17 +128,49 @@ namespace svm {
 			return false;
 		} else return true;
 	}
-	Interpreter::Result Interpreter::GetResult() const noexcept {
-		const Type* const typePtr = m_Stack.GetTopType();
-		if (!typePtr) return std::monostate();
+	const Object* Interpreter::GetResult() const noexcept {
+		return m_Stack.GetTop<Object>();
+	}
+	void Interpreter::PrintObject(std::ostream& stream, const Object& object) const {
+		PrintObject(stream, object, false);
+	}
+	void Interpreter::PrintObject(std::ostream& stream, const Object& object, bool printPointerTarget) const {
+		const Type type = object.GetType();
+		if (type.IsFundamentalType()) {
+			if (type == IntType) {
+				stream << static_cast<const IntObject&>(object).Value;
+			} else if (type == LongType) {
+				stream << static_cast<const LongObject&>(object).Value;
+			} else if (type == DoubleType) {
+				stream << static_cast<const DoubleObject&>(object).Value;
+			} else if (type == PointerType || type == GCPointerType) {
+				stream << static_cast<const PointerObject&>(object).Value;
+				if (printPointerTarget) {
+					PrintPointerTaget(stream, object);
+				}
+			}
+			return;
+		}
 
-		const Type type = *typePtr;
-		if (type == IntType) return reinterpret_cast<const IntObject*>(typePtr)->Value;
-		else if (type == LongType) return reinterpret_cast<const LongObject*>(typePtr)->Value;
-		else if (type == DoubleType) return reinterpret_cast<const DoubleObject*>(typePtr)->Value;
-		else if (type == PointerType) return reinterpret_cast<const PointerObject*>(typePtr)->Value;
-		else if (type.IsStructure()) return reinterpret_cast<const StructureObject*>(typePtr);
-		else return std::monostate();
+		const Structure structure = m_ByteFile.GetStructures()[static_cast<std::uint32_t>(type->Code) - 10];
+		const std::uint32_t fieldCount = static_cast<std::uint32_t>(structure->FieldTypes.size());
+
+		stream << type->Name << '(';
+
+		for (std::uint32_t i = 0; i < fieldCount; ++i) {
+			if (i != 0) {
+				stream << ", ";
+			}
+			PrintObject(stream, reinterpret_cast<const Object*>(reinterpret_cast<const std::uint8_t*>(&object) + structure->FieldOffsets[i]), printPointerTarget);
+		}
+
+		stream << ')';
+	}
+	void Interpreter::PrintObject(std::ostream& stream, const Object* object) const {
+		PrintObject(stream, *object, false);
+	}
+	void Interpreter::PrintObject(std::ostream& stream, const Object* object, bool printPointerTarget) const {
+		PrintObject(stream, *object, printPointerTarget);
 	}
 
 	bool Interpreter::HasException() const noexcept {
@@ -153,7 +196,38 @@ namespace svm {
 			result[i + 1] = *frame;
 		}
 
+		if (HasException()) {
+			result[0].Caller = static_cast<std::size_t>(m_Exception->InstructionIndex);
+		}
 		return result;
+	}
+
+	const Type* Interpreter::GetLocalVariable(std::uint32_t index) const noexcept {
+		return m_Stack.Get<Type>(m_LocalVariables[index]);
+	}
+	Type* Interpreter::GetLocalVariable(std::uint32_t index) noexcept {
+		return m_Stack.Get<Type>(m_LocalVariables[index]);
+	}
+	std::uint32_t Interpreter::GetLocalVariableCount() const noexcept {
+		return static_cast<std::uint32_t>(m_LocalVariables.size());
+	}
+
+	void Interpreter::PrintPointerTaget(std::ostream& stream, const Object& object) const {
+		if (object.GetType() == PointerType) {
+			const PointerObject& pointer = static_cast<const PointerObject&>(object);
+			if (pointer.Value) {
+				stream << '(';
+				PrintObject(stream, static_cast<const Object*>(pointer.Value), true);
+				stream << ')';
+			}
+		} else if (object.GetType() == GCPointerType) {
+			const GCPointerObject& pointer = static_cast<const GCPointerObject&>(object);
+			if (pointer.Value) {
+				stream << '(';
+				PrintObject(stream, reinterpret_cast<const Object*>(static_cast<const ManagedHeapInfo*>(pointer.Value) + 1), true);
+				stream << ')';
+			}
+		}
 	}
 
 	void Interpreter::OccurException(std::uint32_t code) noexcept {
