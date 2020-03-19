@@ -45,16 +45,20 @@ namespace svm {
 		void MajorGC(Interpreter& interpreter, PointerTable* minorPointerTable);
 		void MinorGC(Interpreter& interpreter);
 
-		void MarkGCRoot(Interpreter& interpreter, ManagedHeapGeneration* generation, PointerTable& pointerTable);
-		void MarkGCObject(Interpreter& interpreter, ManagedHeapGeneration* targetGeneration,
-			ManagedHeapGeneration* generation, PointerTable& pointerTable);
-		std::size_t MarkGCObject(Interpreter& interpreter, ManagedHeapGeneration* generation, PointerTable& pointerTable, ManagedHeapInfo* info);
-		void CheckCardTable(Interpreter& interpreter, ManagedHeapGeneration* generation, PointerTable& pointerTable);
-		void UpdateCardTable(const Interpreter& interpreter, const PointerList& promoted);
-		void UpdateCardTable(void* oldAddress, void* newAddress);
-		void UpdateMinorPointerTable(PointerTable& minorPointerTable, void* oldAddress, void* newAddress);
-		void MoveSurvived(ManagedHeapGeneration& generation, ManagedHeapGeneration::Block firstBlock, const PointerTable& pointerTable);
+		void MarkGCRoots(Interpreter& interpreter, ManagedHeapGeneration* generation, PointerTable& pointerTable, PointerList& grayColorList);
+		void MarkGCObjects(Interpreter& interpreter, ManagedHeapGeneration* generation, PointerTable& pointerTable, PointerList& grayColorList);
+		void MarkGCObject(Interpreter& interpreter, ManagedHeapGeneration* generation, PointerTable& pointerTable, PointerList& grayColorList, ManagedHeapInfo* info);
+		void MarkObject(ManagedHeapGeneration* generation, PointerTable& pointerTable, PointerList& grayColorList, Type* typePtr);
+		void MakeGray(PointerTable& pointerTable, PointerList& grayColorList, void** variable, ManagedHeapGeneration::Block block, ManagedHeapInfo* info);
 
+		void CheckCardTable(Interpreter& interpreter, PointerTable& pointerTable, PointerList& grayColorList);
+		void UpdateCardTable(const Interpreter& interpreter, const PointerList& promoted);
 		bool IsDirty(const void* address) const noexcept;
+		void UpdateCardTable(void* oldAddress, void* newAddress);
+
+		ManagedHeapGeneration::Block Sweep(Interpreter& interpreter, ManagedHeapGeneration* generation, PointerTable& pointerTable, PointerList* promoted);
+		void MoveSurvived(ManagedHeapGeneration* generation, ManagedHeapGeneration::Block firstBlock, const PointerTable& pointerTable);
+		void UpdateTables(const PointerTable& pointerTable, PointerTable* minorPointerTable);
+		void UpdateMinorPointerTable(PointerTable* minorPointerTable, const void* oldAddress, const void* newAddress);
 	};
 }

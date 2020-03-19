@@ -114,6 +114,8 @@ namespace svm {
 		else return result;
 	}
 	ManagedHeapGeneration::Block ManagedHeapGeneration::FindBlock(const void* address) noexcept {
+		if (!address) return m_Blocks.end();
+
 		const std::uint8_t* ptr = static_cast<const std::uint8_t*>(address);
 
 		for (Block iter = m_Blocks.begin(); iter != m_Blocks.end(); ++iter) {
