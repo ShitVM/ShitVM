@@ -151,10 +151,11 @@ namespace svm {
 		} else if (typePtr->IsStructure()) {
 			const std::uint32_t structCode = static_cast<std::uint32_t>(typePtr->GetReference().Code) - 10;
 			const Structure structure = interpreter.GetByteFile().GetStructures()[structCode];
-			const std::uint32_t fieldCount = static_cast<std::uint32_t>(structure->FieldTypes.size());
+			const std::uint32_t fieldCount = static_cast<std::uint32_t>(structure->Fields.size());
 
 			for (std::uint32_t i = 0; i < fieldCount; ++i) {
-				Type* const fieldPtr = reinterpret_cast<Type*>(reinterpret_cast<std::uint8_t*>(typePtr) + structure->FieldOffsets[i]);
+				const Field& field = structure->Fields[i];
+				Type* const fieldPtr = reinterpret_cast<Type*>(reinterpret_cast<std::uint8_t*>(typePtr) + field.Offset);
 				MarkObject(interpreter, generation, pointerTable, grayColorList, fieldPtr);
 			}
 		}
@@ -214,10 +215,11 @@ namespace svm {
 
 			const std::uint32_t structCode = static_cast<std::uint32_t>(typePtr->GetReference().Code) - 10;
 			const Structure structure = structures[structCode];
-			const std::uint32_t fieldCount = static_cast<std::uint32_t>(structure->FieldTypes.size());
+			const std::uint32_t fieldCount = static_cast<std::uint32_t>(structure->Fields.size());
 
 			for (std::uint32_t i = 0; i < fieldCount; ++i) {
-				const Type* const fieldPtr = reinterpret_cast<const Type*>(reinterpret_cast<const std::uint8_t*>(typePtr) + structure->FieldOffsets[i]);
+				const Field& field = structure->Fields[i];
+				const Type* const fieldPtr = reinterpret_cast<const Type*>(reinterpret_cast<const std::uint8_t*>(typePtr) + field.Offset);
 				if (*fieldPtr != GCPointerType) continue;
 
 				const void* target = reinterpret_cast<const GCPointerObject*>(fieldPtr)->Value;

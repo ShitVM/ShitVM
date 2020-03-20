@@ -153,15 +153,17 @@ namespace svm {
 		}
 
 		const Structure structure = m_ByteFile.GetStructures()[static_cast<std::uint32_t>(type->Code) - 10];
-		const std::uint32_t fieldCount = static_cast<std::uint32_t>(structure->FieldTypes.size());
+		const std::uint32_t fieldCount = static_cast<std::uint32_t>(structure->Fields.size());
 
 		stream << type->Name << '(';
 
 		for (std::uint32_t i = 0; i < fieldCount; ++i) {
+			const Field& field = structure->Fields[i];
+
 			if (i != 0) {
 				stream << ", ";
 			}
-			PrintObject(stream, reinterpret_cast<const Object*>(reinterpret_cast<const std::uint8_t*>(&object) + structure->FieldOffsets[i]), printPointerTarget);
+			PrintObject(stream, reinterpret_cast<const Object*>(reinterpret_cast<const std::uint8_t*>(&object) + field.Offset), printPointerTarget);
 		}
 
 		stream << ')';

@@ -23,18 +23,18 @@ namespace svm {
 		InitStructure(structures, structure, m_Stack.GetTopType());
 	}
 	SVM_NOINLINE_FOR_PROFILING void Interpreter::InitStructure(const Structures& structures, Structure structure, Type* type) noexcept {
-		const std::size_t fieldCount = structure->FieldTypes.size();
+		const std::uint32_t fieldCount = static_cast<std::uint32_t>(structure->Fields.size());
 
 		*type = structure->Type;
 
-		for (std::size_t i = 0; i < fieldCount; ++i) {
-			const Type fieldType = structure->FieldTypes[i];
-			Type* const pointer = reinterpret_cast<Type*>(reinterpret_cast<std::uint8_t*>(type) + structure->FieldOffsets[i]);
+		for (std::uint32_t i = 0; i < fieldCount; ++i) {
+			const Field& field = structure->Fields[i];
+			Type* const pointer = reinterpret_cast<Type*>(reinterpret_cast<std::uint8_t*>(type) + field.Offset);
 
-			if (fieldType.IsStructure()) {
-				InitStructure(structures, structures[static_cast<std::uint32_t>(fieldType->Code) - 10], pointer);
+			if (field.Type.IsStructure()) {
+				InitStructure(structures, structures[static_cast<std::uint32_t>(field.Type->Code) - 10], pointer);
 			} else {
-				*pointer = fieldType;
+				*pointer = field.Type;
 			}
 		}
 	}
@@ -304,13 +304,13 @@ namespace svm {
 
 		const Structure structure =
 			m_ByteFile.GetStructures()[static_cast<std::uint32_t>(targetTypePtr->GetReference().Code) - 10];
-		if (operand >= structure->FieldTypes.size()) {
+		if (operand >= structure->Fields.size()) {
 			m_Stack.Expand(sizeof(*ptr));
 			OccurException(SVM_IEC_STRUCTURE_FIELD_OUTOFRANGE);
 			return;
 		}
 
-		m_Stack.Push<PointerObject>(reinterpret_cast<std::uint8_t*>(targetTypePtr) + structure->FieldOffsets[operand]);
+		m_Stack.Push<PointerObject>(reinterpret_cast<std::uint8_t*>(targetTypePtr) + structure->Fields[operand].Offset);
 	}
 	SVM_NOINLINE_FOR_PROFILING void Interpreter::InterpretTLoad() noexcept {
 		if (IsLocalVariable()) {
