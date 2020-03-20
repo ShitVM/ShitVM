@@ -797,7 +797,7 @@ ShitVM에서는 포인터가 잘못된 메모리 영역을 가리킬 경우 `POI
 - `POINTER_NULLPOINTER`<br>널포인터를 역참조할 수 없습니다.
 - `POINTER_NOTPOINTER`<br>피연산자의 자료형이 포인터가 아닙니다.
 - `POINTER_INVALIDFORPOINTER`<br>피연산자가 포인터일 수 없습니다.
-- `POINTER_UNKNOWNADDRESS`<br>알 수 없는 메모리를 가리키고 있습니다. ShitVM 전용입니다.
+- `POINTER_UNKNOWNADDRESS`<br>알 수 없는 메모리를 가리키고 있습니다. ShitVM에서만 발생합니다.
 
 ### 구조체 관련 예외
 - `STRUCTURE_FILED_OUTOFRANGE`<br>범위를 벗어난 필드 번호입니다.
