@@ -8,6 +8,15 @@
 namespace svm {
 	TypeInfo::TypeInfo(TypeCode code, std::string name, std::size_t size) noexcept
 		: Code(code), Name(std::move(name)), Size(size) {}
+	TypeInfo::TypeInfo(TypeInfo&& typeInfo) noexcept
+		: Code(typeInfo.Code), Name(std::move(typeInfo.Name)), Size(typeInfo.Size) {}
+
+	TypeInfo& TypeInfo::operator=(TypeInfo&& typeInfo) noexcept {
+		Code = typeInfo.Code;
+		Name = std::move(typeInfo.Name);
+		Size = typeInfo.Size;
+		return *this;
+	}
 }
 
 namespace svm {

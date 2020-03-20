@@ -32,11 +32,11 @@ namespace svm {
 	public:
 		TypeInfo() noexcept = default;
 		TypeInfo(TypeCode code, std::string name, std::size_t size) noexcept;
-		TypeInfo(const TypeInfo&) = delete;
+		TypeInfo(TypeInfo&& typeInfo) noexcept;
 		~TypeInfo() = default;
 
 	public:
-		TypeInfo& operator=(const TypeInfo&) = delete;
+		TypeInfo& operator=(TypeInfo&& typeInfo) noexcept;
 		bool operator==(const TypeInfo&) = delete;
 		bool operator!=(const TypeInfo&) = delete;
 	};

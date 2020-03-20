@@ -11,11 +11,10 @@
 
 namespace svm {
 	enum class ByteFileVersion : std::uint16_t {
-		v0_1_0 = 0,
-		v0_2_0,
+		v0_3_0 = 2,
 
-		Least = v0_1_0,
-		Latest = v0_2_0,
+		Least = v0_3_0,
+		Latest = v0_3_0,
 	};
 
 	enum class ByteCodeVersion : std::uint16_t {
@@ -69,6 +68,7 @@ namespace svm {
 		bool FindCycle(const std::vector<StructureInfo>& structures, std::unordered_map<std::uint32_t, int>& visited, std::vector<Structure>& cycle, std::uint32_t node) const;
 		void CalcSize(std::vector<StructureInfo>& structures) const;
 		std::size_t CalcSize(std::vector<StructureInfo>& structures, std::uint32_t node) const;
+		void CalcOffset(std::vector<StructureInfo>& structures) const;
 		OpCode ReadOpCode() noexcept;
 	};
 }
