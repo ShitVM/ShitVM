@@ -47,9 +47,10 @@ namespace svm {
 
 		void MarkGCRoots(Interpreter& interpreter, ManagedHeapGeneration* generation, PointerTable& pointerTable, PointerList& grayColorList);
 		void MarkGCObjects(Interpreter& interpreter, ManagedHeapGeneration* generation, PointerTable& pointerTable, PointerList& grayColorList);
-		void MarkGCObject(Interpreter& interpreter, ManagedHeapGeneration* generation, PointerTable& pointerTable, PointerList& grayColorList, ManagedHeapInfo* info);
-		void MarkObject(ManagedHeapGeneration* generation, PointerTable& pointerTable, PointerList& grayColorList, Type* typePtr);
+		void MarkObject(Interpreter& interpreter, ManagedHeapGeneration* generation, PointerTable& pointerTable, PointerList& grayColorList, Type* typePtr);
 		void MakeGray(PointerTable& pointerTable, PointerList& grayColorList, void** variable, ManagedHeapGeneration::Block block, ManagedHeapInfo* info);
+
+		void CheckYoungGeneration(Interpreter& interpreter, PointerTable& pointerTable, PointerList& grayColorList);
 
 		void CheckCardTable(Interpreter& interpreter, PointerTable& pointerTable, PointerList& grayColorList);
 		void UpdateCardTable(const Interpreter& interpreter, const PointerList& promoted);

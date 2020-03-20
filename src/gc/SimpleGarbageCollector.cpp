@@ -7,9 +7,8 @@
 
 #include <cassert>
 #include <cstring>
+#include <unordered_set>
 #include <utility>
-
-#include <iostream> // For developing
 
 namespace svm {
 	SimpleGarbageCollector::SimpleGarbageCollector(std::size_t youngGenerationSize, std::size_t oldGenerationSize) {
@@ -96,14 +95,12 @@ namespace svm {
 	}
 
 	void SimpleGarbageCollector::MajorGC(Interpreter& interpreter, PointerTable* minorPointerTable) {
-		std::cout << "MajorGC\n";
-
 		PointerTable pointerTable;
 		PointerList grayColorList;
 
 		// Mark
 		MarkGCRoots(interpreter, &m_OldGeneration, pointerTable, grayColorList);
-		// TODO: Mark young
+		CheckYoungGeneration(interpreter, pointerTable, grayColorList);
 		MarkGCObjects(interpreter, &m_OldGeneration, pointerTable, grayColorList);
 
 		// Sweep
@@ -113,8 +110,6 @@ namespace svm {
 		m_OldGeneration.DeleteEmptyBlocks();
 	}
 	void SimpleGarbageCollector::MinorGC(Interpreter& interpreter) {
-		std::cout << "MinorGC\n";
-
 		PointerTable pointerTable;
 		PointerList grayColorList;
 		PointerList promoted;
@@ -134,7 +129,7 @@ namespace svm {
 	void SimpleGarbageCollector::MarkGCRoots(Interpreter& interpreter, ManagedHeapGeneration* generation, PointerTable& pointerTable, PointerList& grayColorList) {
 		const std::uint32_t varCount = interpreter.GetLocalVariableCount();
 		for (std::uint32_t i = 0; i < varCount; ++i) {
-			MarkObject(generation, pointerTable, grayColorList, interpreter.GetLocalVariable(i));
+			MarkObject(interpreter, generation, pointerTable, grayColorList, interpreter.GetLocalVariable(i));
 		}
 	}
 	void SimpleGarbageCollector::MarkGCObjects(Interpreter& interpreter, ManagedHeapGeneration* generation, PointerTable& pointerTable, PointerList& grayColorList) {
@@ -142,32 +137,27 @@ namespace svm {
 			ManagedHeapInfo* const info = static_cast<ManagedHeapInfo*>(grayColorList.back());
 			grayColorList.pop_back();
 
-			MarkGCObject(interpreter, generation, pointerTable, grayColorList, info);
+			MarkObject(interpreter, generation, pointerTable, grayColorList, reinterpret_cast<Type*>(info + 1));
 		}
 	}
-	void SimpleGarbageCollector::MarkGCObject(Interpreter& interpreter, ManagedHeapGeneration* generation,
-		PointerTable& pointerTable, PointerList& grayColorList, ManagedHeapInfo* info) {
-		Type* const typePtr = reinterpret_cast<Type*>(info + 1);
-		if (!typePtr->IsStructure()) return;
+	void SimpleGarbageCollector::MarkObject(Interpreter& interpreter, ManagedHeapGeneration* generation, PointerTable& pointerTable, PointerList& grayColorList, Type* typePtr) {
+		if (*typePtr == GCPointerType) {
+			GCPointerObject* const object = reinterpret_cast<GCPointerObject*>(typePtr);
+			ManagedHeapInfo* const targetInfo = static_cast<ManagedHeapInfo*>(object->Value);
+			const auto targetBlock = generation->FindBlock(targetInfo);
+			if (targetBlock == generation->End()) return;
 
-		const std::uint32_t structCode = static_cast<std::uint32_t>(typePtr->GetReference().Code) - 10;
-		const Structure structure = interpreter.GetByteFile().GetStructures()[structCode];
-		const std::uint32_t fieldCount = static_cast<std::uint32_t>(structure->FieldTypes.size());
+			MakeGray(pointerTable, grayColorList, &object->Value, targetBlock, targetInfo);
+		} else if (typePtr->IsStructure()) {
+			const std::uint32_t structCode = static_cast<std::uint32_t>(typePtr->GetReference().Code) - 10;
+			const Structure structure = interpreter.GetByteFile().GetStructures()[structCode];
+			const std::uint32_t fieldCount = static_cast<std::uint32_t>(structure->FieldTypes.size());
 
-		for (std::uint32_t i = 0; i < fieldCount; ++i) {
-			Type* const fieldPtr = reinterpret_cast<Type*>(reinterpret_cast<std::uint8_t*>(typePtr) + structure->FieldOffsets[i]);
-			MarkObject(generation, pointerTable, grayColorList, fieldPtr);
+			for (std::uint32_t i = 0; i < fieldCount; ++i) {
+				Type* const fieldPtr = reinterpret_cast<Type*>(reinterpret_cast<std::uint8_t*>(typePtr) + structure->FieldOffsets[i]);
+				MarkObject(interpreter, generation, pointerTable, grayColorList, fieldPtr);
+			}
 		}
-	}
-	void SimpleGarbageCollector::MarkObject(ManagedHeapGeneration* generation, PointerTable& pointerTable, PointerList& grayColorList, Type* typePtr) {
-		if (*typePtr != GCPointerType) return;
-
-		GCPointerObject* const object = reinterpret_cast<GCPointerObject*>(typePtr);
-		ManagedHeapInfo* const info = static_cast<ManagedHeapInfo*>(object->Value);
-		const auto block = generation->FindBlock(object->Value);
-		if (block == generation->End()) return;
-
-		MakeGray(pointerTable, grayColorList, &object->Value, block, info);
 	}
 	void SimpleGarbageCollector::MakeGray(PointerTable& pointerTable, PointerList& grayColorList,
 		void** variable, ManagedHeapGeneration::Block block, ManagedHeapInfo* info) {
@@ -178,27 +168,40 @@ namespace svm {
 		}
 	}
 
-	void SimpleGarbageCollector::CheckCardTable(Interpreter& interpreter, PointerTable& pointerTable, PointerList& grayColorList) {
-		const Structures& structures = interpreter.GetByteFile().GetStructures();
-
-		for (auto block = m_OldGeneration.Begin(); block != m_OldGeneration.End(); ++block) {
+	void SimpleGarbageCollector::CheckYoungGeneration(Interpreter& interpreter, PointerTable& pointerTable, PointerList& grayColorList) {
+		for (auto block = m_YoungGeneration.Begin(); block != m_YoungGeneration.End(); ++block) {
 			std::size_t offset = block->GetUsedSize();
 			while (offset) {
 				ManagedHeapInfo* const info = block->Get<ManagedHeapInfo>(offset);
 				offset -= info->Size;
 				if (!IsDirty(info)) continue;
 
-				Type* const typePtr = reinterpret_cast<Type*>(info + 1);
-				if (!typePtr->IsStructure()) continue;
+				MarkObject(interpreter, &m_OldGeneration, pointerTable, grayColorList, reinterpret_cast<Type*>(info + 1));
+			}
+		}
+	}
 
-				const std::uint32_t structCode = static_cast<std::uint32_t>(typePtr->GetReference().Code) - 10;
-				const Structure structure = structures[structCode];
-				const std::uint32_t fieldCount = static_cast<std::uint32_t>(structure->FieldTypes.size());
+	void SimpleGarbageCollector::CheckCardTable(Interpreter& interpreter, PointerTable& pointerTable, PointerList& grayColorList) {
+		std::unordered_set<Stack*> dirtyBlocks;
 
-				for (std::uint32_t i = 0; i < fieldCount; ++i) {
-					Type* const fieldPtr = reinterpret_cast<Type*>(reinterpret_cast<std::uint8_t*>(typePtr) + structure->FieldOffsets[i]);
-					MarkObject(&m_YoungGeneration, pointerTable, grayColorList, fieldPtr);
-				}
+		for (const auto& [byte, card] : m_CardTable) {
+			if (!card) continue;
+
+			for (int bit = 0; bit < 8; ++bit) {
+				if ((card >> bit & 0b1) == 0) continue;
+
+				dirtyBlocks.insert(&*m_OldGeneration.FindBlock(reinterpret_cast<void*>(byte * 512 + bit * 64)));
+			}
+		}
+
+		for (Stack* block : dirtyBlocks) {
+			std::size_t offset = block->GetUsedSize();
+			while (offset) {
+				ManagedHeapInfo* const info = block->Get<ManagedHeapInfo>(offset);
+				offset -= info->Size;
+				if (!IsDirty(info)) continue;
+
+				MarkObject(interpreter, &m_YoungGeneration, pointerTable, grayColorList, reinterpret_cast<Type*>(info + 1));
 			}
 		}
 	}
@@ -262,7 +265,7 @@ namespace svm {
 				info->Age += 1;
 
 				void* newAddress = nullptr;
-				if (info->Age == 4 && generation == &m_YoungGeneration) {
+				if (info->Age == 32 && generation == &m_YoungGeneration) {
 					newAddress = AllocateOnOldGeneration(interpreter, &pointerTable, info->Size);
 					if (reinterpret_cast<Type*>(info + 1)->IsStructure()) {
 						promoted->push_back(newAddress);
