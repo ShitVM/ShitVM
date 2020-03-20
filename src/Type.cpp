@@ -23,7 +23,10 @@ namespace svm {
 	bool Type::IsFundamentalType() const noexcept {
 		const TypeCode code = GetReference().Code;
 
-		return code != TypeCode::None && code < TypeCode::Structure;
+		return code != TypeCode::None && code < TypeCode::Array;
+	}
+	bool Type::IsArray() const noexcept {
+		return GetReference().Code == TypeCode::Array;
 	}
 	bool Type::IsStructure() const noexcept {
 		return GetReference().Code >= TypeCode::Structure;
@@ -39,6 +42,7 @@ namespace svm {
 		static const TypeInfo s_DoubleType(TypeCode::Double, "double", sizeof(DoubleObject));
 		static const TypeInfo s_PointerType(TypeCode::Pointer, "pointer", sizeof(PointerObject));
 		static const TypeInfo s_GCPointerType(TypeCode::GCPointer, "gcpointer", sizeof(GCPointerObject));
+		static const TypeInfo s_ArrayType(TypeCode::Array, "array", sizeof(ArrayObject));
 	}
 
 	const Type NoneType = s_NoneType;
@@ -47,6 +51,7 @@ namespace svm {
 	const Type DoubleType = s_DoubleType;
 	const Type PointerType = s_PointerType;
 	const Type GCPointerType = s_GCPointerType;
+	const Type ArrayType = s_ArrayType;
 
 	Type GetTypeFromTypeCode(const std::vector<StructureInfo>& structures, TypeCode code) noexcept {
 		switch (code) {

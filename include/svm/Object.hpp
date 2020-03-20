@@ -126,6 +126,21 @@ namespace svm {
 		bool operator!=(const GCPointerObject&) = delete;
 	};
 
+	class ArrayObject final : public Object {
+	public:
+		std::size_t Count = 0;
+
+	public:
+		ArrayObject(std::size_t count) noexcept;
+		ArrayObject(const ArrayObject&) = delete;
+		~ArrayObject() = default;
+
+	public:
+		ArrayObject& operator=(ArrayObject) = delete;
+		bool operator==(const ArrayObject&) = delete;
+		bool operator!=(const ArrayObject&) = delete;
+	};
+
 	class StructureObject final : public Object {
 	public:
 		StructureObject(Type type) noexcept;
