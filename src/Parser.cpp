@@ -1,5 +1,6 @@
 #include <svm/Parser.hpp>
 
+#include <svm/Memory.hpp>
 #include <svm/Type.hpp>
 
 #include <fstream>
@@ -236,12 +237,7 @@ namespace svm {
 		}
 
 		s += sizeof(Type);
-		return s = PadeSize(s);
-	}
-	std::size_t Parser::PadeSize(std::size_t size) const noexcept {
-		const auto temp = size / sizeof(void*) * sizeof(void*);
-		if (size == temp) return size;
-		else return temp + sizeof(void*);
+		return s = Pade(s);
 	}
 	OpCode Parser::ReadOpCode() noexcept {
 		return ReadFile<OpCode>();

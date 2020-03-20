@@ -53,7 +53,9 @@ namespace svm {
 		void Reduce(std::size_t delta) noexcept;
 
 		const std::uint8_t* Begin() const noexcept;
+		std::uint8_t* Begin() noexcept;
 		const std::uint8_t* Last() const noexcept;
+		std::uint8_t* Last() noexcept;
 	};
 }
 

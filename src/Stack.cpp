@@ -60,7 +60,13 @@ namespace svm {
 	const std::uint8_t* Stack::Begin() const noexcept {
 		return &*m_Data.begin();
 	}
+	std::uint8_t* Stack::Begin() noexcept {
+		return &*m_Data.begin();
+	}
 	const std::uint8_t* Stack::Last() const noexcept {
+		return &*(m_Data.end() - 1);
+	}
+	std::uint8_t* Stack::Last() noexcept {
 		return &*(m_Data.end() - 1);
 	}
 }

@@ -2,8 +2,7 @@
 
 #include <svm/Macro.hpp>
 
-#include <algorithm>
-#include <cstdint>
+#include <cstddef>
 
 namespace svm {
 	enum class Endian {
@@ -20,12 +19,10 @@ namespace svm {
 #endif
 
 	template<typename T>
-	T ReverseEndian(const T& value) noexcept {
-		union Transformer {
-			std::uint8_t Bytes[sizeof(value)];
-		} temp;
-		temp = reinterpret_cast<const Transformer&>(value);
-		std::reverse(temp.Bytes, temp.Bytes + sizeof(value));
-		return reinterpret_cast<T&>(temp);
-	}
+	T ReverseEndian(const T& value) noexcept;
+
+	template<typename T = void*>
+	std::size_t Pade(std::size_t dataSize) noexcept;
 }
+
+#include "detail/impl/Memory.hpp"
