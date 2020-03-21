@@ -30,6 +30,15 @@ namespace svm {
 }
 
 namespace svm {
+	namespace detail {
+		struct ArrayInfo final {
+			Type ElementType;
+			std::uint64_t Count = 0;
+			std::size_t CountSize = 0;
+			std::size_t Size = 0;
+		};
+	}
+
 	class Interpreter final {
 	private:
 		ByteFile m_ByteFile;
@@ -96,6 +105,9 @@ namespace svm {
 		template<typename T>
 		bool GetTwoSameType(Type rhsType, T*& lhs) noexcept;
 
+		bool GetArrayInfo(detail::ArrayInfo& info, std::uint32_t operand) noexcept;
+		void InitArray(const detail::ArrayInfo& info, Type* type) noexcept;
+
 	private:
 		void InterpretPush(std::uint32_t operand) noexcept;
 		void InterpretPop() noexcept;
@@ -104,6 +116,8 @@ namespace svm {
 		void InterpretLea(std::uint32_t operand) noexcept;
 		void InterpretCopy() noexcept;
 		void InterpretSwap() noexcept;
+
+		void InterpretAPush(std::uint32_t operand) noexcept;
 
 	private: // Type-cast
 		template<typename F, typename T>
@@ -130,6 +144,11 @@ namespace svm {
 		void InterpretDelete() noexcept;
 		void InterpretGCNull() noexcept;
 		void InterpretGCNew(std::uint32_t operand);
+
+		void InterpretANew(std::uint32_t operand) noexcept;
+		void InterpretAGCNew(std::uint32_t operand) noexcept;
+		void InterpretALea() noexcept;
+		void InterpretCount() noexcept;
 
 	private: // Operation
 		template<typename T>

@@ -3,6 +3,8 @@
 #include <svm/Macro.hpp>
 #include <svm/detail/InterpreterExceptionCode.hpp>
 
+#include <cstring>
+
 namespace svm {
 	template<typename T>
 	SVM_NOINLINE_FOR_PROFILING void Interpreter::DRefAndAssign(const Type* rhsTypePtr) noexcept {
@@ -206,7 +208,7 @@ namespace svm {
 		}
 
 		const Type type = GetTypeFromTypeCode(structures, static_cast<TypeCode>(operand));
-		void* address = m_Heap.AllocateUnmanagedHeap(type->Size);
+		void* const address = m_Heap.AllocateUnmanagedHeap(type->Size);
 
 		m_Stack.Push<PointerObject>(address);
 
@@ -269,6 +271,133 @@ namespace svm {
 			*addressReal = type;
 		} else if (type.IsStructure()) {
 			InitStructure(structures, structures[operand - 10], addressReal);
+		}
+	}
+}
+
+namespace svm {
+	SVM_NOINLINE_FOR_PROFILING void Interpreter::InterpretANew(std::uint32_t operand) noexcept {
+		detail::ArrayInfo info;
+		if (!GetArrayInfo(info, operand)) {
+			return;
+		}
+
+		if (m_Stack.GetFreeSize() < sizeof(PointerObject)) {
+			OccurException(SVM_IEC_STACK_OVERFLOW);
+			return;
+		}
+
+		void* const address = m_Heap.AllocateUnmanagedHeap(info.Size);
+		if (address) {
+			InitArray(info, static_cast<Type*>(address));
+		}
+
+		m_Stack.Push<PointerObject>(address);
+	}
+	SVM_NOINLINE_FOR_PROFILING void Interpreter::InterpretAGCNew(std::uint32_t operand) noexcept {
+		detail::ArrayInfo info;
+		if (!GetArrayInfo(info, operand)) {
+			return;
+		}
+
+		if (m_Stack.GetFreeSize() < sizeof(PointerObject)) {
+			OccurException(SVM_IEC_STACK_OVERFLOW);
+			return;
+		}
+
+		void* const address = m_Heap.AllocateManagedHeap(*this, info.Size);
+		Type* const addressReal = reinterpret_cast<Type*>(static_cast<ManagedHeapInfo*>(address) + 1);
+		if (address) {
+			InitArray(info, addressReal);
+		}
+
+		m_Stack.Push<GCPointerObject>(address);
+	}
+	SVM_NOINLINE_FOR_PROFILING void Interpreter::InterpretALea() noexcept {
+		if (IsLocalVariable()) {
+			OccurException(SVM_IEC_STACK_EMPTY);
+			return;
+		}
+
+		Type* const indexTypePtr = m_Stack.GetTopType();
+		if (!indexTypePtr) {
+			OccurException(SVM_IEC_STACK_EMPTY);
+			return;
+		}
+
+		const Type indexType = *indexTypePtr;
+		std::uint64_t index = 0;
+		if (indexType == IntType) {
+			index = reinterpret_cast<IntObject*>(indexTypePtr)->Value;
+		} else if (indexType == LongType) {
+			index = reinterpret_cast<LongObject*>(indexTypePtr)->Value;
+		} else {
+			OccurException(SVM_IEC_STACK_DIFFERENTTYPE);
+			return;
+		}
+
+		Type* const pointerTypePtr = m_Stack.Get<Type>(m_Stack.GetUsedSize() - indexType->Size);
+		if (!pointerTypePtr) {
+			OccurException(SVM_IEC_STACK_EMPTY);
+			return;
+		} else if (*pointerTypePtr != PointerType && *pointerTypePtr != GCPointerType) {
+			OccurException(SVM_IEC_POINTER_NOTPOINTER);
+			return;
+		}
+
+		const PointerObject* const pointer = reinterpret_cast<PointerObject*>(pointerTypePtr);
+		Type* targetTypePtr = static_cast<Type*>(pointer->Value);
+		if (!targetTypePtr) {
+			OccurException(SVM_IEC_POINTER_NULLPOINTER);
+			return;
+		} else if (pointer->GetType() == GCPointerType) {
+			targetTypePtr = reinterpret_cast<Type*>(reinterpret_cast<ManagedHeapInfo*>(targetTypePtr) + 1);
+		}
+
+		if (!targetTypePtr->IsArray()) {
+			OccurException(SVM_IEC_ARRAY_NOTARRAY);
+			return;
+		}
+
+		ArrayObject* array = reinterpret_cast<ArrayObject*>(targetTypePtr);
+		if (index >= array->Count) {
+			OccurException(SVM_IEC_ARRAY_INDEX_OUTOFRANGE);
+			return;
+		}
+
+		Type* const elementType = reinterpret_cast<Type*>(array + 1);
+		m_Stack.Reduce(indexType->Size + sizeof(PointerObject));
+		m_Stack.Push<PointerObject>(reinterpret_cast<std::uint8_t*>(elementType) + index * elementType->GetReference().Size);
+	}
+	SVM_NOINLINE_FOR_PROFILING void Interpreter::InterpretCount() noexcept {
+		if (IsLocalVariable()) {
+			OccurException(SVM_IEC_STACK_EMPTY);
+			return;
+		}
+
+		const auto ptr = m_Stack.Pop<PointerObject>();
+		if (!ptr) {
+			OccurException(SVM_IEC_STACK_EMPTY);
+			return;
+		} else if (ptr->GetType() != PointerType && ptr->GetType() != GCPointerType) {
+			m_Stack.Expand(sizeof(*ptr));
+			OccurException(SVM_IEC_POINTER_NOTPOINTER);
+			return;
+		}
+
+		const Type* targetTypePtr = static_cast<Type*>(ptr->Value);
+		if (!targetTypePtr) {
+			m_Stack.Expand(sizeof(*ptr));
+			OccurException(SVM_IEC_POINTER_NULLPOINTER);
+			return;
+		} else if (ptr->GetType() == GCPointerType) {
+			targetTypePtr = reinterpret_cast<const Type*>(reinterpret_cast<const ManagedHeapInfo*>(targetTypePtr) + 1);
+		}
+
+		const std::uint64_t count = reinterpret_cast<const ArrayObject*>(targetTypePtr)->Count;
+		if (!m_Stack.Push<LongObject>(count)) {
+			m_Stack.Expand(sizeof(*ptr));
+			OccurException(SVM_IEC_STACK_OVERFLOW);
 		}
 	}
 }

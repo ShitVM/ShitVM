@@ -283,3 +283,86 @@ namespace svm {
 		}
 	}
 }
+
+namespace svm {
+	SVM_NOINLINE_FOR_PROFILING bool Interpreter::GetArrayInfo(detail::ArrayInfo& info, std::uint32_t operand) noexcept {
+		if (IsLocalVariable()) {
+			OccurException(SVM_IEC_STACK_EMPTY);
+			return false;
+		}
+
+		if (operand >> 31 == 0) {
+			OccurException(SVM_IEC_TYPE_OUTOFRANGE);
+			return false;
+		}
+		operand &= 0x7FFFFFFF;
+
+		const Structures& structures = m_ByteFile.GetStructures();
+		info.ElementType = GetTypeFromTypeCode(structures, static_cast<TypeCode>(operand));
+		if (info.ElementType == NoneType) {
+			OccurException(SVM_IEC_TYPE_OUTOFRANGE);
+			return false;
+		}
+
+		Type* const typePtr = m_Stack.GetTopType();
+		if (!typePtr) {
+			OccurException(SVM_IEC_STACK_EMPTY);
+			return false;
+		}
+
+		const Type type = *typePtr;
+		info.CountSize = type->Size;
+		if (type == IntType) {
+			info.Count = reinterpret_cast<IntObject*>(typePtr)->Value;
+		} else if (type == LongType) {
+			info.Count = reinterpret_cast<LongObject*>(typePtr)->Value;
+		} else {
+			OccurException(SVM_IEC_STACK_DIFFERENTTYPE);
+			return false;
+		}
+
+		if (info.Count == 0) {
+			OccurException(SVM_IEC_ARRAY_LENGTH_CANNOTBEZERO);
+			return false;
+		}
+
+		info.Size = static_cast<std::size_t>(info.ElementType->Size * info.Count + sizeof(ArrayObject));
+		return true;
+	}
+	SVM_NOINLINE_FOR_PROFILING void Interpreter::InitArray(const detail::ArrayInfo& info, Type* type) noexcept {
+		const Structures& structures = m_ByteFile.GetStructures();
+		Structure structure;
+		if (info.ElementType.IsStructure()) {
+			structure = structures[static_cast<std::uint32_t>(info.ElementType->Code) - 10];
+		}
+
+		*type = ArrayType;
+		type = reinterpret_cast<Type*>(reinterpret_cast<std::uint8_t*>(type) + sizeof(ArrayObject));
+
+		for (std::uint64_t i = 0; i < info.Count; ++i) {
+			if (info.ElementType.IsStructure()) {
+				InitStructure(structures, structure, type);
+			} else {
+				*type = info.ElementType;
+			}
+			type = reinterpret_cast<Type*>(reinterpret_cast<std::uint8_t*>(type) + info.ElementType->Size);
+		}
+	}
+}
+
+namespace svm {
+	SVM_NOINLINE_FOR_PROFILING void Interpreter::InterpretAPush(std::uint32_t operand) noexcept {
+		detail::ArrayInfo info;
+		if (!GetArrayInfo(info, operand)) {
+			return;
+		}
+
+		if (m_Stack.GetFreeSize() < info.Size) {
+			OccurException(SVM_IEC_STACK_OVERFLOW);
+			return;
+		}
+
+		m_Stack.Expand(info.Size - info.CountSize);
+		InitArray(info, m_Stack.GetTopType());
+	}
+}

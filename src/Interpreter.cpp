@@ -118,6 +118,12 @@ namespace svm {
 			case OpCode::Delete: InterpretDelete(); break;
 			case OpCode::GCNull: InterpretGCNull(); break;
 			case OpCode::GCNew: InterpretGCNew(inst.Operand); break;
+
+			case OpCode::APush: InterpretAPush(inst.Operand); break;
+			case OpCode::ANew: InterpretANew(inst.Operand); break;
+			case OpCode::AGCNew: InterpretAGCNew(inst.Operand); break;
+			case OpCode::ALea: InterpretALea(); break;
+			case OpCode::Count: InterpretCount(); break;
 			}
 
 			if (m_Exception.has_value()) return false;

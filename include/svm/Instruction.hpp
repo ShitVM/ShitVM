@@ -69,8 +69,6 @@ namespace svm {
 		APush,
 		ANew,
 		AGCNew,
-		ALoad,
-		AStore,
 		ALea,
 		Count,
 	};
@@ -83,7 +81,7 @@ namespace svm {
 		"cmp", "icmp", "jmp", "je", "jne", "ja", "jae", "jb", "jbe", "call", "ret",
 		"tob", "tos", "toi", "tol", "tof", "tod", "top",
 		"null", "new", "delete", "gcnull", "gcnew",
-		"apush", "anew", "agcnew", "aload", "astore", "alea", "count",
+		"apush", "anew", "agcnew", "alea", "count",
 	};
 
 	static constexpr bool HasOperand[] = {
@@ -94,7 +92,7 @@ namespace svm {
 		false/*cmp*/, false/*icmp*/, true/*jmp*/, true/*je*/, true/*jne*/, true/*ja*/, true/*jae*/, true/*jb*/, true/*jbe*/, true/*call*/, false/*ret*/,
 		false/*tob*/, false/*tos*/, false/*toi*/, false/*tol*/, false/*tof*/, false/*tod*/, false/*top*/,
 		false/*null*/, true/*new*/, false/*delete*/, false/*gcnull*/, true/*gcnew*/,
-		true/*apush*/, true/*anew*/, true/*agcnew*/, false/*aload*/, false/*astore*/, false/*alea*/, false/*count*/,
+		true/*apush*/, true/*anew*/, true/*agcnew*/, false/*alea*/, false/*count*/,
 	};
 }
 
