@@ -317,8 +317,9 @@ namespace svm {
 		}
 
 		for (auto iter = m_CardTable.begin(); iter != m_CardTable.end();) {
-			if ((iter++)->second == 0) {
-				m_CardTable.erase(std::prev(iter));
+			const auto current = iter++;
+			if (current->second == 0) {
+				m_CardTable.erase(current);
 			}
 		}
 	}

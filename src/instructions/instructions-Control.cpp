@@ -67,10 +67,10 @@ namespace {
 #define CompareClass(n, o, v)								\
 struct n final {											\
 	template<typename T>									\
-	static constexpr bool Compare(T value) noexcept	{		\
+	static bool Compare(T value) noexcept	{				\
 		return value o v;									\
 	}														\
-	static constexpr bool Compare(void* value) noexcept {	\
+	static bool Compare(void* value) noexcept {				\
 		return value o reinterpret_cast<void*>(v);			\
 	}														\
 };
