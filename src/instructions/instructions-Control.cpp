@@ -55,6 +55,8 @@ namespace svm {
 			}
 		} else if (type.IsStructure()) {
 			OccurException(SVM_IEC_STRUCTURE_INVALIDFORSTRUCTURE);
+		} else if (type.IsArray()) {
+			OccurException(SVM_IEC_ARRAY_INVALIDFORARRAY);
 		} else {
 			OccurException(SVM_IEC_STACK_EMPTY);
 		}

@@ -93,6 +93,8 @@ namespace svm {
 			OccurException(SVM_IEC_POINTER_INVALIDFORPOINTER);
 		} else if (rhsType.IsStructure()) {
 			OccurException(SVM_IEC_STRUCTURE_INVALIDFORSTRUCTURE);
+		} else if (rhsType.IsArray()) {
+			OccurException(SVM_IEC_ARRAY_INVALIDFORARRAY);
 		} else {
 			OccurException(SVM_IEC_STACK_EMPTY);
 		}
@@ -127,6 +129,8 @@ namespace svm {
 			OccurException(SVM_IEC_POINTER_INVALIDFORPOINTER);
 		} else if (rhsType.IsStructure()) {
 			OccurException(SVM_IEC_STRUCTURE_INVALIDFORSTRUCTURE);
+		} else if (rhsType.IsArray()) {
+			OccurException(SVM_IEC_ARRAY_INVALIDFORARRAY);
 		} else {
 			OccurException(SVM_IEC_STACK_EMPTY);
 		}
@@ -161,6 +165,8 @@ namespace svm {
 			OccurException(SVM_IEC_POINTER_INVALIDFORPOINTER);
 		} else if (rhsType.IsStructure()) {
 			OccurException(SVM_IEC_STRUCTURE_INVALIDFORSTRUCTURE);
+		} else if (rhsType.IsArray()) {
+			OccurException(SVM_IEC_ARRAY_INVALIDFORARRAY);
 		} else {
 			OccurException(SVM_IEC_STACK_EMPTY);
 		}
@@ -195,6 +201,8 @@ namespace svm {
 			OccurException(SVM_IEC_POINTER_INVALIDFORPOINTER);
 		} else if (rhsType.IsStructure()) {
 			OccurException(SVM_IEC_STRUCTURE_INVALIDFORSTRUCTURE);
+		} else if (rhsType.IsArray()) {
+			OccurException(SVM_IEC_ARRAY_INVALIDFORARRAY);
 		} else {
 			OccurException(SVM_IEC_STACK_EMPTY);
 		}
@@ -241,6 +249,8 @@ namespace svm {
 			OccurException(SVM_IEC_POINTER_INVALIDFORPOINTER);
 		} else if (rhsType.IsStructure()) {
 			OccurException(SVM_IEC_STRUCTURE_INVALIDFORSTRUCTURE);
+		} else if (rhsType.IsArray()) {
+			OccurException(SVM_IEC_ARRAY_INVALIDFORARRAY);
 		} else {
 			OccurException(SVM_IEC_STACK_EMPTY);
 		}
@@ -287,6 +297,8 @@ namespace svm {
 			OccurException(SVM_IEC_POINTER_INVALIDFORPOINTER);
 		} else if (rhsType.IsStructure()) {
 			OccurException(SVM_IEC_STRUCTURE_INVALIDFORSTRUCTURE);
+		} else if (rhsType.IsArray()) {
+			OccurException(SVM_IEC_ARRAY_INVALIDFORARRAY);
 		} else {
 			OccurException(SVM_IEC_STACK_EMPTY);
 		}
@@ -333,6 +345,8 @@ namespace svm {
 			OccurException(SVM_IEC_POINTER_INVALIDFORPOINTER);
 		} else if (rhsType.IsStructure()) {
 			OccurException(SVM_IEC_STRUCTURE_INVALIDFORSTRUCTURE);
+		} else if (rhsType.IsArray()) {
+			OccurException(SVM_IEC_ARRAY_INVALIDFORARRAY);
 		} else {
 			OccurException(SVM_IEC_STACK_EMPTY);
 		}
@@ -379,6 +393,8 @@ namespace svm {
 			OccurException(SVM_IEC_POINTER_INVALIDFORPOINTER);
 		} else if (rhsType.IsStructure()) {
 			OccurException(SVM_IEC_STRUCTURE_INVALIDFORSTRUCTURE);
+		} else if (rhsType.IsArray()) {
+			OccurException(SVM_IEC_ARRAY_INVALIDFORARRAY);
 		} else {
 			OccurException(SVM_IEC_STACK_EMPTY);
 		}
@@ -409,6 +425,8 @@ namespace svm {
 			OccurException(SVM_IEC_POINTER_INVALIDFORPOINTER);
 		} else if (type.IsStructure()) {
 			OccurException(SVM_IEC_STRUCTURE_INVALIDFORSTRUCTURE);
+		} else if (type.IsArray()) {
+			OccurException(SVM_IEC_ARRAY_INVALIDFORARRAY);
 		} else {
 			OccurException(SVM_IEC_STACK_EMPTY);
 		}
@@ -450,6 +468,8 @@ namespace svm {
 			reinterpret_cast<DoubleObject*>(targetTypePtr)->Value += delta;
 		} else if (targetType == PointerType || targetType == GCPointerType) {
 			OccurException(SVM_IEC_POINTER_INVALIDFORPOINTER);
+		} else if (targetType.IsArray()) {
+			OccurException(SVM_IEC_ARRAY_INVALIDFORARRAY);
 		} else {
 			OccurException(SVM_IEC_STACK_EMPTY);
 		}
@@ -483,6 +503,8 @@ namespace svm {
 			OccurException(SVM_IEC_POINTER_INVALIDFORPOINTER);
 		} else if (rhsType.IsStructure()) {
 			OccurException(SVM_IEC_STRUCTURE_INVALIDFORSTRUCTURE);
+		} else if (rhsType.IsArray()) {
+			OccurException(SVM_IEC_ARRAY_INVALIDFORARRAY);
 		} else {
 			OccurException(SVM_IEC_STACK_EMPTY);
 		}
@@ -511,6 +533,8 @@ namespace svm {
 			OccurException(SVM_IEC_POINTER_INVALIDFORPOINTER);
 		} else if (rhsType.IsStructure()) {
 			OccurException(SVM_IEC_STRUCTURE_INVALIDFORSTRUCTURE);
+		} else if (rhsType.IsArray()) {
+			OccurException(SVM_IEC_ARRAY_INVALIDFORARRAY);
 		} else {
 			OccurException(SVM_IEC_STACK_EMPTY);
 		}
@@ -539,6 +563,8 @@ namespace svm {
 			OccurException(SVM_IEC_POINTER_INVALIDFORPOINTER);
 		} else if (rhsType.IsStructure()) {
 			OccurException(SVM_IEC_STRUCTURE_INVALIDFORSTRUCTURE);
+		} else if (rhsType.IsArray()) {
+			OccurException(SVM_IEC_ARRAY_INVALIDFORARRAY);
 		} else {
 			OccurException(SVM_IEC_STACK_EMPTY);
 		}
@@ -566,6 +592,8 @@ namespace svm {
 			OccurException(SVM_IEC_POINTER_INVALIDFORPOINTER);
 		} else if (type.IsStructure()) {
 			OccurException(SVM_IEC_STRUCTURE_INVALIDFORSTRUCTURE);
+		} else if (type.IsArray()) {
+			OccurException(SVM_IEC_ARRAY_INVALIDFORARRAY);
 		} else {
 			OccurException(SVM_IEC_STACK_EMPTY);
 		}
@@ -594,6 +622,8 @@ namespace svm {
 			OccurException(SVM_IEC_POINTER_INVALIDFORPOINTER);
 		} else if (rhsType.IsStructure()) {
 			OccurException(SVM_IEC_STRUCTURE_INVALIDFORSTRUCTURE);
+		} else if (rhsType.IsArray()) {
+			OccurException(SVM_IEC_ARRAY_INVALIDFORARRAY);
 		} else {
 			OccurException(SVM_IEC_STACK_EMPTY);
 		}
@@ -625,6 +655,8 @@ namespace svm {
 			OccurException(SVM_IEC_POINTER_INVALIDFORPOINTER);
 		} else if (rhsType.IsStructure()) {
 			OccurException(SVM_IEC_STRUCTURE_INVALIDFORSTRUCTURE);
+		} else if (rhsType.IsArray()) {
+			OccurException(SVM_IEC_ARRAY_INVALIDFORARRAY);
 		} else {
 			OccurException(SVM_IEC_STACK_EMPTY);
 		}
@@ -653,6 +685,8 @@ namespace svm {
 			OccurException(SVM_IEC_POINTER_INVALIDFORPOINTER);
 		} else if (rhsType.IsStructure()) {
 			OccurException(SVM_IEC_STRUCTURE_INVALIDFORSTRUCTURE);
+		} else if (rhsType.IsArray()) {
+			OccurException(SVM_IEC_ARRAY_INVALIDFORARRAY);
 		} else {
 			OccurException(SVM_IEC_STACK_EMPTY);
 		}
@@ -686,6 +720,8 @@ namespace svm {
 			m_Stack.Push(CompareTwoSameType(lhs.Value, rhs.Value));
 		} else if (rhsType.IsStructure()) {
 			OccurException(SVM_IEC_STRUCTURE_INVALIDFORSTRUCTURE);
+		} else if (rhsType.IsArray()) {
+			OccurException(SVM_IEC_ARRAY_INVALIDFORARRAY);
 		} else {
 			OccurException(SVM_IEC_STACK_EMPTY);
 		}
@@ -716,6 +752,8 @@ namespace svm {
 			m_Stack.Push(CompareTwoSameType(lhs.Value, rhs.Value));
 		} else if (rhsType.IsStructure()) {
 			OccurException(SVM_IEC_STRUCTURE_INVALIDFORSTRUCTURE);
+		} else if (rhsType.IsArray()) {
+			OccurException(SVM_IEC_ARRAY_INVALIDFORARRAY);
 		} else {
 			OccurException(SVM_IEC_STACK_EMPTY);
 		}

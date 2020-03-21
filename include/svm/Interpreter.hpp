@@ -94,9 +94,6 @@ namespace svm {
 		void CopyStructure(const Type& from, Type& to) noexcept;
 
 		template<typename T>
-		void DRefAndAssign(const Type* rhsTypePtr) noexcept;
-
-		template<typename T>
 		bool GetTwoSameType(Type rhsType, T*& lhs) noexcept;
 
 	private:
@@ -105,9 +102,6 @@ namespace svm {
 		void InterpretLoad(std::uint32_t operand) noexcept;
 		void InterpretStore(std::uint32_t operand);
 		void InterpretLea(std::uint32_t operand) noexcept;
-		void InterpretFLea(std::uint32_t operand) noexcept;
-		void InterpretTLoad() noexcept;
-		void InterpretTStore() noexcept;
 		void InterpretCopy() noexcept;
 		void InterpretSwap() noexcept;
 
@@ -122,6 +116,15 @@ namespace svm {
 		void InterpretToP() noexcept;
 
 	private: // Memory
+		template<typename T>
+		void DRefAndAssign(const Type* rhsTypePtr) noexcept;
+
+	private:
+		void InterpretFLea(std::uint32_t operand) noexcept;
+		void InterpretTLoad() noexcept;
+		void InterpretTStore() noexcept;
+
+	private:
 		void InterpretNull() noexcept;
 		void InterpretNew(std::uint32_t operand);
 		void InterpretDelete() noexcept;

@@ -357,9 +357,9 @@ ShitBC 구현체의 GC 알고리즘에 따라 할당된 메모리 영역에 대�
 필드를 가리키는 포인터를 스택의 가장 위에 추가합니다. 이 명령어가 실행될 때 스택의 가장 위에 구조체 포인터가 있어야 합니다. 이 명령어의 실행이 완료되기 전까지 구조체 포인터는 스택에서 삭제됩니다.
 
 다음 예외가 발생할 수 있습니다.
-- `STACK_OVERFLOW`
 - `STACK_EMPTY`
 - `POINTER_NULLPOINTER`
+- `POINTER_NOTPOINTER`
 - `STRUCTURE_FILED_OUTOFRANGE`
 - `STRUCTURE_NOTSTRUCTURE`
 
@@ -550,6 +550,7 @@ ShitVM에서는 포인터가 잘못된 메모리 영역을 가리킬 경우 `POI
 - `STACK_DIFFERENTTYPE`
 - `POINTER_INVALIDFORPOINTER`
 - `STRUCTURE_INVALIDFORSTRUCTURE`
+- `ARRAY_INVALIDFORARRAY`
 
 #### `sub`
 |옵코드|피연산자|버전|
@@ -563,6 +564,7 @@ ShitVM에서는 포인터가 잘못된 메모리 영역을 가리킬 경우 `POI
 - `STACK_DIFFERENTTYPE`
 - `POINTER_INVALIDFORPOINTER`
 - `STRUCTURE_INVALIDFORSTRUCTURE`
+- `ARRAY_INVALIDFORARRAY`
 
 #### `mul`
 |옵코드|피연산자|버전|
@@ -576,6 +578,7 @@ ShitVM에서는 포인터가 잘못된 메모리 영역을 가리킬 경우 `POI
 - `STACK_DIFFERENTTYPE`
 - `POINTER_INVALIDFORPOINTER`
 - `STRUCTURE_INVALIDFORSTRUCTURE`
+- `ARRAY_INVALIDFORARRAY`
 
 #### `imul`
 |옵코드|피연산자|버전|
@@ -589,6 +592,7 @@ ShitVM에서는 포인터가 잘못된 메모리 영역을 가리킬 경우 `POI
 - `STACK_DIFFERENTTYPE`
 - `POINTER_INVALIDFORPOINTER`
 - `STRUCTURE_INVALIDFORSTRUCTURE`
+- `ARRAY_INVALIDFORARRAY`
 
 #### `div`
 |옵코드|피연산자|버전|
@@ -603,6 +607,7 @@ ShitVM에서는 포인터가 잘못된 메모리 영역을 가리킬 경우 `POI
 - `ARITHMETIC_DIVIDEBYZERO`
 - `POINTER_INVALIDFORPOINTER`
 - `STRUCTURE_INVALIDFORSTRUCTURE`
+- `ARRAY_INVALIDFORARRAY`
 
 #### `idiv`
 |옵코드|피연산자|버전|
@@ -617,6 +622,7 @@ ShitVM에서는 포인터가 잘못된 메모리 영역을 가리킬 경우 `POI
 - `ARITHMETIC_DIVIDEBYZERO`
 - `POINTER_INVALIDFORPOINTER`
 - `STRUCTURE_INVALIDFORSTRUCTURE`
+- `ARRAY_INVALIDFORARRAY`
 
 #### `mod`
 |옵코드|피연산자|버전|
@@ -631,6 +637,7 @@ ShitVM에서는 포인터가 잘못된 메모리 영역을 가리킬 경우 `POI
 - `ARITHMETIC_DIVIDEBYZERO`
 - `POINTER_INVALIDFORPOINTER`
 - `STRUCTURE_INVALIDFORSTRUCTURE`
+- `ARRAY_INVALIDFORARRAY`
 
 #### `imod`
 |옵코드|피연산자|버전|
@@ -645,6 +652,7 @@ ShitVM에서는 포인터가 잘못된 메모리 영역을 가리킬 경우 `POI
 - `ARITHMETIC_DIVIDEBYZERO`
 - `POINTER_INVALIDFORPOINTER`
 - `STRUCTURE_INVALIDFORSTRUCTURE`
+- `ARRAY_INVALIDFORARRAY`
 
 #### `neg`
 |옵코드|피연산자|버전|
@@ -657,6 +665,7 @@ ShitVM에서는 포인터가 잘못된 메모리 영역을 가리킬 경우 `POI
 - `STACK_EMPTY`
 - `POINTER_INVALIDFORPOINTER`
 - `STRUCTURE_INVALIDFORSTRUCTURE`
+- `ARRAY_INVALIDFORARRAY`
 
 #### `inc`
 |옵코드|피연산자|버전|
@@ -673,6 +682,7 @@ ShitVM에서는 포인터가 잘못된 메모리 영역을 가리킬 경우 `POI
 - `POINTER_NOTPOINTER`
 - `POINTER_INVALIDFORPOINTER`
 - `STRUCTURE_INVALIDFORSTRUCTURE`
+- `ARRAY_INVALIDFORARRAY`
 
 #### `dec`
 |옵코드|피연산자|버전|
@@ -689,6 +699,7 @@ ShitVM에서는 포인터가 잘못된 메모리 영역을 가리킬 경우 `POI
 - `POINTER_NOTPOINTER`
 - `POINTER_INVALIDFORPOINTER`
 - `STRUCTURE_INVALIDFORSTRUCTURE`
+- `ARRAY_INVALIDFORARRAY`
 
 ### 비트 연산 니모닉
 스택의 두 값에 대해 비트 연산을 하는 니모닉입니다.
@@ -713,6 +724,7 @@ ShitVM에서는 포인터가 잘못된 메모리 영역을 가리킬 경우 `POI
 - `STACK_DIFFERENTTYPE`
 - `POINTER_INVALIDFORPOINTER`
 - `STRUCTURE_INVALIDFORSTRUCTURE`
+- `ARRAY_INVALIDFORARRAY`
 
 #### `or`
 |옵코드|피연산자|버전|
@@ -726,6 +738,7 @@ ShitVM에서는 포인터가 잘못된 메모리 영역을 가리킬 경우 `POI
 - `STACK_DIFFERENTTYPE`
 - `POINTER_INVALIDFORPOINTER`
 - `STRUCTURE_INVALIDFORSTRUCTURE`
+- `ARRAY_INVALIDFORARRAY`
 
 #### `xor`
 |옵코드|피연산자|버전|
@@ -739,6 +752,7 @@ ShitVM에서는 포인터가 잘못된 메모리 영역을 가리킬 경우 `POI
 - `STACK_DIFFERENTTYPE`
 - `POINTER_INVALIDFORPOINTER`
 - `STRUCTURE_INVALIDFORSTRUCTURE`
+- `ARRAY_INVALIDFORARRAY`
 
 #### `not`
 |옵코드|피연산자|버전|
@@ -751,6 +765,7 @@ ShitVM에서는 포인터가 잘못된 메모리 영역을 가리킬 경우 `POI
 - `STACK_EMPTY`
 - `POINTER_INVALIDFORPOINTER`
 - `STRUCTURE_INVALIDFORSTRUCTURE`
+- `ARRAY_INVALIDFORARRAY`
 
 #### `shl`
 |옵코드|피연산자|버전|
@@ -764,6 +779,7 @@ ShitVM에서는 포인터가 잘못된 메모리 영역을 가리킬 경우 `POI
 - `STACK_DIFFERENTTYPE`
 - `POINTER_INVALIDFORPOINTER`
 - `STRUCTURE_INVALIDFORSTRUCTURE`
+- `ARRAY_INVALIDFORARRAY`
 
 #### `sal`
 |옵코드|피연산자|버전|
@@ -777,6 +793,7 @@ ShitVM에서는 포인터가 잘못된 메모리 영역을 가리킬 경우 `POI
 - `STACK_DIFFERENTTYPE`
 - `POINTER_INVALIDFORPOINTER`
 - `STRUCTURE_INVALIDFORSTRUCTURE`
+- `ARRAY_INVALIDFORARRAY`
 
 #### `shr`
 |옵코드|피연산자|버전|
@@ -790,6 +807,7 @@ ShitVM에서는 포인터가 잘못된 메모리 영역을 가리킬 경우 `POI
 - `STACK_DIFFERENTTYPE`
 - `POINTER_INVALIDFORPOINTER`
 - `STRUCTURE_INVALIDFORSTRUCTURE`
+- `ARRAY_INVALIDFORARRAY`
 
 #### `sar`
 |옵코드|피연산자|버전|
@@ -803,6 +821,7 @@ ShitVM에서는 포인터가 잘못된 메모리 영역을 가리킬 경우 `POI
 - `STACK_DIFFERENTTYPE`
 - `POINTER_INVALIDFORPOINTER`
 - `STRUCTURE_INVALIDFORSTRUCTURE`
+- `ARRAY_INVALIDFORARRAY`
 
 ### 비교 연산 니모닉
 스택의 두 값에 대해 비교 연산을 하는 니모닉입니다.
@@ -826,6 +845,7 @@ ShitVM에서는 포인터가 잘못된 메모리 영역을 가리킬 경우 `POI
 - `STACK_EMPTY`
 - `STACK_DIFFERENTTYPE`
 - `STRUCTURE_INVALIDFORSTRUCTURE`
+- `ARRAY_INVALIDFORARRAY`
 
 #### `icmp`
 |옵코드|피연산자|버전|
@@ -844,6 +864,7 @@ ShitVM에서는 포인터가 잘못된 메모리 영역을 가리킬 경우 `POI
 - `STACK_EMPTY`
 - `STACK_DIFFERENTTYPE`
 - `STRUCTURE_INVALIDFORSTRUCTURE`
+- `ARRAY_INVALIDFORARRAY`
 
 ### 분기 니모닉
 명령어의 실행 흐름을 제어하는 니모닉입니다.
