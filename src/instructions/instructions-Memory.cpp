@@ -440,6 +440,12 @@ namespace svm {
 			targetTypePtr = reinterpret_cast<const Type*>(reinterpret_cast<const ManagedHeapInfo*>(targetTypePtr) + 1);
 		}
 
+		if (!targetTypePtr->IsArray()) {
+			m_Stack.Expand(sizeof(*ptr));
+			OccurException(SVM_IEC_ARRAY_NOTARRAY);
+			return;
+		}
+
 		const std::uint64_t count = reinterpret_cast<const ArrayObject*>(targetTypePtr)->Count;
 		if (!m_Stack.Push<LongObject>(count)) {
 			m_Stack.Expand(sizeof(*ptr));

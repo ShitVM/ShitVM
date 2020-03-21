@@ -122,7 +122,7 @@ namespace svm {
 		void InterpretAPush(std::uint32_t operand) noexcept;
 
 	private: // Type-cast
-		template<typename F, typename T>
+		template<typename T, typename F>
 		void TypeCast(Type* typePtr) noexcept;
 
 	private:

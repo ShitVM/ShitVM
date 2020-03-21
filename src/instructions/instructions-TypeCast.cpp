@@ -133,7 +133,7 @@ namespace svm {
 }
 
 namespace svm {
-	template<typename F, typename T>
+	template<typename T, typename F>
 	SVM_NOINLINE_FOR_PROFILING void Interpreter::TypeCast(Type* typePtr) noexcept {
 		if constexpr (std::is_same_v<F, T>) return;
 		else if constexpr (sizeof(T) > sizeof(F)) {
