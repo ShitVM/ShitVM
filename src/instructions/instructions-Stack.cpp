@@ -31,7 +31,15 @@ namespace svm {
 			const Field& field = structure->Fields[i];
 			Type* const pointer = reinterpret_cast<Type*>(reinterpret_cast<std::uint8_t*>(type) + field.Offset);
 
-			if (field.Type.IsStructure()) {
+			if (field.IsArray()) {
+				*pointer = ArrayType;
+				reinterpret_cast<ArrayObject*>(pointer)->Count = field.Count;
+
+				detail::ArrayInfo info;
+				info.ElementType = field.Type;
+				info.Count = field.Count;
+				InitArray(info, pointer);
+			} else if (field.Type.IsStructure()) {
 				InitStructure(structures, structures[static_cast<std::uint32_t>(field.Type->Code) - 10], pointer);
 			} else {
 				*pointer = field.Type;
@@ -330,6 +338,8 @@ namespace svm {
 		return true;
 	}
 	SVM_NOINLINE_FOR_PROFILING void Interpreter::InitArray(const detail::ArrayInfo& info, Type* type) noexcept {
+		std::memset(type, 0, info.Size);
+
 		const Structures& structures = m_ByteFile.GetStructures();
 		Structure structure;
 		if (info.ElementType.IsStructure()) {
@@ -337,6 +347,7 @@ namespace svm {
 		}
 
 		*type = ArrayType;
+		reinterpret_cast<ArrayObject*>(type)->Count = info.Count;
 		type = reinterpret_cast<Type*>(reinterpret_cast<std::uint8_t*>(type) + sizeof(ArrayObject));
 
 		for (std::uint64_t i = 0; i < info.Count; ++i) {
@@ -357,7 +368,7 @@ namespace svm {
 			return;
 		}
 
-		if (m_Stack.GetFreeSize() < info.Size) {
+		if (m_Stack.GetFreeSize() < info.Size - info.CountSize) {
 			OccurException(SVM_IEC_STACK_OVERFLOW);
 			return;
 		}

@@ -159,23 +159,36 @@ namespace svm {
 				}
 			}
 			return;
-		}
+		} else if (type.IsStructure()) {
+			const Structure structure = m_ByteFile.GetStructures()[static_cast<std::uint32_t>(type->Code) - 10];
+			const std::uint32_t fieldCount = static_cast<std::uint32_t>(structure->Fields.size());
 
-		const Structure structure = m_ByteFile.GetStructures()[static_cast<std::uint32_t>(type->Code) - 10];
-		const std::uint32_t fieldCount = static_cast<std::uint32_t>(structure->Fields.size());
+			stream << type->Name << '(';
 
-		stream << type->Name << '(';
+			for (std::uint32_t i = 0; i < fieldCount; ++i) {
+				const Field& field = structure->Fields[i];
 
-		for (std::uint32_t i = 0; i < fieldCount; ++i) {
-			const Field& field = structure->Fields[i];
-
-			if (i != 0) {
-				stream << ", ";
+				if (i != 0) {
+					stream << ", ";
+				}
+				PrintObject(stream, reinterpret_cast<const Object*>(reinterpret_cast<const std::uint8_t*>(&object) + field.Offset), printPointerTarget);
 			}
-			PrintObject(stream, reinterpret_cast<const Object*>(reinterpret_cast<const std::uint8_t*>(&object) + field.Offset), printPointerTarget);
-		}
 
-		stream << ')';
+			stream << ')';
+		} else if (type.IsArray()) {
+			const ArrayObject& array = static_cast<const ArrayObject&>(object);
+			const Type* const elementType = reinterpret_cast<const Type*>(&array + 1);
+			stream << elementType->GetReference().Name << '[' << array.Count << "]{";
+
+			for (std::uint64_t i = 0; i < array.Count; ++i) {
+				if (i != 0) {
+					stream << ", ";
+				}
+				PrintObject(stream, reinterpret_cast<const Object*>(reinterpret_cast<const std::uint8_t*>(elementType) + i * elementType->GetReference().Size));
+			}
+
+			stream << '}';
+		}
 	}
 	void Interpreter::PrintObject(std::ostream& stream, const Object* object) const {
 		PrintObject(stream, *object, false);
