@@ -1,4 +1,17 @@
 # ShitBF 0.3.0
+## 목차
+- [세션](#세션)
+	- [헤더(Header)](#헤더header)
+		- [ShitBF 버전](#shitbf-버전)
+		- [ShitBC 버전](#shitbc-버전)
+	- [상수 풀(Constant Pool)](#상수-풀constant-pool)
+	- [구조체 목록(Structures)](#구조체-목록structures)
+		- [구조체 정보(Structure Information)](#구조체-정보structure-information)
+	- [함수 목록(Functions)](#함수-목록functions)
+		- [함수 정보(Function Information)](#함수-정보function-information)
+	- [진입점(Entrypoint)](#진입점entrypoint)
+- [명령어](#명령어)
+
 ## 세션
 1. 헤더(Header)
 2. 상수 풀(Constant Pool)
