@@ -51,6 +51,7 @@ namespace svm {
 		void* const address = reinterpret_cast<const PointerObject*>(typePtr)->Value;
 		if (address && !m_Heap.DeallocateUnmanagedHeap(reinterpret_cast<const PointerObject*>(typePtr)->Value)) {
 			OccurException(SVM_IEC_POINTER_UNKNOWNADDRESS);
+			return;
 		}
 
 		m_Stack.Reduce(sizeof(PointerObject));

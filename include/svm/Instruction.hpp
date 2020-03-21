@@ -65,6 +65,14 @@ namespace svm {
 		Delete,
 		GCNull,
 		GCNew,
+
+		APush,
+		ANew,
+		AGCNew,
+		ALoad,
+		AStore,
+		ALea,
+		ACount,
 	};
 
 	static constexpr const char* Mnemonics[] = {
@@ -75,6 +83,7 @@ namespace svm {
 		"cmp", "icmp", "jmp", "je", "jne", "ja", "jae", "jb", "jbe", "call", "ret",
 		"tob", "tos", "toi", "tol", "tof", "tod", "top",
 		"null", "new", "delete", "gcnull", "gcnew",
+		"apush", "anew", "agcnew", "aload", "astore", "alea", "acount",
 	};
 
 	static constexpr bool HasOperand[] = {
