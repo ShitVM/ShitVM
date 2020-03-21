@@ -55,6 +55,8 @@ namespace svm {
 			}
 		} else if (type.IsStructure()) {
 			OccurException(SVM_IEC_STRUCTURE_INVALIDFORSTRUCTURE);
+		} else if (type.IsArray()) {
+			OccurException(SVM_IEC_ARRAY_INVALIDFORARRAY);
 		} else {
 			OccurException(SVM_IEC_STACK_EMPTY);
 		}
@@ -137,7 +139,9 @@ namespace svm {
 			m_LocalVariables.push_back(stackOffset);
 
 			const Type type = *typePtr;
-			if (type.IsValidType()) {
+			if (type.IsArray()) {
+				stackOffset -= CalcArraySize(reinterpret_cast<const ArrayObject*>(typePtr));
+			} else if (type.IsValidType()) {
 				stackOffset -= type->Size;
 			} else {
 				OccurException(SVM_IEC_STACK_EMPTY);
@@ -175,7 +179,11 @@ namespace svm {
 				return;
 			}
 
-			m_Stack.Reduce(type->Size);
+			if (type.IsArray()) {
+				m_Stack.Reduce(CalcArraySize(reinterpret_cast<const ArrayObject*>(result)));
+			} else {
+				m_Stack.Reduce(type->Size);
+			}
 		}
 
 		m_LocalVariables.erase(m_LocalVariables.begin() + m_StackFrame.VariableBegin, m_LocalVariables.end());
@@ -191,7 +199,12 @@ namespace svm {
 
 		--m_Depth;
 		if (result) {
-			const std::size_t size = result->GetReference().Size;
+			std::size_t size = 0;
+			if (result->IsArray()) {
+				size = CalcArraySize(reinterpret_cast<const ArrayObject*>(result));
+			} else {
+				size = result->GetReference().Size;
+			}
 
 			m_Stack.Expand(size);
 			std::memmove(m_Stack.GetTopType(), result, size);

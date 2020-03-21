@@ -9,10 +9,19 @@
 #include <vector>
 
 namespace svm {
+	struct Field final {
+		std::size_t Offset = 0;
+		svm::Type Type;
+		std::size_t Count = 0;
+
+		bool IsArray() const noexcept;
+	};
+}
+
+namespace svm {
 	class StructureInfo final {
 	public:
-		std::vector<svm::Type> FieldTypes;
-		std::vector<std::size_t> FieldOffsets;
+		std::vector<Field> Fields;
 		TypeInfo Type;
 
 	public:

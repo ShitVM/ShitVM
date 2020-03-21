@@ -30,6 +30,15 @@ namespace svm {
 }
 
 namespace svm {
+	namespace detail {
+		struct ArrayInfo final {
+			Type ElementType;
+			std::uint64_t Count = 0;
+			std::size_t CountSize = 0;
+			std::size_t Size = 0;
+		};
+	}
+
 	class Interpreter final {
 	private:
 		ByteFile m_ByteFile;
@@ -64,6 +73,7 @@ namespace svm {
 		void SetGarbageCollector(std::unique_ptr<GarbageCollector>&& gc) noexcept;
 
 		bool Interpret();
+		bool HasResult() const noexcept;
 		const Object* GetResult() const noexcept;
 		void PrintObject(std::ostream& stream, const Object& object) const;
 		void PrintObject(std::ostream& stream, const Object& object, bool printPointerTarget) const;
@@ -94,10 +104,11 @@ namespace svm {
 		void CopyStructure(const Type& from, Type& to) noexcept;
 
 		template<typename T>
-		void DRefAndAssign(const Type* rhsTypePtr) noexcept;
-
-		template<typename T>
 		bool GetTwoSameType(Type rhsType, T*& lhs) noexcept;
+
+		bool GetArrayInfo(detail::ArrayInfo& info, std::uint32_t operand) noexcept;
+		void InitArray(const detail::ArrayInfo& info, Type* type) noexcept;
+		std::size_t CalcArraySize(const ArrayObject* array) const noexcept;
 
 	private:
 		void InterpretPush(std::uint32_t operand) noexcept;
@@ -105,14 +116,13 @@ namespace svm {
 		void InterpretLoad(std::uint32_t operand) noexcept;
 		void InterpretStore(std::uint32_t operand);
 		void InterpretLea(std::uint32_t operand) noexcept;
-		void InterpretFLea(std::uint32_t operand) noexcept;
-		void InterpretTLoad() noexcept;
-		void InterpretTStore() noexcept;
 		void InterpretCopy() noexcept;
 		void InterpretSwap() noexcept;
 
+		void InterpretAPush(std::uint32_t operand) noexcept;
+
 	private: // Type-cast
-		template<typename F, typename T>
+		template<typename T, typename F>
 		void TypeCast(Type* typePtr) noexcept;
 
 	private:
@@ -122,11 +132,25 @@ namespace svm {
 		void InterpretToP() noexcept;
 
 	private: // Memory
+		template<typename T>
+		void DRefAndAssign(const Type* rhsTypePtr) noexcept;
+
+	private:
+		void InterpretFLea(std::uint32_t operand) noexcept;
+		void InterpretTLoad() noexcept;
+		void InterpretTStore() noexcept;
+
+	private:
 		void InterpretNull() noexcept;
 		void InterpretNew(std::uint32_t operand);
 		void InterpretDelete() noexcept;
 		void InterpretGCNull() noexcept;
 		void InterpretGCNew(std::uint32_t operand);
+
+		void InterpretANew(std::uint32_t operand) noexcept;
+		void InterpretAGCNew(std::uint32_t operand) noexcept;
+		void InterpretALea() noexcept;
+		void InterpretCount() noexcept;
 
 	private: // Operation
 		template<typename T>

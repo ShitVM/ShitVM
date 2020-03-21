@@ -74,9 +74,7 @@ namespace svm {
 			m_ByteCodeVersion < ByteCodeVersion::Least) throw std::runtime_error("Failed to parse the file. Incompatible ShitBC version.");
 
 		ParseConstantPool();
-		if (m_ByteFileVersion >= ByteFileVersion::v0_2_0) {
-			ParseStructures();
-		}
+		ParseStructures();
 		ParseFunctions();
 		m_ByteFile.SetEntryPoint(ParseInstructions());
 	}
@@ -112,12 +110,18 @@ namespace svm {
 
 		for (std::uint32_t i = 0; i < structCount; ++i) {
 			const auto fieldCount = ReadFile<std::uint32_t>();
-			structures[i].FieldTypes.resize(fieldCount);
+			structures[i].Fields.resize(fieldCount);
 			structures[i].Type.Name = "structure" + std::to_string(i);
 			structures[i].Type.Code = static_cast<TypeCode>(i + 10);
 
 			for (std::uint32_t j = 0; j < fieldCount; ++j) {
-				structures[i].FieldTypes[j] = GetTypeFromTypeCode(structures, ReadFile<TypeCode>());
+				Field& field = structures[i].Fields[j];
+
+				const auto typeCode = ReadFile<std::uint32_t>();
+				field.Type = GetTypeFromTypeCode(structures, static_cast<TypeCode>(typeCode & 0x7FFFFFFF));
+				if (typeCode >> 31) {
+					field.Count = static_cast<std::size_t>(ReadFile<std::uint64_t>());
+				}
 			}
 		}
 
@@ -125,16 +129,7 @@ namespace svm {
 			FindCycle(structures);
 		}
 		CalcSize(structures);
-		for (std::uint32_t i = 0; i < structCount; ++i) {
-			StructureInfo& structure = structures[i];
-			structure.FieldOffsets.resize(structure.FieldTypes.size());
-
-			std::size_t offset = sizeof(Type);
-			for (std::uint32_t j = 0; j < structure.FieldTypes.size(); ++j) {
-				structure.FieldOffsets[j] = offset;
-				offset += structure.FieldTypes[j]->Size;
-			}
-		}
+		CalcOffset(structures);
 
 		m_ByteFile.SetStructures({ std::move(structures) });
 	}
@@ -200,11 +195,11 @@ namespace svm {
 		int& status = visited[node];
 		if (status) return status == 1;
 
-		const std::uint32_t fieldCount = static_cast<std::uint32_t>(structures[node].FieldTypes.size());
+		const std::uint32_t fieldCount = static_cast<std::uint32_t>(structures[node].Fields.size());
 
 		status = 1;
 		for (std::uint32_t i = 0; i < fieldCount; ++i) {
-			const Type type = structures[node].FieldTypes[i];
+			const Type type = structures[node].Fields[i].Type;
 			if (!type.IsStructure()) continue;
 			else if (const auto index = static_cast<std::uint32_t>(type->Code) - 10;
 					 FindCycle(structures, visited, cycle, index)) {
@@ -225,19 +220,43 @@ namespace svm {
 		std::size_t& s = structures[node].Type.Size;
 		if (s) return s;
 
-		const std::uint32_t fieldCount = static_cast<std::uint32_t>(structures[node].FieldTypes.size());
+		const std::uint32_t fieldCount = static_cast<std::uint32_t>(structures[node].Fields.size());
 
 		for (std::size_t i = 0; i < fieldCount; ++i) {
-			const Type type = structures[node].FieldTypes[i];
-			if (!type.IsStructure()) {
-				s += type->Size;
+			const Field& field = structures[node].Fields[i];
+			const Type type = field.Type;
+			std::size_t size = type->Size;
+			if (type.IsStructure()) {
+				size = CalcSize(structures, static_cast<std::uint32_t>(type->Code) - 10);
+			}
+
+			if (field.IsArray()) {
+				s += size * field.Count + sizeof(std::uint64_t);
 			} else {
-				s += CalcSize(structures, static_cast<std::uint32_t>(type->Code) - 10);
+				s += size;
 			}
 		}
 
 		s += sizeof(Type);
 		return s = Pade(s);
+	}
+	void Parser::CalcOffset(std::vector<StructureInfo>& structures) const {
+		for (std::uint32_t i = 0; i < structures.size(); ++i) {
+			StructureInfo& structure = structures[i];
+			const std::uint32_t fieldCount = static_cast<std::uint32_t>(structure.Fields.size());
+
+			std::size_t offset = sizeof(Type);
+			for (std::uint32_t j = 0; j < fieldCount; ++j) {
+				Field& field = structure.Fields[j];
+
+				field.Offset = offset;
+				if (field.IsArray()) {
+					offset += field.Type->Size * field.Count + sizeof(ArrayObject);
+				} else {
+					offset += field.Type->Size;
+				}
+			}
+		}
 	}
 	OpCode Parser::ReadOpCode() noexcept {
 		return ReadFile<OpCode>();

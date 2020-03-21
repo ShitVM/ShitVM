@@ -1,26 +1,43 @@
 #include <svm/Structure.hpp>
 
 #include <svm/IO.hpp>
+#include <svm/Object.hpp>
 
 #include <utility>
 
 namespace svm {
+	bool Field::IsArray() const noexcept {
+		return Count >= 1;
+	}
+}
+
+namespace svm {
 	StructureInfo::StructureInfo(StructureInfo&& structure) noexcept
-		: FieldTypes(std::move(structure.FieldTypes)) {}
+		: Fields(std::move(structure.Fields)), Type(std::move(structure.Type)) {}
 
 	StructureInfo& StructureInfo::operator=(StructureInfo&& structure) noexcept {
-		FieldTypes = std::move(structure.FieldTypes);
+		Fields = std::move(structure.Fields);
+		Type = std::move(structure.Type);
 		return *this;
 	}
 
 	std::ostream& operator<<(std::ostream& stream, const StructureInfo& structureInfo) {
 		const std::string defIndent = detail::MakeTabs(stream);
-		const std::uint32_t fieldCount = static_cast<std::uint32_t>(structureInfo.FieldTypes.size());
+		const std::uint32_t fieldCount = static_cast<std::uint32_t>(structureInfo.Fields.size());
 
 		stream << defIndent << "Structure: " << structureInfo.Type.Size << "B\n"
 			   << defIndent << "\tFields: " << fieldCount;
 		for (std::uint32_t i = 0; i < fieldCount; ++i) {
-			stream << '\n' << defIndent << "\t\t[" << i << "]: " << structureInfo.FieldTypes[i]->Name << '(' << structureInfo.FieldTypes[i]->Size << "B)";
+			const Field& field = structureInfo.Fields[i];
+			stream << '\n' << defIndent << "\t\t[" << i << "]: " << field.Type->Name;
+
+			if (field.IsArray()) {
+				stream << '[' << field.Count << "](" << field.Type->Size * field.Count + sizeof(ArrayObject);
+			} else {
+				stream << '(' << field.Type->Size;
+			}
+
+			stream << "B)";
 		}
 		return stream;
 	}

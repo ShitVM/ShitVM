@@ -75,11 +75,13 @@ int main(int argc, char* argv[]) {
 		return EXIT_FAILURE;
 	}
 
-	std::cout << "Interpreted in " << std::fixed << std::setprecision(6) << interpreting.count() << "s!\n"
-			  << "Result: " << std::defaultfloat;
+	std::cout << "Interpreted in " << std::fixed << std::setprecision(6) << interpreting.count() << "s!";
+	if (interpreter.HasResult()) {
+		std::cout << "\nResult: " << std::defaultfloat;
 
-	const svm::Object* result = interpreter.GetResult();
-	interpreter.PrintObject(std::cout, result, true);
+		const svm::Object* result = interpreter.GetResult();
+		interpreter.PrintObject(std::cout, result, true);
+	}
 
 	std::cout << "\n----------------------------------------\n"
 			  << "Total used: " << std::fixed << std::setprecision(6) << parsing.count() + interpreting.count() << "s\n";

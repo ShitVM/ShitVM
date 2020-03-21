@@ -97,6 +97,11 @@ namespace svm {
 }
 
 namespace svm {
+	ArrayObject::ArrayObject(std::size_t count) noexcept
+		: Object(ArrayType), Count(count) {}
+}
+
+namespace svm {
 	StructureObject::StructureObject(Type type) noexcept
 		: Object(type) {}
 }

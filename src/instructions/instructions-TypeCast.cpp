@@ -31,6 +31,8 @@ namespace svm {
 			OccurException(SVM_IEC_POINTER_INVALIDFORPOINTER);
 		} else if (type.IsStructure()) {
 			OccurException(SVM_IEC_STRUCTURE_INVALIDFORSTRUCTURE);
+		} else if (type.IsArray()) {
+			OccurException(SVM_IEC_ARRAY_INVALIDFORARRAY);
 		} else {
 			OccurException(SVM_IEC_STACK_EMPTY);
 		}
@@ -60,6 +62,8 @@ namespace svm {
 			OccurException(SVM_IEC_POINTER_INVALIDFORPOINTER);
 		} else if (type.IsStructure()) {
 			OccurException(SVM_IEC_STRUCTURE_INVALIDFORSTRUCTURE);
+		} else if (type.IsArray()) {
+			OccurException(SVM_IEC_ARRAY_INVALIDFORARRAY);
 		} else {
 			OccurException(SVM_IEC_STACK_EMPTY);
 		}
@@ -89,6 +93,8 @@ namespace svm {
 			OccurException(SVM_IEC_POINTER_INVALIDFORPOINTER);
 		} else if (type.IsStructure()) {
 			OccurException(SVM_IEC_STRUCTURE_INVALIDFORSTRUCTURE);
+		} else if (type.IsArray()) {
+			OccurException(SVM_IEC_ARRAY_INVALIDFORARRAY);
 		} else {
 			OccurException(SVM_IEC_STACK_EMPTY);
 		}
@@ -118,6 +124,8 @@ namespace svm {
 			OccurException(SVM_IEC_POINTER_INVALIDFORPOINTER);
 		} else if (type.IsStructure()) {
 			OccurException(SVM_IEC_STRUCTURE_INVALIDFORSTRUCTURE);
+		} else if (type.IsArray()) {
+			OccurException(SVM_IEC_ARRAY_INVALIDFORARRAY);
 		} else {
 			OccurException(SVM_IEC_STACK_EMPTY);
 		}
@@ -125,7 +133,7 @@ namespace svm {
 }
 
 namespace svm {
-	template<typename F, typename T>
+	template<typename T, typename F>
 	SVM_NOINLINE_FOR_PROFILING void Interpreter::TypeCast(Type* typePtr) noexcept {
 		if constexpr (std::is_same_v<F, T>) return;
 		else if constexpr (sizeof(T) > sizeof(F)) {

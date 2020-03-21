@@ -19,7 +19,7 @@ namespace svm {
 		Double,
 		Pointer,
 		GCPointer,
-		Array,				// Not supported
+		Array,
 		Structure,
 	};
 
@@ -32,11 +32,11 @@ namespace svm {
 	public:
 		TypeInfo() noexcept = default;
 		TypeInfo(TypeCode code, std::string name, std::size_t size) noexcept;
-		TypeInfo(const TypeInfo&) = delete;
+		TypeInfo(TypeInfo&& typeInfo) noexcept;
 		~TypeInfo() = default;
 
 	public:
-		TypeInfo& operator=(const TypeInfo&) = delete;
+		TypeInfo& operator=(TypeInfo&& typeInfo) noexcept;
 		bool operator==(const TypeInfo&) = delete;
 		bool operator!=(const TypeInfo&) = delete;
 	};
@@ -52,6 +52,7 @@ namespace svm {
 
 	public:
 		bool IsFundamentalType() const noexcept;
+		bool IsArray() const noexcept;
 		bool IsStructure() const noexcept;
 		bool IsValidType() const noexcept;
 	};
@@ -62,6 +63,7 @@ namespace svm {
 	extern const Type DoubleType;
 	extern const Type PointerType;
 	extern const Type GCPointerType;
+	extern const Type ArrayType;
 
 	Type GetTypeFromTypeCode(const std::vector<StructureInfo>& structures, TypeCode code) noexcept;
 	Type GetTypeFromTypeCode(const Structures& structures, TypeCode code) noexcept;
