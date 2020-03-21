@@ -1,6 +1,7 @@
 #include <svm/Interpreter.hpp>
 #include <svm/IO.hpp>
 #include <svm/Parser.hpp>
+#include <svm/ProgramOption.hpp>
 #include <svm/gc/SimpleGarbageCollector.hpp>
 
 #include <algorithm>
@@ -11,15 +12,22 @@
 #include <iostream>
 
 int main(int argc, char* argv[]) {
-	if (argc <= 1) {
-		std::cout << "Usage: ./ShitVM <File>\n";
+	svm::ProgramOption option;
+	option.AddVariable("stack", 1 * 1024 * 1024)
+		  .AddVariable("young", 8 * 1024 * 1024)
+		  .AddVariable("old", 32 * 1024 * 1024)
+		  .AddFlag("gc", true);
+
+	if (!option.Parse(argc, argv) || !option.Verity()) {
 		return EXIT_FAILURE;
 	}
+
+	std::cout << "----------------------------------------\n";
 
 	const auto startParsing = std::chrono::system_clock::now();
 
 	svm::Parser parser;
-	parser.Load(argv[1]);
+	parser.Load(option.Path);
 	try {
 		parser.Parse();
 	} catch (const std::exception & e) {
@@ -38,8 +46,11 @@ int main(int argc, char* argv[]) {
 	const auto startInterpreting = std::chrono::system_clock::now();
 
 	svm::Interpreter interpreter(std::move(byteFile));
-	interpreter.AllocateStack();
-	interpreter.SetGarbageCollector(std::make_unique<svm::SimpleGarbageCollector>(8 * 1024 * 1024, 32 * 1024 * 1024));
+	interpreter.AllocateStack(static_cast<std::size_t>(option.GetVariable("stack")));
+	if (option.GetFlag("gc")) {
+		interpreter.SetGarbageCollector(std::make_unique<svm::SimpleGarbageCollector>(
+			static_cast<std::size_t>(option.GetVariable("young")), static_cast<std::size_t>(option.GetVariable("old"))));
+	}
 	const bool success = interpreter.Interpret();
 
 	const auto endInterpreting = std::chrono::system_clock::now();
