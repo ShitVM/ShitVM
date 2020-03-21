@@ -75,7 +75,7 @@ int main(int argc, char* argv[]) {
 			using namespace svm;
 
 			if (frame.Function == nullptr) {
-				std::cout << "\tentrypoint";
+				std::cout << "\tentrypoint\n";
 			} else {
 				const auto iter = std::find_if(funcs.begin(), funcs.end(), [&frame](const auto& func) {
 					return &func == frame.Function;
