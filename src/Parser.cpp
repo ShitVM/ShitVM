@@ -159,7 +159,7 @@ namespace svm {
 		std::vector<Instruction> insts(static_cast<std::size_t>(instCount));
 
 		std::uint64_t nextOffset = 0;
-		for (std::uint64_t i = 0; i < instCount; ++i) {
+		for (std::size_t i = 0; i < instCount; ++i) {
 			insts[i].OpCode = ReadOpCode();
 			insts[i].Offset = nextOffset;
 			if (insts[i].HasOperand()) {

@@ -386,7 +386,7 @@ namespace svm {
 		}
 
 		*type = ArrayType;
-		reinterpret_cast<ArrayObject*>(type)->Count = info.Count;
+		reinterpret_cast<ArrayObject*>(type)->Count = static_cast<std::size_t>(info.Count);
 		type = reinterpret_cast<Type*>(reinterpret_cast<std::uint8_t*>(type) + sizeof(ArrayObject));
 
 		for (std::uint64_t i = 0; i < info.Count; ++i) {
