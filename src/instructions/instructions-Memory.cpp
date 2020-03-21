@@ -72,6 +72,45 @@ namespace svm {
 		CopyStructure(*rhsTypePtr, *targetType);
 		m_Stack.Reduce(sizeof(PointerObject) + structSize);
 	}
+	template<>
+	SVM_NOINLINE_FOR_PROFILING void Interpreter::DRefAndAssign<ArrayObject>(const Type* rhsTypePtr) noexcept {
+		const std::size_t arraySize = CalcArraySize(reinterpret_cast<const ArrayObject*>(rhsTypePtr));
+
+		if (IsLocalVariable() || IsLocalVariable(arraySize)) {
+			OccurException(SVM_IEC_STACK_EMPTY);
+			return;
+		}
+
+		const Type* const lhsTypePtr = m_Stack.Get<Type>(m_Stack.GetUsedSize() - arraySize);
+		if (!lhsTypePtr) {
+			OccurException(SVM_IEC_STACK_EMPTY);
+			return;
+		} else if (*lhsTypePtr != PointerType && *lhsTypePtr != GCPointerType) {
+			OccurException(SVM_IEC_POINTER_NOTPOINTER);
+			return;
+		}
+
+		Type* targetType = static_cast<Type*>(reinterpret_cast<const PointerObject*>(lhsTypePtr)->Value);
+		if (!targetType) {
+			OccurException(SVM_IEC_POINTER_NULLPOINTER);
+			return;
+		} else if (*lhsTypePtr == GCPointerType) {
+			targetType = reinterpret_cast<Type*>(reinterpret_cast<ManagedHeapInfo*>(targetType) + 1);
+		}
+
+		if (*targetType != *rhsTypePtr) {
+			OccurException(SVM_IEC_STACK_DIFFERENTTYPE);
+			return;
+		}
+
+		ArrayObject* const target = reinterpret_cast<ArrayObject*>(targetType);
+		if (target->Count != reinterpret_cast<const ArrayObject*>(rhsTypePtr)->Count) {
+			OccurException(SVM_IEC_ARRAY_LENGTH_DIFFERENTLENGTH);
+			return;
+		}
+
+		m_Stack.Reduce(sizeof(PointerObject) + arraySize);
+	}
 }
 
 namespace svm {
@@ -155,6 +194,11 @@ namespace svm {
 			isSuccess = m_Stack.Push(reinterpret_cast<const GCPointerObject&>(*targetTypePtr));
 		} else if (targetType.IsStructure() && (isSuccess = m_Stack.Expand(targetType->Size))) {
 			CopyStructure(*targetTypePtr);
+		} else if (targetType.IsArray()) {
+			const std::size_t size = CalcArraySize(reinterpret_cast<const ArrayObject*>(targetTypePtr));
+			if (isSuccess = m_Stack.Expand(size)) {
+				std::memcpy(m_Stack.GetTopType(), targetTypePtr, size);
+			}
 		}
 
 		if (!isSuccess) {
@@ -182,6 +226,8 @@ namespace svm {
 			DRefAndAssign<GCPointerObject>(rhsTypePtr);
 		} else if (rhsType.IsStructure()) {
 			DRefAndAssign<StructureObject>(rhsTypePtr);
+		} else if (rhsType.IsArray()) {
+			DRefAndAssign<ArrayObject>(rhsTypePtr);
 		} else {
 			OccurException(SVM_IEC_STACK_EMPTY);
 		}

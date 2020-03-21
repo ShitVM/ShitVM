@@ -108,6 +108,7 @@ namespace svm {
 
 		bool GetArrayInfo(detail::ArrayInfo& info, std::uint32_t operand) noexcept;
 		void InitArray(const detail::ArrayInfo& info, Type* type) noexcept;
+		std::size_t CalcArraySize(const ArrayObject* array) const noexcept;
 
 	private:
 		void InterpretPush(std::uint32_t operand) noexcept;

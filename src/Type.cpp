@@ -32,7 +32,7 @@ namespace svm {
 		return GetReference().Code >= TypeCode::Structure;
 	}
 	bool Type::IsValidType() const noexcept {
-		return IsFundamentalType() || IsStructure();
+		return IsFundamentalType() || IsArray() || IsStructure();
 	}
 
 	namespace {
