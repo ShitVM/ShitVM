@@ -145,6 +145,6 @@ namespace svm {
 			m_Stack.Reduce(sizeof(F) - sizeof(T));
 		}
 
-		*m_Stack.GetTop<T>() = reinterpret_cast<F*>(typePtr)->Cast<T>();
+		*m_Stack.GetTop<T>() = reinterpret_cast<F*>(typePtr)->template Cast<T>();
 	}
 }
