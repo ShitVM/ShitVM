@@ -223,11 +223,17 @@ namespace svm {
 		const std::uint32_t fieldCount = static_cast<std::uint32_t>(structures[node].Fields.size());
 
 		for (std::size_t i = 0; i < fieldCount; ++i) {
-			const Type type = structures[node].Fields[i].Type;
-			if (!type.IsStructure()) {
-				s += type->Size;
+			const Field& field = structures[node].Fields[i];
+			const Type type = field.Type;
+			std::size_t size = type->Size;
+			if (type.IsStructure()) {
+				size = CalcSize(structures, static_cast<std::uint32_t>(type->Code) - 10);
+			}
+
+			if (field.IsArray()) {
+				s += size * field.Count + sizeof(std::uint64_t);
 			} else {
-				s += CalcSize(structures, static_cast<std::uint32_t>(type->Code) - 10);
+				s += size;
 			}
 		}
 

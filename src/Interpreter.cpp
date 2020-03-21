@@ -134,6 +134,9 @@ namespace svm {
 			return false;
 		} else return true;
 	}
+	bool Interpreter::HasResult() const noexcept {
+		return m_Stack.GetUsedSize();
+	}
 	const Object* Interpreter::GetResult() const noexcept {
 		return m_Stack.GetTop<Object>();
 	}

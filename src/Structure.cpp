@@ -1,6 +1,7 @@
 #include <svm/Structure.hpp>
 
 #include <svm/IO.hpp>
+#include <svm/Object.hpp>
 
 #include <utility>
 
@@ -31,7 +32,7 @@ namespace svm {
 			stream << '\n' << defIndent << "\t\t[" << i << "]: " << field.Type->Name;
 
 			if (field.IsArray()) {
-				stream << '[' << field.Count << "](" << field.Type->Size * field.Count;
+				stream << '[' << field.Count << "](" << field.Type->Size * field.Count + sizeof(ArrayObject);
 			} else {
 				stream << '(' << field.Type->Size;
 			}

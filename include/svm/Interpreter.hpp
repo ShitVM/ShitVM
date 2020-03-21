@@ -73,6 +73,7 @@ namespace svm {
 		void SetGarbageCollector(std::unique_ptr<GarbageCollector>&& gc) noexcept;
 
 		bool Interpret();
+		bool HasResult() const noexcept;
 		const Object* GetResult() const noexcept;
 		void PrintObject(std::ostream& stream, const Object& object) const;
 		void PrintObject(std::ostream& stream, const Object& object, bool printPointerTarget) const;
