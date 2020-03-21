@@ -53,6 +53,7 @@ namespace svm {
 		m_GarbageCollector = std::move(gc);
 	}
 	void* Heap::AllocateManagedHeap(Interpreter& interpreter, std::size_t size) {
-		return m_GarbageCollector->Allocate(interpreter, size);
+		if (!m_GarbageCollector) return nullptr;
+		else return m_GarbageCollector->Allocate(interpreter, size);
 	}
 }

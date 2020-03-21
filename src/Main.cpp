@@ -2,6 +2,7 @@
 #include <svm/IO.hpp>
 #include <svm/Parser.hpp>
 #include <svm/ProgramOption.hpp>
+#include <svm/Version.hpp>
 #include <svm/gc/SimpleGarbageCollector.hpp>
 
 #include <algorithm>
@@ -20,6 +21,12 @@ int main(int argc, char* argv[]) {
 
 	if (!option.Parse(argc, argv) || !option.Verity()) {
 		return EXIT_FAILURE;
+	} else if (option.ShowVersion) {
+		std::cout << "ShitVM " << SVM_VER_STRING << '\n'
+				  << "(C) 2020. kmc7468 All rights reserved.\n\n"
+				  << "You can get the source of latest ShitVM here:\n"
+				  << "https://github.com/ShitVM\n";
+		return EXIT_SUCCESS;
 	}
 
 	std::cout << "----------------------------------------\n";

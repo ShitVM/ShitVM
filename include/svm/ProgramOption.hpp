@@ -20,6 +20,7 @@ namespace svm {
 	class ProgramOption final {
 	public:
 		std::string Path;
+		bool ShowVersion = false;
 
 		std::unordered_map<std::string_view, Variable> Variables;
 		std::unordered_map<std::string_view, Flag> Flags;

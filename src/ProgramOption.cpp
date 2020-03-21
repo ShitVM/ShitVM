@@ -6,10 +6,12 @@
 
 namespace svm {
 	ProgramOption::ProgramOption(ProgramOption&& option) noexcept
-		: Path(std::move(option.Path)), Variables(std::move(option.Variables)), Flags(std::move(option.Flags)) {}
+		: Path(std::move(option.Path)), ShowVersion(option.ShowVersion),
+		Variables(std::move(option.Variables)), Flags(std::move(option.Flags)) {}
 
 	ProgramOption& ProgramOption::operator=(ProgramOption&& option) noexcept {
 		Path = std::move(option.Path);
+		ShowVersion = option.ShowVersion;
 
 		Variables = std::move(option.Variables);
 		Flags = std::move(option.Flags);
@@ -18,6 +20,7 @@ namespace svm {
 
 	void ProgramOption::Clear() noexcept {
 		Path.clear();
+		ShowVersion = false;
 
 		Variables.clear();
 		Flags.clear();
@@ -69,6 +72,8 @@ namespace svm {
 						return false;
 					}
 					iter->second.Value = true;
+				} else if (option == "-version") {
+					ShowVersion = true;
 				} else {
 					const std::size_t assign = option.find('=');
 					if (assign == std::string_view::npos) {
@@ -96,6 +101,8 @@ namespace svm {
 		return true;
 	}
 	bool ProgramOption::Verity() {
+		if (ShowVersion) return true;
+
 		if (Path.empty()) {
 			std::cout << "Error: There is no input file.\n";
 			return false;
@@ -113,23 +120,23 @@ namespace svm {
 		}
 
 		if (GetVariable("stack") == 0) {
-			std::cout << "Error: Stack's size cannot be zero.\n";
+			std::cout << "Error: Size of the stack cannot be zero.\n";
 			return false;
 		} else if (GetVariable("stack") < 1 * 1024) {
-			std::cout << "Warning: Stack's size is too small.\n";
+			std::cout << "Warning: Size of the stack is too small.\n";
 		}
 
 		if (GetVariable("young") == 0) {
-			std::cout << "Error: Young geneartion's block size cannot be zero.\n";
+			std::cout << "Error: Size of a young block cannot be zero.\n";
 			return false;
 		} else if (GetVariable("young") % 512) {
-			std::cout << "Error: Young geneartion's block size must be a multiple of 512.\n";
+			std::cout << "Error: Size of a young block must be a multiple of 512.\n";
 			return false;
 		} else if (GetVariable("old") == 0) {
-			std::cout << "Error: Old geneartion's block size cannot be zero.\n";
+			std::cout << "Error: Size of a old block cannot be zero.\n";
 			return false;
 		} else if (GetVariable("old") % 512) {
-			std::cout << "Error: Old geneartion's block size must be a multiple of 512.\n";
+			std::cout << "Error: Size of a old block must be a multiple of 512.\n";
 			return false;
 		}
 
