@@ -158,6 +158,15 @@ namespace svm {
 				Type* const fieldPtr = reinterpret_cast<Type*>(reinterpret_cast<std::uint8_t*>(typePtr) + field.Offset);
 				MarkObject(interpreter, generation, pointerTable, grayColorList, fieldPtr);
 			}
+		} else if (typePtr->IsArray()) {
+			ArrayObject* const array = reinterpret_cast<ArrayObject*>(typePtr);
+			const std::uint64_t elementCount = array->Count;
+			Type* elementPtr = reinterpret_cast<Type*>(array + 1);
+
+			for (std::uint64_t i = 0; i < elementCount; ++i) {
+				MarkObject(interpreter, generation, pointerTable, grayColorList, elementPtr);
+				elementPtr = reinterpret_cast<Type*>(reinterpret_cast<std::uint8_t*>(elementPtr) + elementPtr->GetReference().Size);
+			}
 		}
 	}
 	void SimpleGarbageCollector::MakeGray(PointerTable& pointerTable, PointerList& grayColorList,
