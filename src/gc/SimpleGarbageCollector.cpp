@@ -149,7 +149,7 @@ namespace svm {
 
 			MakeGray(pointerTable, grayColorList, &object->Value, targetBlock, targetInfo);
 		} else if (typePtr->IsStructure()) {
-			const std::uint32_t structCode = static_cast<std::uint32_t>(typePtr->GetReference().Code) - 10;
+			const std::uint32_t structCode = static_cast<std::uint32_t>(typePtr->GetReference().Code) - static_cast<std::uint32_t>(TypeCode::Structure);
 			const Structure structure = interpreter.GetByteFile().GetStructures()[structCode];
 			const std::uint32_t fieldCount = static_cast<std::uint32_t>(structure->Fields.size());
 
@@ -222,7 +222,7 @@ namespace svm {
 			const ManagedHeapInfo* const info = static_cast<const ManagedHeapInfo*>(address);
 			const Type* const typePtr = reinterpret_cast<const Type*>(info + 1);
 
-			const std::uint32_t structCode = static_cast<std::uint32_t>(typePtr->GetReference().Code) - 10;
+			const std::uint32_t structCode = static_cast<std::uint32_t>(typePtr->GetReference().Code) - static_cast<std::uint32_t>(TypeCode::Structure);
 			const Structure structure = structures[structCode];
 			const std::uint32_t fieldCount = static_cast<std::uint32_t>(structure->Fields.size());
 

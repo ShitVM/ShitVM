@@ -112,7 +112,7 @@ namespace svm {
 			const auto fieldCount = ReadFile<std::uint32_t>();
 			structures[i].Fields.resize(fieldCount);
 			structures[i].Type.Name = "structure" + std::to_string(i);
-			structures[i].Type.Code = static_cast<TypeCode>(i + 10);
+			structures[i].Type.Code = static_cast<TypeCode>(i + static_cast<std::uint32_t>(TypeCode::Structure));
 
 			for (std::uint32_t j = 0; j < fieldCount; ++j) {
 				Field& field = structures[i].Fields[j];
@@ -183,7 +183,7 @@ namespace svm {
 				std::ostringstream oss;
 				oss << "Failed to parse the file. Detected circular reference in the structures([" << i << ']';
 				for (auto iter = cycle.rbegin(); iter < cycle.rend(); ++iter) {
-					oss << "-[" << static_cast<std::uint32_t>((*iter)->Type.Code) - 10 << ']';
+					oss << "-[" << static_cast<std::uint32_t>((*iter)->Type.Code) - static_cast<std::uint32_t>(TypeCode::Structure) << ']';
 				}
 				oss << ").";
 
@@ -201,7 +201,7 @@ namespace svm {
 		for (std::uint32_t i = 0; i < fieldCount; ++i) {
 			const Type type = structures[node].Fields[i].Type;
 			if (!type.IsStructure()) continue;
-			else if (const auto index = static_cast<std::uint32_t>(type->Code) - 10;
+			else if (const auto index = static_cast<std::uint32_t>(type->Code) - static_cast<std::uint32_t>(TypeCode::Structure);
 					 FindCycle(structures, visited, cycle, index)) {
 				cycle.push_back(structures[index]);
 				return true;
@@ -227,7 +227,7 @@ namespace svm {
 			const Type type = field.Type;
 			std::size_t size = type->Size;
 			if (type.IsStructure()) {
-				size = CalcSize(structures, static_cast<std::uint32_t>(type->Code) - 10);
+				size = CalcSize(structures, static_cast<std::uint32_t>(type->Code) - static_cast<std::uint32_t>(TypeCode::Structure));
 			}
 
 			if (field.IsArray()) {

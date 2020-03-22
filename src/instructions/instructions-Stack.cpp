@@ -40,7 +40,7 @@ namespace svm {
 				info.Count = field.Count;
 				InitArray(info, pointer);
 			} else if (field.Type.IsStructure()) {
-				InitStructure(structures, structures[static_cast<std::uint32_t>(field.Type->Code) - 10], pointer);
+				InitStructure(structures, structures[static_cast<std::uint32_t>(field.Type->Code) - static_cast<std::uint32_t>(TypeCode::Structure)], pointer);
 			} else {
 				*pointer = field.Type;
 			}
@@ -203,7 +203,7 @@ namespace svm {
 			const std::size_t size = CalcArraySize(reinterpret_cast<const ArrayObject*>(typePtr));
 
 			if (reinterpret_cast<ArrayObject&>(varType).Count != reinterpret_cast<const ArrayObject*>(typePtr)->Count) {
-				OccurException(SVM_IEC_ARRAY_LENGTH_DIFFERENTLENGTH);
+				OccurException(SVM_IEC_ARRAY_COUNT_DIFFERENTCOUNT);
 				return;
 			}
 
@@ -318,7 +318,7 @@ namespace svm {
 				OccurException(SVM_IEC_STACK_DIFFERENTTYPE);
 				return;
 			} else if (m_Stack.Get<ArrayObject>(m_Stack.GetUsedSize() - size)->Count != reinterpret_cast<ArrayObject*>(firstTypePtr)->Count) {
-				OccurException(SVM_IEC_ARRAY_LENGTH_DIFFERENTLENGTH);
+				OccurException(SVM_IEC_ARRAY_COUNT_DIFFERENTCOUNT);
 				return;
 			}
 
@@ -369,7 +369,7 @@ namespace svm {
 		}
 
 		if (info.Count == 0) {
-			OccurException(SVM_IEC_ARRAY_LENGTH_CANNOTBEZERO);
+			OccurException(SVM_IEC_ARRAY_COUNT_CANNOTBEZERO);
 			return false;
 		}
 
@@ -382,7 +382,7 @@ namespace svm {
 		const Structures& structures = m_ByteFile.GetStructures();
 		Structure structure;
 		if (info.ElementType.IsStructure()) {
-			structure = structures[static_cast<std::uint32_t>(info.ElementType->Code) - 10];
+			structure = structures[static_cast<std::uint32_t>(info.ElementType->Code) - static_cast<std::uint32_t>(TypeCode::Structure)];
 		}
 
 		*type = ArrayType;

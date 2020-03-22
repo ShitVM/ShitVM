@@ -62,7 +62,7 @@ namespace svm {
 		case TypeCode::GCPointer: return GCPointerType;
 
 		default:
-			if (code >= TypeCode::Structure) return structures[static_cast<std::uint8_t>(code) - static_cast<std::uint8_t>(TypeCode::Structure)].Type;
+			if (code >= TypeCode::Structure) return structures[static_cast<std::uint32_t>(code) - static_cast<std::uint32_t>(TypeCode::Structure)].Type;
 			else return NoneType;
 		}
 	}
@@ -75,7 +75,7 @@ namespace svm {
 		case TypeCode::GCPointer: return GCPointerType;
 
 		default:
-			if (code >= TypeCode::Structure) return structures[static_cast<std::uint8_t>(code) - static_cast<std::uint8_t>(TypeCode::Structure)]->Type;
+			if (code >= TypeCode::Structure) return structures[static_cast<std::uint32_t>(code) - static_cast<std::uint32_t>(TypeCode::Structure)]->Type;
 			else return NoneType;
 		}
 	}

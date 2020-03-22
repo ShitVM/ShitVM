@@ -105,7 +105,7 @@ namespace svm {
 
 		ArrayObject* const target = reinterpret_cast<ArrayObject*>(targetType);
 		if (target->Count != reinterpret_cast<const ArrayObject*>(rhsTypePtr)->Count) {
-			OccurException(SVM_IEC_ARRAY_LENGTH_DIFFERENTLENGTH);
+			OccurException(SVM_IEC_ARRAY_COUNT_DIFFERENTCOUNT);
 			return;
 		}
 
@@ -146,7 +146,7 @@ namespace svm {
 		}
 
 		const Structure structure =
-			m_ByteFile.GetStructures()[static_cast<std::uint32_t>(targetTypePtr->GetReference().Code) - 10];
+			m_ByteFile.GetStructures()[static_cast<std::uint32_t>(targetTypePtr->GetReference().Code) - static_cast<std::uint32_t>(TypeCode::Structure)];
 		if (operand >= structure->Fields.size()) {
 			m_Stack.Expand(sizeof(*ptr));
 			OccurException(SVM_IEC_STRUCTURE_FIELD_OUTOFRANGE);
@@ -243,7 +243,7 @@ namespace svm {
 	SVM_NOINLINE_FOR_PROFILING void Interpreter::InterpretNew(std::uint32_t operand) {
 		const Structures& structures = m_ByteFile.GetStructures();
 
-		if (operand >= structures.GetStructureCount() + 10) {
+		if (operand >= structures.GetStructureCount() + static_cast<std::uint32_t>(TypeCode::Structure)) {
 			OccurException(SVM_IEC_TYPE_OUTOFRANGE);
 			return;
 		}
@@ -262,7 +262,7 @@ namespace svm {
 		else if (type.IsFundamentalType()) {
 			*static_cast<Type*>(address) = type;
 		} else if (type.IsStructure()) {
-			InitStructure(structures, structures[operand - 10], static_cast<Type*>(address));
+			InitStructure(structures, structures[operand - static_cast<std::uint32_t>(TypeCode::Structure)], static_cast<Type*>(address));
 		}
 	}
 	SVM_NOINLINE_FOR_PROFILING void Interpreter::InterpretDelete() noexcept {
@@ -296,7 +296,7 @@ namespace svm {
 	SVM_NOINLINE_FOR_PROFILING void Interpreter::InterpretGCNew(std::uint32_t operand) {
 		const Structures& structures = m_ByteFile.GetStructures();
 
-		if (operand >= structures.GetStructureCount() + 10) {
+		if (operand >= structures.GetStructureCount() + static_cast<std::uint32_t>(TypeCode::Structure)) {
 			OccurException(SVM_IEC_TYPE_OUTOFRANGE);
 			return;
 		}
@@ -316,7 +316,7 @@ namespace svm {
 		else if (type.IsFundamentalType()) {
 			*addressReal = type;
 		} else if (type.IsStructure()) {
-			InitStructure(structures, structures[operand - 10], addressReal);
+			InitStructure(structures, structures[operand - static_cast<std::uint32_t>(TypeCode::Structure)], addressReal);
 		}
 	}
 }

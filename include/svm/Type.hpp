@@ -20,7 +20,7 @@ namespace svm {
 		Pointer,
 		GCPointer,
 		Array,
-		Structure,
+		Structure = 20,
 	};
 
 	class TypeInfo final {

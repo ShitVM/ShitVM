@@ -160,7 +160,7 @@ namespace svm {
 			}
 			return;
 		} else if (type.IsStructure()) {
-			const Structure structure = m_ByteFile.GetStructures()[static_cast<std::uint32_t>(type->Code) - 10];
+			const Structure structure = m_ByteFile.GetStructures()[static_cast<std::uint32_t>(type->Code) - static_cast<std::uint32_t>(TypeCode::Structure)];
 			const std::uint32_t fieldCount = static_cast<std::uint32_t>(structure->Fields.size());
 
 			stream << type->Name << '(';
