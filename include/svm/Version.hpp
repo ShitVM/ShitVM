@@ -1,10 +1,10 @@
 #pragma once
 
 namespace svm {
-#define SVM_VER_STRING "0.3.1"
+#define SVM_VER_STRING "0.4.0"
 #define SVM_VER_MAJOR 0
-#define SVM_VER_MINOR 3
-#define SVM_VER_PATCH 1
+#define SVM_VER_MINOR 4
+#define SVM_VER_PATCH 0
 #define SVM_VER_IDENTIFIER ""
 #define SVM_VER_TAG ""
 
