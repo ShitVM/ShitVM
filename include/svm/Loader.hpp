@@ -1,7 +1,7 @@
 #pragma once
 
 #include <svm/Module.hpp>
-#include <svm/VirtualModule.hpp>
+#include <svm/virtual/VirtualModule.hpp>
 
 #include <string>
 #include <unordered_map>

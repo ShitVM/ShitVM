@@ -1,7 +1,7 @@
 #pragma once
 
 #include <svm/ByteFile.hpp>
-#include <svm/VirtualModule.hpp>
+#include <svm/virtual/VirtualModule.hpp>
 #include <svm/detail/ReferenceWrapper.hpp>
 
 #include <variant>
