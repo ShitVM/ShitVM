@@ -13,10 +13,14 @@ namespace svm {
 
 	public:
 		ModuleInfo() noexcept = default;
+		ModuleInfo(ByteFile&& byteFile) noexcept;
+		ModuleInfo(VirtualModule&& virtualModule) noexcept;
 		ModuleInfo(ModuleInfo&& moduleInfo) noexcept;
 		~ModuleInfo() = default;
 
 	public:
+		ModuleInfo& operator=(ByteFile&& byteFile) noexcept;
+		ModuleInfo& operator=(VirtualModule&& virtualModule) noexcept;
 		ModuleInfo& operator=(ModuleInfo&& moduleInfo) noexcept;
 		bool operator==(const ModuleInfo&) = delete;
 		bool operator!=(const ModuleInfo&) = delete;
