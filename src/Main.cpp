@@ -75,7 +75,7 @@ int main(int argc, char* argv[]) {
 			using namespace svm;
 
 			if (frame.Function == nullptr) {
-				std::cout << "\tentrypoint\n";
+				std::cout << "\tentrypoint";
 			} else {
 				const auto iter = std::find_if(funcs.begin(), funcs.end(), [&frame](const auto& func) {
 					return &func == frame.Function;
@@ -85,7 +85,9 @@ int main(int argc, char* argv[]) {
 			}
 			std::cout << '(' << frame.Caller
 					  << '(' << QWord(frame.Instructions->GetInstruction(frame.Caller).Offset) << "))";
-			if (frame.Function != nullptr) {
+			if (frame.Function == nullptr) {
+				std::cout << '\n';
+			} else {
 				std::cout << " at\n";
 			}
 		}
