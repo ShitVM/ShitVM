@@ -1,6 +1,7 @@
 #include <svm/virtual/VirtualObject.hpp>
 
 #include <cassert>
+#include <cmath>
 
 namespace svm {
 	const detail::VirtualNullObject VNull;
@@ -36,16 +37,84 @@ namespace svm {
 	}
 	VirtualObject& VirtualObject::operator=(const VirtualObject& object) noexcept {
 		std::visit(detail::Overload{
-			[this](std::monostate) {
+			[this](std::monostate) noexcept {
 				m_Object = std::monostate();
 			},
-			[this](const auto& object) {
+			[this](const auto& object) noexcept {
 				m_Object = GetObject(object);
 			}
 		}, object.m_Object);
 		return *this;
 	}
+	bool VirtualObject::operator==(const VirtualObject& object) const noexcept {
+		return Compare(*this, object) == 0;
+	}
+	bool VirtualObject::operator!=(const VirtualObject& object) const noexcept {
+		return Compare(*this, object) != 0;
+	}
+	bool VirtualObject::operator>(const VirtualObject& object) const noexcept {
+		return Compare(*this, object) == 1;
+	}
+	bool VirtualObject::operator>=(const VirtualObject& object) const noexcept {
+		return Compare(*this, object) != -1;
+	}
+	bool VirtualObject::operator<(const VirtualObject& object) const noexcept {
+		return Compare(*this, object) == -1;
+	}
+	bool VirtualObject::operator<=(const VirtualObject& object) const noexcept {
+		return Compare(*this, object) != 1;
+	}
+	VirtualObject VirtualObject::operator+(const VirtualObject& rhs) const noexcept {
+		return ArithmeticOperation(rhs, [](auto&& lhs, auto&& rhs) {
+			return lhs + rhs;
+		});
+	}
+	VirtualObject VirtualObject::operator-(const VirtualObject& rhs) const noexcept {
+		return ArithmeticOperation(rhs, [](auto&& lhs, auto&& rhs) {
+			return lhs - rhs;
+		});
+	}
+	VirtualObject VirtualObject::operator*(const VirtualObject& rhs) const noexcept {
+		return ArithmeticOperation(rhs, [](auto&& lhs, auto&& rhs) {
+			return lhs * rhs;
+		});
+	}
+	VirtualObject VirtualObject::operator/(const VirtualObject& rhs) const noexcept {
+		return ArithmeticOperation(rhs, [](auto&& lhs, auto&& rhs) {
+			return lhs / rhs;
+		});
+	}
+	VirtualObject VirtualObject::operator%(const VirtualObject& rhs) const noexcept {
+		return ArithmeticOperation(rhs, detail::Overload{
+			[](double lhs, double rhs) {
+				return std::fmod(lhs, rhs);
+			},
+			[](auto&& lhs, auto&& rhs) {
+				return lhs % rhs;
+			}
+		});
+	}
+	VirtualObject VirtualObject::operator+() const noexcept {
+		return VirtualObject(*this);
+	}
+	VirtualObject VirtualObject::operator-() const noexcept {
+		if (IsEmpty()) return VNULL;
 
+		return std::visit(detail::Overload{
+			[](const PointerObject& object) noexcept -> VirtualObject { return object; },
+			[](const GCPointerObject& object) noexcept -> VirtualObject { return object; },
+			[](const auto& object) noexcept -> VirtualObject {
+				return -static_cast<detail::MakeSignedType<decltype(object.Value)>>(object.Value);
+			}
+		}, std::visit(detail::Overload{
+			[](std::monostate) noexcept -> ObjectVariant {
+				return IntObject();
+			},
+			[](const auto& object) noexcept -> ObjectVariant {
+				return GetObject(object);
+			}
+		}, m_Object));
+	}
 	VirtualObject VirtualObject::operator&() const noexcept {
 		if (std::holds_alternative<std::monostate>(m_Object)) return VNULL;
 		else if (std::holds_alternative<Object*>(m_Object)) return PointerObject(std::get<Object*>(m_Object));
@@ -163,5 +232,63 @@ namespace svm {
 	}
 	VirtualObject::ObjectVariant VirtualObject::GetObject(ManagedHeapInfo* reference) noexcept {
 		return GetObject(reinterpret_cast<Object*>(reference + 1));
+	}
+
+	bool VirtualObject::MakeSameType(ObjectVariant& lhs, ObjectVariant& rhs) noexcept {
+		if (lhs.index() == rhs.index()) return true;
+		else if (lhs.index() >= 3 && rhs.index() < 3 ||
+				 lhs.index() < 3 && rhs.index() >= 3) return false;
+
+		if (lhs.index() < 3) {
+			ObjectVariant& target = (lhs.index() > rhs.index() ? rhs : lhs);
+			ObjectVariant& other = (lhs.index() > rhs.index() ? lhs : rhs);
+			
+			while (target.index() != other.index()) {
+				ArithmeticPromotion(target);
+			}
+		} else {
+			ObjectVariant& gcPtr = (lhs.index() == 4 ? lhs : rhs);
+			gcPtr = PointerObject(static_cast<ManagedHeapInfo*>(std::get<PointerObject>(gcPtr).Value) + 1);
+		}
+
+		return true;
+	}
+	void VirtualObject::ArithmeticPromotion(ObjectVariant& target) noexcept {
+		switch (target.index()) {
+		case 0: target = LongObject(std::get<IntObject>(target).Value); break;
+		case 1: target = DoubleObject(static_cast<double>(std::get<LongObject>(target).Value)); break;
+		}
+	}
+	int VirtualObject::Compare(const VirtualObject& lhs, const VirtualObject& rhs) noexcept {
+		if (lhs.IsEmpty() && rhs.IsEmpty()) return 0;
+		else if (lhs.IsEmpty() || rhs.IsEmpty()) return 2;
+
+		ObjectVariant lhsObject = std::visit(detail::Overload{
+			[](std::monostate) noexcept -> ObjectVariant {
+				return IntObject();
+			},
+			[](const auto& object) noexcept -> ObjectVariant {
+				return GetObject(object);
+			}
+		}, lhs.m_Object);
+		ObjectVariant rhsObject = std::visit(detail::Overload{
+			[](std::monostate) noexcept -> ObjectVariant {
+				return IntObject();
+			},
+			[](const auto& object) noexcept -> ObjectVariant {
+				return GetObject(object);
+			}
+		}, rhs.m_Object);
+		if (!MakeSameType(lhsObject, rhsObject)) return -2;
+		else return Compare(lhsObject, rhsObject);
+	}
+	int VirtualObject::Compare(ObjectVariant lhs, ObjectVariant rhs) noexcept {
+		switch (lhs.index()) {
+		case 0: return Compare<std::uint32_t>(std::get<IntObject>(lhs).Value, std::get<IntObject>(rhs).Value);
+		case 1: return Compare<std::uint64_t>(std::get<LongObject>(lhs).Value, std::get<LongObject>(rhs).Value);
+		case 2: return Compare<double>(std::get<DoubleObject>(lhs).Value, std::get<DoubleObject>(rhs).Value);
+		case 3: return Compare<Object*>(static_cast<Object*>(std::get<PointerObject>(lhs).Value), static_cast<Object*>(std::get<PointerObject>(rhs).Value));
+		case 4: return Compare<ManagedHeapInfo*>(static_cast<ManagedHeapInfo*>(std::get<GCPointerObject>(lhs).Value), static_cast<ManagedHeapInfo*>(std::get<GCPointerObject>(rhs).Value));
+		}
 	}
 }

@@ -5,7 +5,23 @@
 #include <svm/Type.hpp>
 
 #include <cstdint>
+#include <type_traits>
 #include <variant>
+
+namespace svm::detail {
+	template<typename T, typename = void>
+	struct MakeSigned;
+
+	template<typename T>
+	struct MakeSigned<T, std::enable_if_t<std::is_integral_v<T>>> final : std::make_signed<T> {};
+	template<typename T>
+	struct MakeSigned<T, std::enable_if_t<std::is_floating_point_v<T>>> final {
+		using type = T;
+	};
+
+	template<typename T>
+	using MakeSignedType = typename MakeSigned<T>::type;
+}
 
 namespace svm {
 	namespace detail {
@@ -95,6 +111,15 @@ namespace svm {
 		static ObjectVariant& GetObject(ObjectVariant& object) noexcept;
 		static ObjectVariant GetObject(Object* reference) noexcept;
 		static ObjectVariant GetObject(ManagedHeapInfo* reference) noexcept;
+
+		static bool MakeSameType(ObjectVariant& lhs, ObjectVariant& rhs) noexcept;
+		static void ArithmeticPromotion(ObjectVariant& target) noexcept;
+		static int Compare(const VirtualObject& lhs, const VirtualObject& rhs) noexcept;
+		static int Compare(ObjectVariant lhs, ObjectVariant rhs) noexcept;
+		template<typename T>
+		static int Compare(T lhs, T rhs) noexcept;
+		template<typename F>
+		VirtualObject ArithmeticOperation(const VirtualObject& rhs, F&& function) const noexcept;
 	};
 }
 
