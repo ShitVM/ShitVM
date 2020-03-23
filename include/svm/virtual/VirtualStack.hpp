@@ -28,6 +28,6 @@ namespace svm {
 		bool Push(const VirtualObject& object);
 		bool Pop();
 
-		VirtualObject Parameter(std::uint32_t index) noexcept;
+		VirtualObject Parameter(std::uint16_t index) noexcept;
 	};
 }

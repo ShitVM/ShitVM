@@ -57,9 +57,9 @@ namespace svm {
 		return true;
 	}
 
-	VirtualObject VirtualStack::Parameter(std::uint32_t index) noexcept {
-		index += m_StackFrame->VariableBegin;
-		if (index >= m_LocalVariables->size()) return VNULL;
-		else return m_Stack->Get<Object>((*m_LocalVariables)[index]);
+	VirtualObject VirtualStack::Parameter(std::uint16_t index) noexcept {
+		const std::uint32_t realIndex = index + m_StackFrame->VariableBegin;
+		if (realIndex >= m_LocalVariables->size()) return VNULL;
+		else return m_Stack->Get<Object>((*m_LocalVariables)[realIndex]);
 	}
 }
