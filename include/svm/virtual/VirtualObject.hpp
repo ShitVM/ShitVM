@@ -34,6 +34,8 @@ namespace svm {
 }
 
 namespace svm {
+	class Loader;
+
 	class VirtualObject final {
 	private:
 		using ObjectVariant = std::variant<
@@ -92,13 +94,15 @@ namespace svm {
 		bool IsDouble() const noexcept;
 		bool IsPointer() const noexcept;
 		bool IsGCPointer() const noexcept;
-		bool IsArray() const noexcept;
-		bool IsStructure() const noexcept;
+		ArrayObject* IsArray() const noexcept;
+		StructureObject* IsStructure() const noexcept;
 		std::uint32_t ToInt() const noexcept;
 		std::uint64_t ToLong() const noexcept;
 		double ToDouble() const noexcept;
 		Object* ToPointer() const noexcept;
 		ManagedHeapInfo* ToGCPointer() const noexcept;
+
+		VirtualObject Field(const Loader& loader, std::uint32_t index) const noexcept;
 
 	private:
 		template<typename T, typename F>

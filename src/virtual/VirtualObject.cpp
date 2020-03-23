@@ -1,5 +1,8 @@
 #include <svm/virtual/VirtualObject.hpp>
 
+#include <svm/Loader.hpp>
+#include <svm/Structure.hpp>
+
 #include <cassert>
 #include <cmath>
 
@@ -144,6 +147,14 @@ namespace svm {
 				}
 			}, m_Object));
 	}
+	VirtualObject VirtualObject::operator[](std::uint64_t index) const noexcept {
+		ArrayObject* const array = IsArray();
+		if (!array) return VNULL;
+		else if (index >= array->Count) return VNULL;
+		
+		Object* const firstElement = static_cast<Object*>(array + 1);
+		return reinterpret_cast<Object*>(reinterpret_cast<std::uint8_t*>(firstElement) + index * firstElement->GetType()->Size);
+	}
 
 	Type VirtualObject::GetType() const noexcept {
 		if (std::holds_alternative<std::monostate>(m_Object)) return NoneType;
@@ -177,6 +188,20 @@ namespace svm {
 	}
 	bool VirtualObject::IsGCPointer() const noexcept {
 		return GetType() == GCPointerType;
+	}
+	ArrayObject* VirtualObject::IsArray() const noexcept {
+		if (!IsPointer() && !IsGCPointer()) return nullptr;
+
+		Object* const array = ToPointer();
+		if (array->GetType().IsArray()) return static_cast<ArrayObject*>(array);
+		else return nullptr;
+	}
+	StructureObject* VirtualObject::IsStructure() const noexcept {
+		if (!IsPointer() && !IsGCPointer()) return nullptr;
+
+		Object* const structure = ToPointer();
+		if (structure->GetType().IsStructure()) return static_cast<StructureObject*>(structure);
+		else return nullptr;
 	}
 
 	std::uint32_t VirtualObject::ToInt() const noexcept {
@@ -213,6 +238,14 @@ namespace svm {
 				return reinterpret_cast<ManagedHeapInfo*>(static_cast<std::uintptr_t>(object.Value));
 			}
 		});
+	}
+
+	VirtualObject VirtualObject::Field(const Loader& loader, std::uint32_t index) const noexcept {
+		StructureObject* const structure = IsStructure();
+		if (!structure) return VNULL;
+
+		// TODO
+		return VNULL;
 	}
 
 	const VirtualObject::ObjectVariant& VirtualObject::GetObject(const ObjectVariant& object) noexcept {
