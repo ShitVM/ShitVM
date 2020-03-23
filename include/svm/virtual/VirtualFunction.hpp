@@ -6,6 +6,7 @@
 #include <functional>
 #include <type_traits>
 #include <utility>
+#include <vector>
 
 namespace svm {
 	class VirtualFunction final {
@@ -32,6 +33,8 @@ namespace svm {
 		void Clear() noexcept;
 		bool IsEmpty() const noexcept;
 	};
+
+	using VirtualFunctions = std::vector<VirtualFunction>;
 }
 
 #include "detail/impl/VirtualFunction.hpp"

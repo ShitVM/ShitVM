@@ -32,6 +32,6 @@ namespace svm {
 	}
 	VirtualModule Loader::Create(const std::string& virtualPath) {
 		ModuleInfo& module = (m_Modules[detail::fs::absolute(virtualPath).string()] = VirtualModule());
-		return std::get<VirtualModule>(module.Module);
+		return std::move(std::get<VirtualModule>(module.Module));
 	}
 }
