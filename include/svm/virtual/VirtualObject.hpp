@@ -35,8 +35,11 @@ namespace svm {
 
 namespace svm {
 	class Loader;
+	class VirtualStack;
 
 	class VirtualObject final {
+		friend class VirtualStack;
+
 	private:
 		using ObjectVariant = std::variant<
 			IntObject, LongObject,
