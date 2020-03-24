@@ -10,6 +10,7 @@ namespace svm {
 	class Loader final {
 	private:
 		std::vector<ModuleInfo> m_Modules;
+		std::uint32_t m_StructureCodeOffset = 0;
 
 	public:
 		Loader() = default;
@@ -25,6 +26,7 @@ namespace svm {
 		void Clear() noexcept;
 		Module Load(const std::string& path);
 		VirtualModule& Create(const std::string& virtualPath);
+		void LoadDependencies(Module module);
 
 		Module GetModule(std::uint32_t index) const noexcept;
 		Module GetModule(const std::string& path) const noexcept;

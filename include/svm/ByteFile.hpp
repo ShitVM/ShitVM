@@ -86,6 +86,8 @@ namespace svm {
 		void SetEntryPoint(Instructions&& newEntryPoint) noexcept;
 		const Mappings& GetMappings() const noexcept;
 		void SetMappings(Mappings&& newMappings) noexcept;
+
+		void UpdateStructureCodes(std::uint32_t offset) noexcept;
 	};
 
 	std::ostream& operator<<(std::ostream& stream, const ByteFile& byteFile);

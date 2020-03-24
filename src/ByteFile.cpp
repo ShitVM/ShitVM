@@ -119,6 +119,12 @@ namespace svm {
 		m_Mappings = std::move(newMappings);
 	}
 
+	void ByteFile::UpdateStructureCodes(std::uint32_t offset) noexcept {
+		for (std::uint32_t i = 0; i < m_Structures.GetStructureCount(); ++i) {
+			const_cast<StructureInfo&>(*m_Structures[i]).Type.Code = static_cast<TypeCode>(static_cast<std::uint32_t>(m_Structures[i]->Type.Code) + offset);
+		}
+	}
+
 	std::ostream& operator<<(std::ostream& stream, const ByteFile& byteFile) {
 		const std::string defIndent = detail::MakeTabs(stream);
 
