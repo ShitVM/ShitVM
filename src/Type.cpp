@@ -1,5 +1,6 @@
 #include <svm/Type.hpp>
 
+#include <svm/Interpreter.hpp>
 #include <svm/Object.hpp>
 #include <svm/Structure.hpp>
 
@@ -66,17 +67,14 @@ namespace svm {
 			else return NoneType;
 		}
 	}
-	Type GetTypeFromTypeCode(const Structures& structures, TypeCode code) noexcept {
+	Type GetTypeFromTypeCode(const Interpreter& interpreter, TypeCode code) noexcept {
 		switch (code) {
 		case TypeCode::Int: return IntType;
 		case TypeCode::Long: return LongType;
 		case TypeCode::Double: return DoubleType;
 		case TypeCode::Pointer: return PointerType;
 		case TypeCode::GCPointer: return GCPointerType;
-
-		default:
-			if (code >= TypeCode::Structure) return structures[static_cast<std::uint32_t>(code) - static_cast<std::uint32_t>(TypeCode::Structure)]->Type;
-			else return NoneType;
+		default: return interpreter.GetStructure(code)->Type;
 		}
 	}
 }

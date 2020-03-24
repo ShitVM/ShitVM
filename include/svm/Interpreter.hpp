@@ -52,6 +52,7 @@ namespace svm {
 		StackFrame m_StackFrame;
 		std::size_t m_Depth = 0;
 
+		std::uint32_t m_StructureCodeOffset = 0;
 		std::vector<std::size_t> m_LocalVariables;
 
 		Heap m_Heap;
@@ -88,8 +89,11 @@ namespace svm {
 		std::vector<StackFrame> GetCallStacks() const;
 
 	public:
-		Structure GetStructure(std::uint32_t index) const noexcept;
+		Structure GetStructure(Type type) const noexcept;
+		Structure GetStructure(TypeCode code) const noexcept;
+		std::uint32_t GetStructureCount() const noexcept;
 		std::variant<std::monostate, const Function*, const VirtualFunction*> GetFunction(std::uint32_t index) const noexcept;
+		std::uint32_t GetFunctionCount() const noexcept;
 		const Type* GetLocalVariable(std::uint32_t index) const noexcept;
 		Type* GetLocalVariable(std::uint32_t index) noexcept;
 		std::uint32_t GetLocalVariableCount() const noexcept;
@@ -104,7 +108,7 @@ namespace svm {
 
 	private: // Stack
 		void PushStructure(std::uint32_t code) noexcept;
-		void InitStructure(const Structures& structures, Structure structure, Type* type) noexcept;
+		void InitStructure(Structure structure, Type* type) noexcept;
 		void CopyStructure(const Type& type) noexcept;
 		void CopyStructure(const Type& from, Type& to) noexcept;
 

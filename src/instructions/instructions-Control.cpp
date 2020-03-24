@@ -2,6 +2,7 @@
 
 #include <svm/Macro.hpp>
 #include <svm/detail/InterpreterExceptionCode.hpp>
+#include <svm/virtual/VirtualStack.hpp>
 
 #include <cstring>
 
@@ -112,9 +113,7 @@ namespace svm {
 		JumpCondition<NotEqualOne>(operand);
 	}
 	SVM_NOINLINE_FOR_PROFILING void Interpreter::InterpretCall(std::uint32_t operand) {
-		const Functions& functions = m_ByteFile.GetFunctions();
-
-		if (operand >= functions.size()) {
+		if (operand >= GetFunctionCount()) {
 			OccurException(SVM_IEC_FUNCTION_OUTOFRANGE);
 			return;
 		} else if (!m_Stack.Push(m_StackFrame)) {
@@ -123,8 +122,13 @@ namespace svm {
 		}
 
 		m_StackFrame = { NoneType, m_Stack.GetUsedSize(), static_cast<std::uint32_t>(m_LocalVariables.size()) };
-		m_StackFrame.Function = &functions[operand];
-		m_StackFrame.Instructions = &m_StackFrame.Function->GetInstructions();
+
+		const auto func = GetFunction(operand);
+		if (std::holds_alternative<const Function*>(func)) {
+			m_StackFrame.Function = std::get<const Function*>(func);
+			m_StackFrame.Instructions = &m_StackFrame.Function->GetInstructions();
+			m_StackFrame.Caller = static_cast<std::uint64_t>(-1);
+		}
 
 		const std::uint16_t arity = m_StackFrame.Function->GetArity();
 		std::size_t stackOffset = m_Stack.GetUsedSize() - sizeof(m_StackFrame);
@@ -151,8 +155,12 @@ namespace svm {
 			}
 		}
 
-		m_StackFrame.Caller = static_cast<std::uint64_t>(-1);
 		++m_Depth;
+
+		if (std::holds_alternative<const VirtualFunction*>(func)) {
+			(*std::get<const VirtualFunction*>(func))({ &m_Stack, &m_StackFrame, &m_LocalVariables });
+			--m_Depth;
+		}
 	}
 	SVM_NOINLINE_FOR_PROFILING void Interpreter::InterpretRet() noexcept {
 		if (m_Depth == 0) {

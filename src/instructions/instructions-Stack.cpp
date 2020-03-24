@@ -8,21 +8,20 @@
 
 namespace svm {
 	SVM_NOINLINE_FOR_PROFILING void Interpreter::PushStructure(std::uint32_t code) noexcept {
-		const Structures& structures = m_ByteFile.GetStructures();
-		if (code >= structures.GetStructureCount()) {
+		if (code >= GetStructureCount()) {
 			OccurException(SVM_IEC_CONSTANTPOOL_OUTOFRANGE);
 			return;
 		}
 
-		const Structure structure = structures[code];
+		const Structure structure = GetStructure(static_cast<TypeCode>(code));
 		if (!m_Stack.Expand(structure->Type.Size)) {
 			OccurException(SVM_IEC_STACK_OVERFLOW);
 			return;
 		}
 
-		InitStructure(structures, structure, m_Stack.GetTopType());
+		InitStructure(structure, m_Stack.GetTopType());
 	}
-	SVM_NOINLINE_FOR_PROFILING void Interpreter::InitStructure(const Structures& structures, Structure structure, Type* type) noexcept {
+	SVM_NOINLINE_FOR_PROFILING void Interpreter::InitStructure(Structure structure, Type* type) noexcept {
 		const std::uint32_t fieldCount = static_cast<std::uint32_t>(structure->Fields.size());
 
 		*type = structure->Type;
@@ -40,7 +39,7 @@ namespace svm {
 				info.Count = field.Count;
 				InitArray(info, pointer);
 			} else if (field.Type.IsStructure()) {
-				InitStructure(structures, structures[static_cast<std::uint32_t>(field.Type->Code) - static_cast<std::uint32_t>(TypeCode::Structure)], pointer);
+				InitStructure(GetStructure(field.Type), pointer);
 			} else {
 				*pointer = field.Type;
 			}
@@ -78,11 +77,9 @@ namespace svm {
 
 namespace svm {
 	SVM_NOINLINE_FOR_PROFILING void Interpreter::InterpretPush(std::uint32_t operand) noexcept {
-		const ConstantPool& constantPool = m_ByteFile.GetConstantPool();
-		const std::uint32_t constCount = constantPool.GetAllCount();
-
-		if (operand >= constCount) {
-			PushStructure(operand - constCount);
+		const ConstantPool& constantPool = m_Program->GetConstantPool();
+		if (operand >= constantPool.GetAllCount()) {
+			PushStructure(operand);
 			return;
 		}
 
@@ -344,8 +341,7 @@ namespace svm {
 		}
 		operand &= 0x7FFFFFFF;
 
-		const Structures& structures = m_ByteFile.GetStructures();
-		info.ElementType = GetTypeFromTypeCode(structures, static_cast<TypeCode>(operand));
+		info.ElementType = GetTypeFromTypeCode(*this, static_cast<TypeCode>(operand));
 		if (info.ElementType == NoneType) {
 			OccurException(SVM_IEC_TYPE_OUTOFRANGE);
 			return false;
@@ -379,10 +375,9 @@ namespace svm {
 	SVM_NOINLINE_FOR_PROFILING void Interpreter::InitArray(const detail::ArrayInfo& info, Type* type) noexcept {
 		std::memset(type, 0, info.Size);
 
-		const Structures& structures = m_ByteFile.GetStructures();
 		Structure structure;
 		if (info.ElementType.IsStructure()) {
-			structure = structures[static_cast<std::uint32_t>(info.ElementType->Code) - static_cast<std::uint32_t>(TypeCode::Structure)];
+			structure = GetStructure(info.ElementType);
 		}
 
 		*type = ArrayType;
@@ -391,7 +386,7 @@ namespace svm {
 
 		for (std::uint64_t i = 0; i < info.Count; ++i) {
 			if (info.ElementType.IsStructure()) {
-				InitStructure(structures, structure, type);
+				InitStructure(structure, type);
 			} else {
 				*type = info.ElementType;
 			}

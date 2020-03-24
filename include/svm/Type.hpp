@@ -44,7 +44,7 @@ namespace svm {
 
 namespace svm {
 	class StructureInfo;
-	class Structures;
+	class Interpreter;
 
 	class Type final : public detail::ReferenceWrapper<TypeInfo> {
 	public:
@@ -66,5 +66,5 @@ namespace svm {
 	extern const Type ArrayType;
 
 	Type GetTypeFromTypeCode(const std::vector<StructureInfo>& structures, TypeCode code) noexcept;
-	Type GetTypeFromTypeCode(const Structures& structures, TypeCode code) noexcept;
+	Type GetTypeFromTypeCode(const Interpreter& interpreter, TypeCode code) noexcept;
 }
