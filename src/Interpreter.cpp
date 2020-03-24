@@ -6,18 +6,19 @@
 #include <utility>
 
 namespace svm {
-	Interpreter::Interpreter(ByteFile&& byteFile) noexcept
-		: m_ByteFile(std::move(byteFile)) {
-		m_StackFrame.Instructions = &m_ByteFile.GetEntryPoint();
+	Interpreter::Interpreter(Loader&& loader, Module program) noexcept
+		: m_Loader(std::move(loader)), m_Program(program) {
+		m_StackFrame.Instructions = &std::get<ByteFile>(program->Module).GetEntryPoint();
 	}
 	Interpreter::Interpreter(Interpreter&& interpreter) noexcept
-		: m_ByteFile(std::move(interpreter.m_ByteFile)), m_Exception(std::move(interpreter.m_Exception)),
+		: m_Loader(std::move(interpreter.m_Loader)), m_Program(interpreter.m_Program), m_Exception(std::move(interpreter.m_Exception)),
 		m_Stack(std::move(interpreter.m_Stack)), m_StackFrame(interpreter.m_StackFrame), m_Depth(interpreter.m_Depth),
 		m_LocalVariables(std::move(interpreter.m_LocalVariables)),
 		m_Heap(std::move(interpreter.m_Heap)) {}
 
 	Interpreter& Interpreter::operator=(Interpreter&& interpreter) noexcept {
-		m_ByteFile = std::move(interpreter.m_ByteFile);
+		m_Loader = std::move(interpreter.m_Loader);
+		m_Program = interpreter.m_Program;
 		m_Exception = std::move(interpreter.m_Exception);
 
 		m_Stack = std::move(interpreter.m_Stack);
@@ -32,7 +33,7 @@ namespace svm {
 	}
 
 	void Interpreter::Clear() noexcept {
-		m_ByteFile.Clear();
+		m_Loader.Clear();
 		m_Exception.reset();
 
 		m_Stack.Deallocate();
@@ -43,12 +44,10 @@ namespace svm {
 
 		m_Heap.Deallocate();
 	}
-	void Interpreter::Load(ByteFile&& byteFile) noexcept {
-		m_ByteFile = std::move(byteFile);
-		m_StackFrame.Instructions = &m_ByteFile.GetEntryPoint();
-	}
-	const ByteFile& Interpreter::GetByteFile() const noexcept {
-		return m_ByteFile;
+	void Interpreter::Load(Loader&& loader, Module program) noexcept {
+		m_Loader = std::move(loader);
+		m_Program = program;
+		m_StackFrame.Instructions = &std::get<ByteFile>(program->Module).GetEntryPoint();
 	}
 
 	void Interpreter::AllocateStack(std::size_t size) {

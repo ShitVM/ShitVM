@@ -4,12 +4,12 @@
 #include <svm/virtual/VirtualModule.hpp>
 
 #include <string>
-#include <unordered_map>
+#include <vector>
 
 namespace svm {
 	class Loader final {
 	private:
-		std::unordered_map<std::string, ModuleInfo> m_Modules;
+		std::vector<ModuleInfo> m_Modules;
 
 	public:
 		Loader() = default;
@@ -24,6 +24,9 @@ namespace svm {
 	public:
 		void Clear() noexcept;
 		Module Load(const std::string& path);
-		VirtualModule Create(const std::string& virtualPath);
+		VirtualModule& Create(const std::string& virtualPath);
+
+		Module GetModule(std::uint32_t index) const noexcept;
+		std::uint32_t GetModuleCount() const noexcept;
 	};
 }

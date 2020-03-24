@@ -6,6 +6,8 @@
 #include <svm/GarbageCollector.hpp>
 #include <svm/Heap.hpp>
 #include <svm/Instruction.hpp>
+#include <svm/Loader.hpp>
+#include <svm/Module.hpp>
 #include <svm/Object.hpp>
 #include <svm/Stack.hpp>
 #include <svm/Type.hpp>
@@ -41,7 +43,8 @@ namespace svm {
 
 	class Interpreter final {
 	private:
-		ByteFile m_ByteFile;
+		Loader m_Loader;
+		Module m_Program;
 		std::optional<InterpreterException> m_Exception;
 
 		Stack m_Stack;
@@ -54,7 +57,7 @@ namespace svm {
 
 	public:
 		Interpreter() noexcept = default;
-		explicit Interpreter(ByteFile&& byteFile) noexcept;
+		Interpreter(Loader&& loader, Module program) noexcept;
 		Interpreter(Interpreter&& interpreter) noexcept;
 		~Interpreter() = default;
 
@@ -65,8 +68,7 @@ namespace svm {
 
 	public:
 		void Clear() noexcept;
-		void Load(ByteFile&& byteFile) noexcept;
-		const ByteFile& GetByteFile() const noexcept;
+		void Load(Loader&& loader, Module program) noexcept;
 
 		void AllocateStack(std::size_t size = 1 * 1024 * 1024);
 		void ReallocateStack(std::size_t newSize);

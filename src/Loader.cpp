@@ -20,18 +20,20 @@ namespace svm {
 	}
 	Module Loader::Load(const std::string& path) {
 		Parser parser;
-		parser.Load(path);
+		parser.Load(detail::fs::absolute(path).string());
 		parser.Parse();
 
-		ModuleInfo& module = (m_Modules[detail::fs::absolute(path).string()] = parser.GetResult());
-		ByteFile& byteFile = std::get<ByteFile>(module.Module);
-
-		// TODO
-
-		return module;
+		return m_Modules.emplace_back(parser.GetResult());
 	}
-	VirtualModule Loader::Create(const std::string& virtualPath) {
-		ModuleInfo& module = (m_Modules[detail::fs::absolute(virtualPath).string()] = VirtualModule());
-		return std::move(std::get<VirtualModule>(module.Module));
+	VirtualModule& Loader::Create(const std::string& virtualPath) {
+		ModuleInfo& module = m_Modules.emplace_back(VirtualModule(detail::fs::absolute(virtualPath).string()));
+		return std::get<VirtualModule>(module.Module);
+	}
+
+	Module Loader::GetModule(std::uint32_t index) const noexcept {
+		return m_Modules[index];
+	}
+	std::uint32_t Loader::GetModuleCount() const noexcept {
+		return static_cast<std::uint32_t>(m_Modules.size());
 	}
 }
