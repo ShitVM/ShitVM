@@ -7,8 +7,8 @@
 
 namespace svm {
 	Interpreter::Interpreter(Loader&& loader, Module program) noexcept
-		: m_Loader(std::move(loader)), m_Program(program) {
-		m_StackFrame.Instructions = &std::get<ByteFile>(program->Module).GetEntryPoint();
+		: m_Loader(std::move(loader)), m_Program(&std::get<ByteFile>(program->Module)) {
+		m_StackFrame.Instructions = &m_Program->GetEntryPoint();
 	}
 	Interpreter::Interpreter(Interpreter&& interpreter) noexcept
 		: m_Loader(std::move(interpreter.m_Loader)), m_Program(interpreter.m_Program), m_Exception(std::move(interpreter.m_Exception)),
@@ -28,7 +28,6 @@ namespace svm {
 		m_LocalVariables = std::move(interpreter.m_LocalVariables);
 
 		m_Heap = std::move(interpreter.m_Heap);
-
 		return *this;
 	}
 
@@ -46,8 +45,8 @@ namespace svm {
 	}
 	void Interpreter::Load(Loader&& loader, Module program) noexcept {
 		m_Loader = std::move(loader);
-		m_Program = program;
-		m_StackFrame.Instructions = &std::get<ByteFile>(program->Module).GetEntryPoint();
+		m_Program = &std::get<ByteFile>(program->Module);
+		m_StackFrame.Instructions = &m_Program->GetEntryPoint();
 	}
 
 	void Interpreter::AllocateStack(std::size_t size) {
@@ -225,6 +224,33 @@ namespace svm {
 		return result;
 	}
 
+	Structure Interpreter::GetStructure(std::uint32_t index) const noexcept {
+		const Structures& structures = m_Program->GetStructures();
+		const std::uint32_t structCount = structures.GetStructureCount();
+		if (index < structCount) return structures[index];
+
+		index -= structCount;
+		const Mappings& mappings = m_Program->GetMappings();
+		if (index >= mappings.GetStructureMappingCount()) return nullptr;
+
+		const Mapping& mapping = mappings.GetStructureMapping(index);
+		return m_Loader.GetModule(mapping.Module)->GetStructure(mapping.Index);
+	}
+	std::variant<std::monostate, const Function*, const VirtualFunction*> Interpreter::GetFunction(std::uint32_t index) const noexcept {
+		const Functions& functions = m_Program->GetFunctions();
+		const std::uint32_t funcCount = static_cast<std::uint32_t>(functions.size());
+		if (index < funcCount) return &functions[index];
+
+		index -= funcCount;
+		const Mappings& mappings = m_Program->GetMappings();
+		if (index >= mappings.GetFunctionMappingCount()) return std::monostate();
+
+		const Mapping& mapping = mappings.GetFunctionMapping(index);
+		const auto result = m_Loader.GetModule(mapping.Module)->GetFunction(mapping.Index);
+
+		if (std::holds_alternative<const Function*>(result)) return std::get<const Function*>(result);
+		else return std::get<const VirtualFunction*>(result);
+	}
 	const Type* Interpreter::GetLocalVariable(std::uint32_t index) const noexcept {
 		return m_Stack.Get<Type>(m_LocalVariables[index]);
 	}

@@ -11,6 +11,7 @@
 #include <svm/Object.hpp>
 #include <svm/Stack.hpp>
 #include <svm/Type.hpp>
+#include <svm/virtual/VirtualFunction.hpp>
 
 #include <cstddef>
 #include <cstdint>
@@ -44,7 +45,7 @@ namespace svm {
 	class Interpreter final {
 	private:
 		Loader m_Loader;
-		Module m_Program;
+		const ByteFile* m_Program = nullptr;
 		std::optional<InterpreterException> m_Exception;
 
 		Stack m_Stack;
@@ -87,6 +88,8 @@ namespace svm {
 		std::vector<StackFrame> GetCallStacks() const;
 
 	public:
+		Structure GetStructure(std::uint32_t index) const noexcept;
+		std::variant<std::monostate, const Function*, const VirtualFunction*> GetFunction(std::uint32_t index) const noexcept;
 		const Type* GetLocalVariable(std::uint32_t index) const noexcept;
 		Type* GetLocalVariable(std::uint32_t index) noexcept;
 		std::uint32_t GetLocalVariableCount() const noexcept;
