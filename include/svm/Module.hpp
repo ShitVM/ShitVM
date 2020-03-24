@@ -1,9 +1,13 @@
 #pragma once
 
 #include <svm/ByteFile.hpp>
+#include <svm/Function.hpp>
+#include <svm/Structure.hpp>
+#include <svm/virtual/VirtualFunction.hpp>
 #include <svm/virtual/VirtualModule.hpp>
 #include <svm/detail/ReferenceWrapper.hpp>
 
+#include <cstdint>
 #include <variant>
 
 namespace svm {

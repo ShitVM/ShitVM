@@ -12,8 +12,8 @@
 	- [함수 목록(Functions)](#함수-목록functions)
 		- [함수 정보(Function Information)](#함수-정보function-information)
 	- [매핑 목록(Mappings)](#매핑-목록mappings)
-		- [함수 매핑 정보(Function Mapping Information)](#함수-매핑-정보function-mapping-information)
 		- [구조체 매핑 정보(Structure Mapping Information)](#구조체-매핑-정보structure-mapping-information)
+		- [함수 매핑 정보(Function Mapping Information)](#함수-매핑-정보function-mapping-information)
 	- [진입점(Entrypoint)](#진입점entrypoint)
 - [명령어](#명령어)
 
@@ -118,22 +118,22 @@ ShitBF 0.3.0부터 배열의 경우 배열의 원소의 개수가 8바이트 Lit
 
 |오프셋|이름|크기|엔디안|설명|
 |:-:|:-:|:-:|:-:|:-:|
-|?|함수 매핑 정보의 개수|4|Little||
-|?|함수 매핑 정보|?||함수 매핑 정보의 개수만큼 함수 매핑 정보가 순서대로 저장됨|
 |?|구조체 매핑 정보의 개수|4|Little||
 |?|구조체 매핑 정보|?||구조체 매핑 정보의 개수만큼 구조체 매핑 정보가 순서대로 저장됨|
-
-#### 함수 매핑 정보(Function Mapping Information)
-|오프셋|이름|크기|엔디안|설명|
-|:-:|:-:|:-:|:-:|:-:|
-|?|모듈 번호|4|Little||
-|?|함수 번호|4|Little|해당 모듈에 있는 매핑할 함수의 번호임|
+|?|함수 매핑 정보의 개수|4|Little||
+|?|함수 매핑 정보|?||함수 매핑 정보의 개수만큼 함수 매핑 정보가 순서대로 저장됨|
 
 #### 구조체 매핑 정보(Structure Mapping Information)
 |오프셋|이름|크기|엔디안|설명|
 |:-:|:-:|:-:|:-:|:-:|
 |?|모듈 번호|4|Little||
 |?|구조체 번호|4|Little|해당 모듈에 있는 매핑할 구조체의 번호임|
+
+#### 함수 매핑 정보(Function Mapping Information)
+|오프셋|이름|크기|엔디안|설명|
+|:-:|:-:|:-:|:-:|:-:|
+|?|모듈 번호|4|Little||
+|?|함수 번호|4|Little|해당 모듈에 있는 매핑할 함수의 번호임|
 
 ### 진입점(Entrypoint)
 진입점은 진입점에 소속된 명령어들을 저장하는 세션입니다. 최대 4,294,967,296(2^32)개의 레이블, 최대 18,446,744,073,709,551,616(2^64)개의 명령어를 가질 수 있습니다.
