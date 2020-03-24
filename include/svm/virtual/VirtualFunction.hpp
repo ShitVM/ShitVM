@@ -32,6 +32,9 @@ namespace svm {
 	public:
 		void Clear() noexcept;
 		bool IsEmpty() const noexcept;
+
+		std::uint16_t GetArity() const noexcept;
+		bool HasResult() const noexcept;
 	};
 
 	using VirtualFunctions = std::vector<VirtualFunction>;

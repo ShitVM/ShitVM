@@ -20,4 +20,11 @@ namespace svm {
 	bool VirtualFunction::IsEmpty() const noexcept {
 		return m_Function == nullptr;
 	}
+
+	std::uint16_t VirtualFunction::GetArity() const noexcept {
+		return m_Arity;
+	}
+	bool VirtualFunction::HasResult() const noexcept {
+		return m_HasResult;
+	}
 }

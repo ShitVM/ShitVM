@@ -27,7 +27,7 @@ namespace svm {
 		std::size_t StackBegin = 0;
 		std::uint32_t VariableBegin = 0;
 		std::uint64_t Caller = 0;
-		const svm::Function* Function = nullptr;
+		std::variant<std::monostate, const Function*, const VirtualFunction*> Function;
 		const svm::Instructions* Instructions = nullptr;
 	};
 }

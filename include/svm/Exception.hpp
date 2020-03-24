@@ -2,13 +2,15 @@
 
 #include <svm/Function.hpp>
 #include <svm/Instruction.hpp>
+#include <svm/virtual/VirtualFunction.hpp>
 
 #include <cstdint>
 #include <string_view>
+#include <variant>
 
 namespace svm {
 	struct InterpreterException final {
-		const svm::Function* Function = nullptr;
+		std::variant<std::monostate, const Function*, const VirtualFunction*> Function;
 		const svm::Instructions* Instructions = nullptr;
 		std::uint64_t InstructionIndex = 0;
 

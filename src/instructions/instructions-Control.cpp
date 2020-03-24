@@ -122,15 +122,22 @@ namespace svm {
 		}
 
 		m_StackFrame = { NoneType, m_Stack.GetUsedSize(), static_cast<std::uint32_t>(m_LocalVariables.size()) };
+		std::uint16_t arity = 0;
 
-		const auto func = GetFunction(operand);
-		if (std::holds_alternative<const Function*>(func)) {
-			m_StackFrame.Function = std::get<const Function*>(func);
-			m_StackFrame.Instructions = &m_StackFrame.Function->GetInstructions();
+		m_StackFrame.Function = GetFunction(operand);
+		if (std::holds_alternative<const Function*>(m_StackFrame.Function)) {
+			const Function* const function = std::get<const Function*>(m_StackFrame.Function);
+
+			m_StackFrame.Instructions = &function->GetInstructions();
 			m_StackFrame.Caller = static_cast<std::uint64_t>(-1);
+
+			arity = function->GetArity();
+		} else {
+			const VirtualFunction* const function = std::get<const VirtualFunction*>(m_StackFrame.Function);
+
+			arity = function->GetArity();
 		}
 
-		const std::uint16_t arity = m_StackFrame.Function->GetArity();
 		std::size_t stackOffset = m_Stack.GetUsedSize() - sizeof(m_StackFrame);
 		for (std::uint16_t j = 0; j < arity; ++j) {
 			const Type* const typePtr = m_Stack.Get<Type>(stackOffset);
@@ -157,9 +164,11 @@ namespace svm {
 
 		++m_Depth;
 
-		if (std::holds_alternative<const VirtualFunction*>(func)) {
-			(*std::get<const VirtualFunction*>(func))({ &m_Stack, &m_StackFrame, &m_LocalVariables });
-			--m_Depth;
+		if (std::holds_alternative<const VirtualFunction*>(m_StackFrame.Function)) {
+			const VirtualFunction* const function = std::get<const VirtualFunction*>(m_StackFrame.Function);
+
+			(*function)({ &m_Stack, &m_StackFrame, &m_LocalVariables });
+			InterpretRet();
 		}
 	}
 	SVM_NOINLINE_FOR_PROFILING void Interpreter::InterpretRet() noexcept {
@@ -168,8 +177,22 @@ namespace svm {
 			return;
 		}
 
+		std::uint16_t arity = 0;
+		bool hasResult = false;
+		if (std::holds_alternative<const Function*>(m_StackFrame.Function)) {
+			const Function* const function = std::get<const Function*>(m_StackFrame.Function);
+
+			arity = function->GetArity();
+			hasResult = function->HasResult();
+		} else {
+			const VirtualFunction* const function = std::get<const VirtualFunction*>(m_StackFrame.Function);
+
+			arity = function->GetArity();
+			hasResult = function->HasResult();
+		}
+
 		const Type* result = nullptr;
-		if (m_StackFrame.Function->HasResult()) {
+		if (hasResult) {
 			if (IsLocalVariable()) {
 				OccurException(SVM_IEC_STACK_EMPTY);
 				return;
@@ -196,7 +219,6 @@ namespace svm {
 
 		m_LocalVariables.erase(m_LocalVariables.begin() + m_StackFrame.VariableBegin, m_LocalVariables.end());
 
-		const std::uint16_t arity = m_StackFrame.Function->GetArity();
 		m_Stack.SetUsedSize(m_StackFrame.StackBegin);
 		m_StackFrame = *m_Stack.Pop<StackFrame>();
 
