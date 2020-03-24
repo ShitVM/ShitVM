@@ -1,7 +1,10 @@
 #include <svm/Parser.hpp>
 
+#include <svm/Macro.hpp>
 #include <svm/Memory.hpp>
+#include <svm/Module.hpp>
 #include <svm/Type.hpp>
+#include <svm/detail/FileSystem.hpp>
 
 #include <fstream>
 #include <ios>
@@ -73,6 +76,7 @@ namespace svm {
 		if (m_ByteCodeVersion > ByteCodeVersion::Latest ||
 			m_ByteCodeVersion < ByteCodeVersion::Least) throw std::runtime_error("Failed to parse the file. Incompatible ShitBC version.");
 
+		ParseDependencies();
 		ParseConstantPool();
 		ParseStructures();
 		ParseFunctions();
@@ -89,6 +93,20 @@ namespace svm {
 		return std::move(m_ByteFile);
 	}
 
+	void Parser::ParseDependencies() {
+		const auto dependencyCount = ReadFile<std::uint32_t>();
+		std::vector<std::string> dependencies(dependencyCount);
+
+		for (std::uint32_t i = 0; i < dependencyCount; ++i) {
+			const auto length = ReadFile<std::uint32_t>();
+			const auto [begin, end] = ReadFile(length);
+			const std::string utf8(begin, end);
+
+			dependencies[i] = svm::detail::fs::absolute(svm::detail::fs::u8path(utf8)).string();
+		}
+
+		m_ByteFile.SetDependencies(std::move(dependencies));
+	}
 	void Parser::ParseConstantPool() {
 		const auto intCount = ReadFile<std::uint32_t>();
 		std::vector<IntObject> intPool(intCount);
@@ -170,6 +188,23 @@ namespace svm {
 		}
 
 		return { std::move(labels), std::move(insts) };
+	}
+	void Parser::ParseMappings() {
+		const auto structMappingCount = ReadFile<std::uint32_t>();
+		std::vector<Mapping> structMappings(structMappingCount);
+		ParseMappings(structMappings);
+
+		const auto funcMappingCount = ReadFile<std::uint32_t>();
+		std::vector<Mapping> funcMappings(funcMappingCount);
+		ParseMappings(funcMappings);
+
+		m_ByteFile.SetMappings({ std::move(structMappings), std::move(funcMappings) });
+	}
+	void Parser::ParseMappings(std::vector<Mapping>& mappings) noexcept {
+		for (Mapping& mapping : mappings) {
+			mapping.Module = ReadFile<std::uint32_t>();
+			mapping.Index = ReadFile<std::uint32_t>();
+		}
 	}
 
 	void Parser::FindCycle(const std::vector<StructureInfo>& structures) const {

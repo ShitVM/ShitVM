@@ -18,14 +18,6 @@
 - [명령어](#명령어)
 
 ## 세션
-1. 헤더(Header)
-2. 의존성 목록(Dependencies)
-3. 상수 풀(Constant Pool)
-4. 구조체 목록(Structures)
-5. 함수 목록(Functions)
-6. 매핑 목록(Mappings)
-7. 진입점(Entrypoint)
-
 ### 헤더(Header)
 헤더는 ShitBF에 대한 정보를 저장하는 세션입니다. 총 8바이트로 구성됩니다.
 

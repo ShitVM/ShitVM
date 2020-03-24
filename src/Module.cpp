@@ -33,6 +33,13 @@ namespace svm {
 	bool ModuleInfo::IsVirtual() const noexcept {
 		return std::holds_alternative<VirtualModule>(Module);
 	}
+
+	std::string_view svm::ModuleInfo::GetPath() const noexcept {
+		assert(!IsEmpty());
+
+		if (IsVirtual()) return std::get<VirtualModule>(Module).GetPath();
+		else return std::get<ByteFile>(Module).GetPath();
+	}
 	Structure ModuleInfo::GetStructure(std::uint32_t index) const noexcept {
 		assert(!IsEmpty());
 

@@ -27,6 +27,7 @@ namespace svm {
 		VirtualModule& Create(const std::string& virtualPath);
 
 		Module GetModule(std::uint32_t index) const noexcept;
+		Module GetModule(const std::string& path) const noexcept;
 		std::uint32_t GetModuleCount() const noexcept;
 	};
 }

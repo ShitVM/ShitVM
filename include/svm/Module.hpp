@@ -34,6 +34,7 @@ namespace svm {
 		bool IsEmpty() const noexcept;
 		bool IsVirtual() const noexcept;
 
+		std::string_view GetPath() const noexcept;
 		Structure GetStructure(std::uint32_t index) const noexcept;
 		std::uint32_t GetStructureCount() const noexcept;
 		std::variant<const Function*, const VirtualFunction*> GetFunction(std::uint32_t index) const noexcept;

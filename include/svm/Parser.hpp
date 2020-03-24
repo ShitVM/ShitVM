@@ -57,12 +57,15 @@ namespace svm {
 		T ReadFile() noexcept;
 		inline auto ReadFile(std::size_t size) noexcept;
 
+		void ParseDependencies();
 		void ParseConstantPool();
 		template<typename T>
 		void ParseConstants(std::vector<T>& pool) noexcept;
 		void ParseStructures();
 		void ParseFunctions();
 		Instructions ParseInstructions();
+		void ParseMappings();
+		void ParseMappings(std::vector<Mapping>& mappings) noexcept;
 
 		void FindCycle(const std::vector<StructureInfo>& structures) const;
 		bool FindCycle(const std::vector<StructureInfo>& structures, std::unordered_map<std::uint32_t, int>& visited, std::vector<Structure>& cycle, std::uint32_t node) const;
