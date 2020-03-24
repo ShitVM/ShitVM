@@ -24,6 +24,16 @@ namespace svm {
 		ModuleInfo& operator=(ModuleInfo&& moduleInfo) noexcept;
 		bool operator==(const ModuleInfo&) = delete;
 		bool operator!=(const ModuleInfo&) = delete;
+
+	public:
+		void Clear() noexcept;
+		bool IsEmpty() const noexcept;
+		bool IsVirtual() const noexcept;
+
+		Structure GetStructure(std::uint32_t index) const noexcept;
+		std::uint32_t GetStructureCount() const noexcept;
+		std::variant<const Function*, const VirtualFunction*> GetFunction(std::uint32_t index) const noexcept;
+		std::uint32_t GetFunctionCount() const noexcept;
 	};
 }
 

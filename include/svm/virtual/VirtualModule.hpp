@@ -25,5 +25,8 @@ namespace svm {
 	public:
 		void Clear() noexcept;
 		bool IsEmpty() const noexcept;
+
+		const Structures& GetStructures() const noexcept;
+		const VirtualFunctions& GetFunctions() const noexcept;
 	};
 }

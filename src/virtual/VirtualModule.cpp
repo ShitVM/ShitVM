@@ -21,4 +21,11 @@ namespace svm {
 	bool VirtualModule::IsEmpty() const noexcept {
 		return m_Structures.IsEmpty() && m_Functions.empty();
 	}
+
+	const Structures& VirtualModule::GetStructures() const noexcept {
+		return m_Structures;
+	}
+	const VirtualFunctions& VirtualModule::GetFunctions() const noexcept {
+		return m_Functions;
+	}
 }
