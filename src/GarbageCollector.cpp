@@ -1,5 +1,7 @@
 #include <svm/GarbageCollector.hpp>
 
+#include <svm/Interpreter.hpp>
+
 #include <algorithm>
 #include <cassert>
 #include <iterator>

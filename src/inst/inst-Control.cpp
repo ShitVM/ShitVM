@@ -1,6 +1,5 @@
 #include <svm/Interpreter.hpp>
 
-#include <svm/Macro.hpp>
 #include <svm/detail/InterpreterExceptionCode.hpp>
 #include <svm/virtual/VirtualStack.hpp>
 
@@ -125,15 +124,15 @@ namespace svm {
 		std::uint16_t arity = 0;
 
 		m_StackFrame.Function = GetFunction(operand);
-		if (std::holds_alternative<const Function*>(m_StackFrame.Function)) {
-			const Function* const function = std::get<const Function*>(m_StackFrame.Function);
+		if (std::holds_alternative<Function>(m_StackFrame.Function)) {
+			const Function function = std::get<Function>(m_StackFrame.Function);
 
-			m_StackFrame.Instructions = &function->GetInstructions();
+			m_StackFrame.Instructions = &function->Instructions;
 			m_StackFrame.Caller = static_cast<std::uint64_t>(-1);
 
-			arity = function->GetArity();
+			arity = function->Arity;
 		} else {
-			const VirtualFunction* const function = std::get<const VirtualFunction*>(m_StackFrame.Function);
+			const VirtualFunction function = std::get<VirtualFunction>(m_StackFrame.Function);
 
 			arity = function->GetArity();
 		}
@@ -164,8 +163,8 @@ namespace svm {
 
 		++m_Depth;
 
-		if (std::holds_alternative<const VirtualFunction*>(m_StackFrame.Function)) {
-			const VirtualFunction* const function = std::get<const VirtualFunction*>(m_StackFrame.Function);
+		if (std::holds_alternative<VirtualFunction>(m_StackFrame.Function)) {
+			const VirtualFunction function = std::get<VirtualFunction>(m_StackFrame.Function);
 
 			(*function)({ &m_Stack, &m_StackFrame, &m_LocalVariables });
 			InterpretRet();
@@ -179,13 +178,13 @@ namespace svm {
 
 		std::uint16_t arity = 0;
 		bool hasResult = false;
-		if (std::holds_alternative<const Function*>(m_StackFrame.Function)) {
-			const Function* const function = std::get<const Function*>(m_StackFrame.Function);
+		if (std::holds_alternative<Function>(m_StackFrame.Function)) {
+			const Function function = std::get<Function>(m_StackFrame.Function);
 
-			arity = function->GetArity();
-			hasResult = function->HasResult();
+			arity = function->Arity;
+			hasResult = function->HasResult;
 		} else {
-			const VirtualFunction* const function = std::get<const VirtualFunction*>(m_StackFrame.Function);
+			const VirtualFunction function = std::get<VirtualFunction>(m_StackFrame.Function);
 
 			arity = function->GetArity();
 			hasResult = function->HasResult();

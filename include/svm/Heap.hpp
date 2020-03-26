@@ -30,7 +30,7 @@ namespace svm {
 
 		void* AllocateUnmanagedHeap(std::size_t size);
 		bool DeallocateUnmanagedHeap(void* address) noexcept;
-		
+
 		void SetGarbageCollector(std::unique_ptr<GarbageCollector>&& gc) noexcept;
 		void* AllocateManagedHeap(Interpreter& interpreter, std::size_t size);
 	};

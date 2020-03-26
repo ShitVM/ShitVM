@@ -4,6 +4,8 @@
 #include <svm/Object.hpp>
 #include <svm/Stack.hpp>
 
+#include <cstring>
+
 namespace svm {
 	VirtualStack::VirtualStack(Stack* stack, const StackFrame* stackFrame, const std::vector<std::size_t>* localVariables) noexcept
 		: m_Stack(stack), m_StackFrame(stackFrame), m_LocalVariables(localVariables) {}

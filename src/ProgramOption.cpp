@@ -1,18 +1,17 @@
 #include <svm/ProgramOption.hpp>
 
 #include <iostream>
-#include <string_view>
 #include <utility>
 
 namespace svm {
 	ProgramOption::ProgramOption(ProgramOption&& option) noexcept
-		: Path(std::move(option.Path)), ShowVersion(option.ShowVersion),
-		Variables(std::move(option.Variables)), Flags(std::move(option.Flags)) {}
+		: Path(std::move(option.Path)),
+		Options(std::move(option.Options)), Variables(std::move(option.Variables)), Flags(std::move(option.Flags)) {}
 
 	ProgramOption& ProgramOption::operator=(ProgramOption&& option) noexcept {
 		Path = std::move(option.Path);
-		ShowVersion = option.ShowVersion;
 
+		Options = std::move(option.Options);
 		Variables = std::move(option.Variables);
 		Flags = std::move(option.Flags);
 		return *this;
@@ -20,12 +19,16 @@ namespace svm {
 
 	void ProgramOption::Clear() noexcept {
 		Path.clear();
-		ShowVersion = false;
 
+		Options.clear();
 		Variables.clear();
 		Flags.clear();
 	}
 
+	ProgramOption& ProgramOption::AddOption(const char* name) {
+		Options[name].DefaultValue = false;
+		return *this;
+	}
 	ProgramOption& ProgramOption::AddVariable(const char* name, std::uint64_t defaultValue) {
 		Variables[name].DefaultValue = defaultValue;
 		return *this;
@@ -33,6 +36,9 @@ namespace svm {
 	ProgramOption& ProgramOption::AddFlag(const char* name, bool defaultValue) {
 		Flags[name].DefaultValue = defaultValue;
 		return *this;
+	}
+	bool ProgramOption::GetOption(const char* name) const {
+		return *Options.at(name).Value;
 	}
 	std::uint64_t ProgramOption::GetVariable(const char* name) const {
 		return *Variables.at(name).Value;
@@ -72,8 +78,14 @@ namespace svm {
 						return false;
 					}
 					iter->second.Value = true;
-				} else if (option == "-version") {
-					ShowVersion = true;
+				} else if (option.size() >= 2 && option.front() == '-') {
+					const std::string_view opt = option.substr(1);
+					const auto iter = Options.find(opt);
+					if (iter == Options.end()) {
+						std::cout << "Error: Unknown option '" << opt << "'.\n";
+						return false;
+					}
+					iter->second.Value = true;
 				} else {
 					const std::size_t assign = option.find('=');
 					if (assign == std::string_view::npos) {
@@ -101,13 +113,11 @@ namespace svm {
 		return true;
 	}
 	bool ProgramOption::Verity() {
-		if (ShowVersion) return true;
-
-		if (Path.empty()) {
-			std::cout << "Error: There is no input file.\n";
-			return false;
+		for (auto& opt : Options) {
+			if (!opt.second.Value) {
+				opt.second.Value = opt.second.DefaultValue;
+			}
 		}
-
 		for (auto& var : Variables) {
 			if (!var.second.Value) {
 				var.second.Value = var.second.DefaultValue;
@@ -117,6 +127,13 @@ namespace svm {
 			if (!flag.second.Value) {
 				flag.second.Value = flag.second.DefaultValue;
 			}
+		}
+
+		if (GetOption("version")) {
+			return true;
+		} else if (Path.empty()) {
+			std::cout << "Error: There is no input file.\n";
+			return false;
 		}
 
 		if (GetVariable("stack") == 0) {

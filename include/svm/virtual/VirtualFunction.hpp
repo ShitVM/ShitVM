@@ -1,43 +1,38 @@
 #pragma once
 
+#include <svm/core/virtual/VirtualFunction.hpp>
 #include <svm/virtual/VirtualObject.hpp>
 #include <svm/virtual/VirtualStack.hpp>
 
+#include <cstdint>
 #include <functional>
 #include <type_traits>
 #include <utility>
-#include <vector>
 
 namespace svm {
-	class VirtualFunction final {
+	class VirtualFunctionInfo final : public core::VirtualFunctionInfo {
 	private:
-		std::uint16_t m_Arity = 0;
-		bool m_HasResult = false;
 		std::function<VirtualObject(VirtualStack&)> m_Function;
 
 	public:
-		VirtualFunction() noexcept = default;
+		VirtualFunctionInfo() noexcept = default;
 		template<typename F>
-		VirtualFunction(std::uint16_t arity, bool hasResult, F&& function)
+		VirtualFunctionInfo(std::uint16_t arity, bool hasResult, F&& function)
 			noexcept(noexcept(std::is_nothrow_constructible_v<decltype(m_Function), decltype(std::forward<F>(function))>));
-		VirtualFunction(VirtualFunction&& function) noexcept;
-		~VirtualFunction() = default;
+		inline VirtualFunctionInfo(VirtualFunctionInfo&& functionInfo) noexcept;
+		~VirtualFunctionInfo() = default;
 
 	public:
-		VirtualFunction& operator=(VirtualFunction&& function) noexcept;
-		bool operator==(const VirtualFunction&) = delete;
-		bool operator!=(const VirtualFunction&) = delete;
-		VirtualObject operator()(VirtualStack stack) const;
-
-	public:
-		void Clear() noexcept;
-		bool IsEmpty() const noexcept;
-
-		std::uint16_t GetArity() const noexcept;
-		bool HasResult() const noexcept;
+		inline VirtualFunctionInfo& operator=(VirtualFunctionInfo&& functionInfo) noexcept;
+		bool operator==(const VirtualFunctionInfo&) = delete;
+		bool operator!=(const VirtualFunctionInfo&) = delete;
+		inline VirtualObject operator()(VirtualStack stack) const;
 	};
+}
 
-	using VirtualFunctions = std::vector<VirtualFunction>;
+namespace svm {
+	using VirtualFunction = core::VirtualFunction<VirtualFunctionInfo>;
+	using VirtualFunctions = core::VirtualFunctions<VirtualFunctionInfo>;
 }
 
 #include "detail/impl/VirtualFunction.hpp"

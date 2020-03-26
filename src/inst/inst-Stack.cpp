@@ -1,6 +1,6 @@
 #include <svm/Interpreter.hpp>
 
-#include <svm/Macro.hpp>
+#include <svm/ConstantPool.hpp>
 #include <svm/detail/InterpreterExceptionCode.hpp>
 
 #include <algorithm>
@@ -13,7 +13,7 @@ namespace svm {
 			return;
 		}
 
-		const Structure structure = GetStructure(static_cast<TypeCode>(code));
+		const Structure structure = GetStructure(static_cast<TypeCode>(code + static_cast<std::uint32_t>(TypeCode::Structure)));
 		if (!m_Stack.Expand(structure->Type.Size)) {
 			OccurException(SVM_IEC_STACK_OVERFLOW);
 			return;
@@ -79,7 +79,7 @@ namespace svm {
 	SVM_NOINLINE_FOR_PROFILING void Interpreter::InterpretPush(std::uint32_t operand) noexcept {
 		const ConstantPool& constantPool = m_Program->GetConstantPool();
 		if (operand >= constantPool.GetAllCount()) {
-			PushStructure(operand);
+			PushStructure(operand - constantPool.GetAllCount());
 			return;
 		}
 
@@ -341,7 +341,7 @@ namespace svm {
 		}
 		operand &= 0x7FFFFFFF;
 
-		info.ElementType = GetTypeFromTypeCode(*this, static_cast<TypeCode>(operand));
+		info.ElementType = GetType(m_Program->GetStructures(), static_cast<TypeCode>(operand));
 		if (info.ElementType == NoneType) {
 			OccurException(SVM_IEC_TYPE_OUTOFRANGE);
 			return false;
