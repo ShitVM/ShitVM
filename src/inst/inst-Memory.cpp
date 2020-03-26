@@ -249,7 +249,7 @@ namespace svm {
 			return;
 		}
 
-		const Type type = GetTypeFromTypeCode(*this, static_cast<TypeCode>(operand));
+		const Type type = GetType(m_Program->GetStructures(), static_cast<TypeCode>(operand));
 		void* const address = m_Heap.AllocateUnmanagedHeap(type->Size);
 
 		m_Stack.Push<PointerObject>(address);
@@ -300,7 +300,7 @@ namespace svm {
 			return;
 		}
 
-		const Type type = GetTypeFromTypeCode(*this, static_cast<TypeCode>(operand));
+		const Type type = GetType(m_Program->GetStructures(), static_cast<TypeCode>(operand));
 		void* const address = m_Heap.AllocateManagedHeap(*this, type->Size);
 		Type* const addressReal = reinterpret_cast<Type*>(static_cast<ManagedHeapInfo*>(address) + 1);
 

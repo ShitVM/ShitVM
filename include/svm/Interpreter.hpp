@@ -28,7 +28,7 @@ namespace svm {
 		std::size_t StackBegin = 0;
 		std::uint32_t VariableBegin = 0;
 		std::uint64_t Caller = 0;
-		std::variant<std::monostate, const Function*, const VirtualFunction*> Function;
+		std::variant<std::monostate, Function, VirtualFunction> Function;
 		const svm::Instructions* Instructions = nullptr;
 	};
 }
@@ -93,7 +93,7 @@ namespace svm {
 		Structure GetStructure(Type type) const noexcept;
 		Structure GetStructure(TypeCode code) const noexcept;
 		std::uint32_t GetStructureCount() const noexcept;
-		std::variant<std::monostate, const Function*, const VirtualFunction*> GetFunction(std::uint32_t index) const noexcept;
+		std::variant<std::monostate, Function, VirtualFunction> GetFunction(std::uint32_t index) const noexcept;
 		std::uint32_t GetFunctionCount() const noexcept;
 		const Type* GetLocalVariable(std::uint32_t index) const noexcept;
 		Type* GetLocalVariable(std::uint32_t index) noexcept;

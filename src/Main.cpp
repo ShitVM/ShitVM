@@ -24,7 +24,7 @@ int main(int argc, char* argv[]) {
 	if (!option.Parse(argc, argv) || !option.Verity()) {
 		return EXIT_FAILURE;
 	} else if (option.ShowVersion) {
-		std::cout << "ShitVM " << SVM_VER_STRING << '\n'
+		std::cout << "ShitVM " << svm::Version << '\n'
 				  << "(C) 2020. kmc7468 All rights reserved.\n\n"
 				  << "You can get the source of latest ShitVM here:\n"
 				  << "https://github.com/ShitVM\n";
@@ -82,7 +82,7 @@ int Run(const svm::ProgramOption& option) {
 					}
 				}
 
-				if (std::holds_alternative<const svm::Function*>(frame.Function)) {
+				if (std::holds_alternative<svm::Function>(frame.Function)) {
 					using namespace svm;
 					std::cout << '(' << frame.Caller << '(' << QWord(frame.Instructions->GetInstruction(frame.Caller).Offset) << "))";
 				}

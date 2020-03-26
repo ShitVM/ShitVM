@@ -1,14 +1,15 @@
 #include <svm/Interpreter.hpp>
 
 #include <svm/Object.hpp>
+#include <svm/core/ByteFile.hpp>
 #include <svm/detail/InterpreterExceptionCode.hpp>
 
 #include <utility>
 
 namespace svm {
 	Interpreter::Interpreter(Loader&& loader, Module program) noexcept
-		: m_Loader(std::move(loader)), m_Program(&std::get<ByteFile>(program->Module)) {
-		m_StackFrame.Instructions = &m_Program->GetEntryPoint();
+		: m_Loader(std::move(loader)), m_Program(&static_cast<const ByteFile&>(std::get<core::ByteFile>(program->Module))) {
+		m_StackFrame.Instructions = &m_Program->GetEntrypoint();
 	}
 	Interpreter::Interpreter(Interpreter&& interpreter) noexcept
 		: m_Loader(std::move(interpreter.m_Loader)), m_Program(interpreter.m_Program), m_Exception(std::move(interpreter.m_Exception)),
@@ -47,8 +48,8 @@ namespace svm {
 	}
 	void Interpreter::Load(Loader&& loader, Module program) noexcept {
 		m_Loader = std::move(loader);
-		m_Program = &std::get<ByteFile>(program->Module);
-		m_StackFrame.Instructions = &m_Program->GetEntryPoint();
+		m_Program = &static_cast<const ByteFile&>(std::get<core::ByteFile>(program->Module));
+		m_StackFrame.Instructions = &m_Program->GetEntrypoint();
 	}
 
 	void Interpreter::AllocateStack(std::size_t size) {
@@ -233,7 +234,7 @@ namespace svm {
 		std::uint32_t index = static_cast<std::uint32_t>(code) - static_cast<std::uint32_t>(TypeCode::Structure) - m_StructureCodeOffset;
 
 		const Structures& structures = m_Program->GetStructures();
-		const std::uint32_t structCount = structures.GetStructureCount();
+		const std::uint32_t structCount = static_cast<std::uint32_t>(structures.size());
 		if (index < structCount) return structures[index];
 
 		index -= structCount;
@@ -244,12 +245,12 @@ namespace svm {
 		return m_Loader.GetModule(mapping.Module)->GetStructure(mapping.Index);
 	}
 	std::uint32_t Interpreter::GetStructureCount() const noexcept {
-		return m_Program->GetStructures().GetStructureCount() + m_Program->GetMappings().GetStructureMappingCount();
+		return static_cast<std::uint32_t>(m_Program->GetStructures().size()) + m_Program->GetMappings().GetStructureMappingCount();
 	}
-	std::variant<std::monostate, const Function*, const VirtualFunction*> Interpreter::GetFunction(std::uint32_t index) const noexcept {
+	std::variant<std::monostate, Function, VirtualFunction> Interpreter::GetFunction(std::uint32_t index) const noexcept {
 		const Functions& functions = m_Program->GetFunctions();
 		const std::uint32_t funcCount = static_cast<std::uint32_t>(functions.size());
-		if (index < funcCount) return &functions[index];
+		if (index < funcCount) return functions[index];
 
 		index -= funcCount;
 		const Mappings& mappings = m_Program->GetMappings();
@@ -258,8 +259,8 @@ namespace svm {
 		const Mapping& mapping = mappings.GetFunctionMapping(index);
 		const auto result = m_Loader.GetModule(mapping.Module)->GetFunction(mapping.Index);
 
-		if (std::holds_alternative<const Function*>(result)) return std::get<const Function*>(result);
-		else return std::get<const VirtualFunction*>(result);
+		if (std::holds_alternative<Function>(result)) return std::get<Function>(result);
+		else return std::get<VirtualFunction>(result);
 	}
 	std::uint32_t Interpreter::GetFunctionCount() const noexcept {
 		return static_cast<std::uint32_t>(m_Program->GetFunctions().size()) + m_Program->GetMappings().GetFunctionMappingCount();
