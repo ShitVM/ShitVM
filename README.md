@@ -3,9 +3,9 @@
 
 ## 컴파일
 ```
-$ git clone https://github.com/ShitVM/ShitVM.git
+$ git clone https://github.com/ShitVM/ShitVM.git --recurse-submodules
 $ cd ShitVM
-$ cmake CMakeLists.txt
+$ cmake .
 $ make
 ```
 
