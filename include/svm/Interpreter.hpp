@@ -9,6 +9,7 @@
 #include <svm/Loader.hpp>
 #include <svm/Module.hpp>
 #include <svm/Object.hpp>
+#include <svm/Predefined.hpp>
 #include <svm/Stack.hpp>
 #include <svm/Type.hpp>
 #include <svm/virtual/VirtualFunction.hpp>
@@ -210,3 +211,9 @@ namespace svm {
 		void InterpretRet() noexcept;
 	};
 }
+
+#if defined(SVM_MSVC) && defined(SVM_PROFILING)
+#	define SVM_NOINLINE_FOR_PROFILING __declspec(noinline)
+#else
+#	define SVM_NOINLINE_FOR_PROFILING
+#endif

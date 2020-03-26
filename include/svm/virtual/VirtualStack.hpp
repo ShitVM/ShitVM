@@ -2,6 +2,10 @@
 
 #include <svm/virtual/VirtualObject.hpp>
 
+#include <cstddef>
+#include <cstdint>
+#include <vector>
+
 namespace svm {
 	class Stack;
 	struct StackFrame;

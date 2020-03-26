@@ -10,7 +10,7 @@
 
 namespace svm {
 	struct InterpreterException final {
-		std::variant<std::monostate, const Function*, const VirtualFunction*> Function;
+		std::variant<std::monostate, Function, VirtualFunction> Function;
 		const svm::Instructions* Instructions = nullptr;
 		std::uint64_t InstructionIndex = 0;
 

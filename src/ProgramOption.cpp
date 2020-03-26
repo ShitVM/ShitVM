@@ -1,7 +1,6 @@
 #include <svm/ProgramOption.hpp>
 
 #include <iostream>
-#include <string_view>
 #include <utility>
 
 namespace svm {

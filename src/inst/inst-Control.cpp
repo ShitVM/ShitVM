@@ -1,6 +1,5 @@
 #include <svm/Interpreter.hpp>
 
-#include <svm/Macro.hpp>
 #include <svm/detail/InterpreterExceptionCode.hpp>
 #include <svm/virtual/VirtualStack.hpp>
 
