@@ -3,6 +3,7 @@
 #include <svm/Parser.hpp>
 #include <svm/ProgramOption.hpp>
 #include <svm/Version.hpp>
+#include <svm/core/Version.hpp>
 #include <svm/gc/SimpleGarbageCollector.hpp>
 
 #include <chrono>
@@ -16,16 +17,19 @@ int Run(const svm::ProgramOption& option);
 
 int main(int argc, char* argv[]) {
 	svm::ProgramOption option;
-	option.AddVariable("stack", 1 * 1024 * 1024)
+	option.AddOption("version")
+		  .AddOption("dump-bytefile")
+		  .AddVariable("stack", 1 * 1024 * 1024)
 		  .AddVariable("young", 8 * 1024 * 1024)
 		  .AddVariable("old", 32 * 1024 * 1024)
 		  .AddFlag("gc", true);
 
 	if (!option.Parse(argc, argv) || !option.Verity()) {
 		return EXIT_FAILURE;
-	} else if (option.ShowVersion) {
+	} else if (option.GetOption("version")) {
 		std::cout << "ShitVM " << svm::Version << '\n'
-				  << "(C) 2020. kmc7468 All rights reserved.\n\n"
+				  << "(C) 2020. kmc7468 All rights reserved.\n"
+				  << "This version is based on ShitCore " << svm::core::Version << "\n\n"
 				  << "You can get the source of latest ShitVM here:\n"
 				  << "https://github.com/ShitVM\n";
 		return EXIT_SUCCESS;
@@ -53,6 +57,10 @@ int Run(const svm::ProgramOption& option) {
 	const auto endLoading = std::chrono::system_clock::now();
 	const std::chrono::duration<double> loading = endLoading - startLoading;
 	std::cout << "Succeed loading in " << std::fixed << std::setprecision(6) << loading.count() << "s!\n";
+	
+	if (option.GetOption("dump-bytefile")) {
+		std::cout << svm::Indent << std::get<svm::core::ByteFile>(program->Module) << svm::UnIndent << '\n';
+	}
 
 	std::cout << "Started interpreting...\n";
 	const auto startInterpreting = std::chrono::system_clock::now();

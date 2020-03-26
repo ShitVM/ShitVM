@@ -21,8 +21,8 @@ namespace svm {
 	class ProgramOption final {
 	public:
 		std::string Path;
-		bool ShowVersion = false;
 
+		std::unordered_map<std::string_view, Flag> Options;
 		std::unordered_map<std::string_view, Variable> Variables;
 		std::unordered_map<std::string_view, Flag> Flags;
 
@@ -39,8 +39,10 @@ namespace svm {
 	public:
 		void Clear() noexcept;
 
+		ProgramOption& AddOption(const char* name);
 		ProgramOption& AddVariable(const char* name, std::uint64_t defaultValue);
 		ProgramOption& AddFlag(const char* name, bool defaultValue);
+		bool GetOption(const char* name) const;
 		std::uint64_t GetVariable(const char* name) const;
 		bool GetFlag(const char* name) const;
 
