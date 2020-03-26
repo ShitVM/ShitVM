@@ -81,17 +81,19 @@ int Run(const svm::ProgramOption& option) {
 						break;
 					}
 				}
-
-				if (std::holds_alternative<svm::Function>(frame.Function)) {
-					using namespace svm;
-					std::cout << '(' << frame.Caller << '(' << QWord(frame.Instructions->GetInstruction(frame.Caller).Offset) << "))";
-				}
-				if (!std::holds_alternative<std::monostate>(frame.Function)) {
-					std::cout << " at";
-				}
-				std::cout << '\n';
 			}
+
+			if (!std::holds_alternative<svm::VirtualFunction>(frame.Function)) {
+				using namespace svm;
+				std::cout << '(' << frame.Caller << '(' << QWord(frame.Instructions->GetInstruction(frame.Caller).Offset) << "))";
+			}
+			if (!std::holds_alternative<std::monostate>(frame.Function)) {
+				std::cout << " at";
+			}
+			std::cout << '\n';
 		}
+
+		return EXIT_FAILURE;
 	}
 
 	const auto endInterpreting = std::chrono::system_clock::now();
