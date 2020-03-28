@@ -15,7 +15,7 @@ namespace svm {
 		m_Function = std::move(functionInfo.m_Function);
 		return *this;
 	}
-	inline VirtualObject VirtualFunctionInfo::operator()(VirtualStack& stack) const {
-		return m_Function(stack);
+	inline VirtualObject VirtualFunctionInfo::operator()(Interpreter& interpreter, VirtualStack& stack) const {
+		return m_Function(interpreter, stack);
 	}
 }

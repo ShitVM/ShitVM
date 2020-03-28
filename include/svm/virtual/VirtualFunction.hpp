@@ -10,9 +10,11 @@
 #include <utility>
 
 namespace svm {
+	class Interpreter;
+
 	class VirtualFunctionInfo final : public core::VirtualFunctionInfo {
 	private:
-		std::function<VirtualObject(VirtualStack&)> m_Function;
+		std::function<VirtualObject(Interpreter&, VirtualStack&)> m_Function;
 
 	public:
 		VirtualFunctionInfo() noexcept = default;
@@ -26,7 +28,7 @@ namespace svm {
 		inline VirtualFunctionInfo& operator=(VirtualFunctionInfo&& functionInfo) noexcept;
 		bool operator==(const VirtualFunctionInfo&) = delete;
 		bool operator!=(const VirtualFunctionInfo&) = delete;
-		inline VirtualObject operator()(VirtualStack& stack) const;
+		inline VirtualObject operator()(Interpreter& interpreter, VirtualStack& stack) const;
 	};
 }
 

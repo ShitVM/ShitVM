@@ -1,6 +1,6 @@
 #include <svm/virtual/VirtualObject.hpp>
 
-#include <svm/Loader.hpp>
+#include <svm/Interpreter.hpp>
 #include <svm/Structure.hpp>
 
 #include <cassert>
@@ -240,12 +240,12 @@ namespace svm {
 		});
 	}
 
-	VirtualObject VirtualObject::Field(const Loader& loader, std::uint32_t index) const noexcept {
+	VirtualObject VirtualObject::Field(const Interpreter& interpreter, std::uint32_t index) const noexcept {
 		StructureObject* const structure = IsStructure();
 		if (!structure) return VNULL;
 
-		// TODO
-		return VNULL;
+		return reinterpret_cast<Object*>(
+			reinterpret_cast<std::uint8_t*>(structure) + interpreter.GetStructure(structure->GetType())->Fields[index].Offset);
 	}
 
 	const VirtualObject::ObjectVariant& VirtualObject::GetObject(const ObjectVariant& object) noexcept {

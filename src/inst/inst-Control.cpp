@@ -167,7 +167,7 @@ namespace svm {
 			const VirtualFunction function = std::get<VirtualFunction>(m_StackFrame.Function);
 
 			VirtualStack stack(&m_Stack, &m_StackFrame, &m_LocalVariables);
-			const VirtualObject result = (*function)(stack);
+			const VirtualObject result = (*function)(*this, stack);
 
 			if (function->HasResult()) {
 				stack.Push(result);

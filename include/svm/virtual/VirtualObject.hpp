@@ -34,7 +34,7 @@ namespace svm {
 }
 
 namespace svm {
-	class Loader;
+	class Interpreter;
 	class VirtualStack;
 
 	class VirtualObject final {
@@ -105,7 +105,7 @@ namespace svm {
 		Object* ToPointer() const noexcept;
 		ManagedHeapInfo* ToGCPointer() const noexcept;
 
-		VirtualObject Field(const Loader& loader, std::uint32_t index) const noexcept;
+		VirtualObject Field(const Interpreter& interpreter, std::uint32_t index) const noexcept;
 
 	private:
 		template<typename T, typename F>
