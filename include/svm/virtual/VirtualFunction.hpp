@@ -26,7 +26,7 @@ namespace svm {
 		inline VirtualFunctionInfo& operator=(VirtualFunctionInfo&& functionInfo) noexcept;
 		bool operator==(const VirtualFunctionInfo&) = delete;
 		bool operator!=(const VirtualFunctionInfo&) = delete;
-		inline VirtualObject operator()(VirtualStack stack) const;
+		inline VirtualObject operator()(VirtualStack& stack) const;
 	};
 }
 

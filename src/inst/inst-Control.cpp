@@ -166,7 +166,12 @@ namespace svm {
 		if (std::holds_alternative<VirtualFunction>(m_StackFrame.Function)) {
 			const VirtualFunction function = std::get<VirtualFunction>(m_StackFrame.Function);
 
-			(*function)({ &m_Stack, &m_StackFrame, &m_LocalVariables });
+			VirtualStack stack(&m_Stack, &m_StackFrame, &m_LocalVariables);
+			const VirtualObject result = (*function)(stack);
+
+			if (function->HasResult()) {
+				stack.Push(result);
+			}
 			InterpretRet();
 		}
 	}
