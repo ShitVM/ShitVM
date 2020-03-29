@@ -228,7 +228,7 @@ namespace svm {
 	}
 
 	Structure Interpreter::GetStructure(Type type) const noexcept {
-		return GetStructure(type->Code);
+		return m_Loader.GetModule(type->Module)->GetStructure(static_cast<std::uint32_t>(type->Code) - static_cast<std::uint32_t>(TypeCode::Structure));
 	}
 	Structure Interpreter::GetStructure(TypeCode code) const noexcept {
 		std::uint32_t index = static_cast<std::uint32_t>(code) - static_cast<std::uint32_t>(TypeCode::Structure) - m_StructureCodeOffset;
