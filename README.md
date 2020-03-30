@@ -1,5 +1,5 @@
 # ShitVM
-<img width=256 height=256 align="right" src="https://github.com/ShitVM/ShitVM/blob/master/docs/logo/ShitVM.svg">
+<img width=512 height=132 align="right" src="https://github.com/ShitVM/ShitVM/blob/master/docs/logo/ShitVM.svg">
 
 가벼운 가상머신
 
