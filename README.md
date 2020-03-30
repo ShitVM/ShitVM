@@ -1,5 +1,5 @@
 <div align="center">
-	<img src="https://github.com/ShitVM/ShitVM/blob/master/docs/logo/Logo.png" />
+	<img width=384 height=80 src="https://github.com/ShitVM/ShitVM/blob/master/docs/logo/Logo.svg" />
 </div>
 
 ---
