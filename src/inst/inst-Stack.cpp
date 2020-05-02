@@ -32,7 +32,7 @@ namespace svm {
 
 			if (field.IsArray()) {
 				*pointer = ArrayType;
-				reinterpret_cast<ArrayObject*>(pointer)->Count = field.Count;
+				reinterpret_cast<ArrayObject*>(pointer)->Count = static_cast<std::size_t>(field.Count);
 
 				detail::ArrayInfo info;
 				info.ElementType = field.Type;
