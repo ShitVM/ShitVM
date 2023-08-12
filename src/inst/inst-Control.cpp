@@ -163,7 +163,10 @@ namespace svm {
 
 		++m_Depth;
 
-		if (std::holds_alternative<VirtualFunction>(m_StackFrame.Function)) {
+		if (std::holds_alternative<Function>(m_StackFrame.Function)) {
+			m_Program = static_cast<const svm::ByteFile*>(
+				&std::get<svm::core::ByteFile>(m_Loader.GetModule(std::get<Function>(m_StackFrame.Function)->Module)->Module));
+		} else if (std::holds_alternative<VirtualFunction>(m_StackFrame.Function)) {
 			const VirtualFunction function = std::get<VirtualFunction>(m_StackFrame.Function);
 
 			VirtualStack stack(&m_Stack, &m_StackFrame, &m_LocalVariables);
@@ -225,6 +228,14 @@ namespace svm {
 
 		m_Stack.SetUsedSize(m_StackFrame.StackBegin);
 		m_StackFrame = *m_Stack.Pop<StackFrame>();
+
+		if (std::holds_alternative<std::monostate>(m_StackFrame.Function)) {
+			m_Program = static_cast<const svm::ByteFile*>(
+				&std::get<svm::core::ByteFile>(m_Loader.GetModule(0)->Module));
+		} else {
+			m_Program = static_cast<const svm::ByteFile*>(
+				&std::get<svm::core::ByteFile>(m_Loader.GetModule(std::get<Function>(m_StackFrame.Function)->Module)->Module));
+		}
 
 		for (std::uint16_t j = 0; j < arity; ++j) {
 			const Type type = *m_Stack.GetTopType();

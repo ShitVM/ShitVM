@@ -257,7 +257,7 @@ namespace svm {
 		if (index >= mappings.GetFunctionMappingCount()) return std::monostate();
 
 		const Mapping& mapping = mappings.GetFunctionMapping(index);
-		const auto result = m_Loader.GetModule(mapping.Module)->GetFunction(mapping.Name);
+		const auto result = m_Loader.GetModule(mapping.Module + 1)->GetFunction(mapping.Name);
 
 		if (std::holds_alternative<Function>(result)) return std::get<Function>(result);
 		else return std::get<VirtualFunction>(result);

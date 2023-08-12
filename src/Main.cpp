@@ -48,7 +48,6 @@ int Run(const svm::ProgramOption& option) {
 	try {
 		program = loader.Load(option.Path);
 		loader.LoadDependencies(program);
-		loader.UpdateStructureInfos();
 	} catch (const std::exception& e) {
 		std::cout << "Occured exception!\n"
 				  << "Message: \"" << e.what() << "\"\n";
@@ -107,7 +106,7 @@ int Run(const svm::ProgramOption& option) {
 
 	const auto endInterpreting = std::chrono::system_clock::now();
 	const std::chrono::duration<double> interpreting = endInterpreting - startInterpreting;
-	std::cout << "Succeed interpreting in  " << std::fixed << std::setprecision(6) << interpreting.count() << "s!\n";
+	std::cout << "Succeed interpreting in " << std::fixed << std::setprecision(6) << interpreting.count() << "s!\n";
 
 	if (interpreter.HasResult()) {
 		std::cout << "\tResult: " << std::defaultfloat;
