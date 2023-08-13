@@ -231,7 +231,7 @@ namespace svm {
 
 		if (std::holds_alternative<std::monostate>(m_StackFrame.Function)) {
 			m_Program = static_cast<const svm::ByteFile*>(
-				&std::get<svm::core::ByteFile>(m_Loader.GetModule(0)->Module));
+				&std::get<svm::core::ByteFile>(m_Loader.GetModule(static_cast<std::uint32_t>(0))->Module));
 		} else {
 			m_Program = static_cast<const svm::ByteFile*>(
 				&std::get<svm::core::ByteFile>(m_Loader.GetModule(std::get<Function>(m_StackFrame.Function)->Module)->Module));

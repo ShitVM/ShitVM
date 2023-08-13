@@ -14,7 +14,7 @@ namespace svm {
 	Interpreter::Interpreter(Interpreter&& interpreter) noexcept
 		: m_Loader(std::move(interpreter.m_Loader)), m_Program(interpreter.m_Program), m_Exception(std::move(interpreter.m_Exception)),
 		m_Stack(std::move(interpreter.m_Stack)), m_StackFrame(interpreter.m_StackFrame), m_Depth(interpreter.m_Depth),
-		m_StructureCodeOffset(interpreter.m_StructureCodeOffset), m_LocalVariables(std::move(interpreter.m_LocalVariables)),
+		m_LocalVariables(std::move(interpreter.m_LocalVariables)),
 		m_Heap(std::move(interpreter.m_Heap)) {}
 
 	Interpreter& Interpreter::operator=(Interpreter&& interpreter) noexcept {
@@ -26,7 +26,6 @@ namespace svm {
 		m_StackFrame = interpreter.m_StackFrame;
 		m_Depth = interpreter.m_Depth;
 
-		m_StructureCodeOffset = interpreter.m_StructureCodeOffset;
 		m_LocalVariables = std::move(interpreter.m_LocalVariables);
 
 		m_Heap = std::move(interpreter.m_Heap);
@@ -41,7 +40,6 @@ namespace svm {
 		m_StackFrame = {};
 		m_Depth = 0;
 
-		m_StructureCodeOffset = 0;
 		m_LocalVariables.clear();
 
 		m_Heap.Deallocate();
@@ -227,11 +225,16 @@ namespace svm {
 		return result;
 	}
 
+	Type Interpreter::GetType(TypeCode code) const noexcept {
+		auto result = GetFundamentalType(code);
+		if (result != NoneType) return result;
+		else return GetStructure(code)->Type;
+	}
 	Structure Interpreter::GetStructure(Type type) const noexcept {
 		return m_Loader.GetModule(type->Module)->GetStructure(static_cast<std::uint32_t>(type->Code) - static_cast<std::uint32_t>(TypeCode::Structure));
 	}
 	Structure Interpreter::GetStructure(TypeCode code) const noexcept {
-		std::uint32_t index = static_cast<std::uint32_t>(code) - static_cast<std::uint32_t>(TypeCode::Structure) - m_StructureCodeOffset;
+		std::uint32_t index = static_cast<std::uint32_t>(code) - static_cast<std::uint32_t>(TypeCode::Structure);
 
 		const Structures& structures = m_Program->GetStructures();
 		const std::uint32_t structCount = static_cast<std::uint32_t>(structures.size());
@@ -242,7 +245,7 @@ namespace svm {
 		if (index >= mappings.GetStructureMappingCount()) return nullptr;
 
 		const Mapping& mapping = mappings.GetStructureMapping(index);
-		return m_Loader.GetModule(mapping.Module)->GetStructure(mapping.Name);
+		return m_Loader.GetModule(m_Program->GetDependencies()[mapping.Module])->GetStructure(mapping.Name); // TODO: ÃÖÀûÈ­
 	}
 	std::uint32_t Interpreter::GetStructureCount() const noexcept {
 		return static_cast<std::uint32_t>(m_Program->GetStructures().size()) + m_Program->GetMappings().GetStructureMappingCount();

@@ -53,7 +53,6 @@ namespace svm {
 		StackFrame m_StackFrame;
 		std::size_t m_Depth = 0;
 
-		std::uint32_t m_StructureCodeOffset = 0;
 		std::vector<std::size_t> m_LocalVariables;
 
 		Heap m_Heap;
@@ -90,6 +89,7 @@ namespace svm {
 		std::vector<StackFrame> GetCallStacks() const;
 
 	public:
+		Type GetType(TypeCode code) const noexcept;
 		Structure GetStructure(Type type) const noexcept;
 		Structure GetStructure(TypeCode code) const noexcept;
 		std::uint32_t GetStructureCount() const noexcept;

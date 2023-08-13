@@ -47,7 +47,6 @@ int Run(const svm::ProgramOption& option) {
 	svm::Module program;
 	try {
 		program = loader.Load(option.Path);
-		loader.LoadDependencies(program);
 	} catch (const std::exception& e) {
 		std::cout << "Occured exception!\n"
 				  << "Message: \"" << e.what() << "\"\n";

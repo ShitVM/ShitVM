@@ -341,7 +341,7 @@ namespace svm {
 		}
 		operand &= 0x7FFFFFFF;
 
-		info.ElementType = GetType(m_Program->GetStructures(), static_cast<TypeCode>(operand));
+		info.ElementType = GetType(static_cast<TypeCode>(operand));
 		if (info.ElementType == NoneType) {
 			OccurException(SVM_IEC_TYPE_OUTOFRANGE);
 			return false;
