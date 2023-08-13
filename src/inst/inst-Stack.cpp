@@ -77,7 +77,8 @@ namespace svm {
 
 namespace svm {
 	SVM_NOINLINE_FOR_PROFILING void Interpreter::InterpretPush(std::uint32_t operand) noexcept {
-		const ConstantPool& constantPool = m_Program->GetConstantPool();
+		const ConstantPool& constantPool = static_cast<const ConstantPool&>(
+			std::get<core::ByteFile>(m_StackFrame.Program->Module).GetConstantPool());
 		if (operand >= constantPool.GetAllCount()) {
 			PushStructure(operand - constantPool.GetAllCount());
 			return;

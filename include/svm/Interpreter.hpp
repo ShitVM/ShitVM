@@ -28,6 +28,7 @@ namespace svm {
 		std::size_t StackBegin = 0;
 		std::uint32_t VariableBegin = 0;
 		std::uint64_t Caller = 0;
+		Module Program;
 		std::variant<std::monostate, Function, VirtualFunction> Function;
 		const svm::Instructions* Instructions = nullptr;
 	};
@@ -46,7 +47,6 @@ namespace svm {
 	class Interpreter final {
 	private:
 		Loader m_Loader;
-		const ByteFile* m_Program = nullptr;
 		std::optional<InterpreterException> m_Exception;
 
 		Stack m_Stack;
