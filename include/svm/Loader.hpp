@@ -7,5 +7,8 @@ namespace svm {
 	class Loader final : public core::Loader<VirtualFunctionInfo> {
 	public:
 		using core::Loader<VirtualFunctionInfo>::Loader;
+
+	public:
+		void LoadStdLibraries();
 	};
 }

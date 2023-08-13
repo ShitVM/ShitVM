@@ -6,6 +6,7 @@
 
 #include <cstdint>
 #include <functional>
+#include <string>
 #include <type_traits>
 #include <utility>
 
@@ -19,7 +20,7 @@ namespace svm {
 	public:
 		VirtualFunctionInfo() noexcept = default;
 		template<typename F>
-		VirtualFunctionInfo(std::uint16_t arity, bool hasResult, F&& function)
+		VirtualFunctionInfo(std::string name, std::uint16_t arity, bool hasResult, F&& function)
 			noexcept(noexcept(std::is_nothrow_constructible_v<decltype(m_Function), decltype(std::forward<F>(function))>));
 		inline VirtualFunctionInfo(VirtualFunctionInfo&& functionInfo) noexcept;
 		~VirtualFunctionInfo() = default;

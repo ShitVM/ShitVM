@@ -46,6 +46,8 @@ int Run(const svm::ProgramOption& option) {
 	svm::Loader loader;
 	svm::Module program;
 	try {
+		loader.LoadStdLibraries();
+
 		program = loader.Load(option.Path);
 	} catch (const std::exception& e) {
 		std::cout << "Occured exception!\n"
