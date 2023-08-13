@@ -51,6 +51,10 @@ namespace svm {
 	SVM_NOINLINE_FOR_PROFILING void Interpreter::CopyStructure(const Type& from, Type& to) noexcept {
 		std::memcpy(&to, &from, from->Size);
 	}
+
+	void Interpreter::InitStructure(Object* object, Structure structure) {
+		InitStructure(structure, reinterpret_cast<Type*>(object));
+	}
 }
 
 namespace svm {
@@ -370,7 +374,7 @@ namespace svm {
 			return false;
 		}
 
-		info.Size = static_cast<std::size_t>(info.ElementType->Size * info.Count + sizeof(ArrayObject));
+		info.Size = CalcArraySize(info.ElementType, info.Count);
 		return true;
 	}
 	SVM_NOINLINE_FOR_PROFILING void Interpreter::InitArray(const detail::ArrayInfo& info, Type* type) noexcept {
@@ -397,6 +401,18 @@ namespace svm {
 	SVM_NOINLINE_FOR_PROFILING std::size_t Interpreter::CalcArraySize(const ArrayObject* array) const noexcept {
 		const std::size_t elementSize = reinterpret_cast<const Type*>(array + 1)->GetReference().Size;
 		return static_cast<std::size_t>(array->Count * elementSize + sizeof(ArrayObject));
+	}
+
+	void Interpreter::InitArray(Object* object, Type type, std::uint64_t count) {
+		detail::ArrayInfo info;
+		info.ElementType = type;
+		info.Count = count;
+		info.Size = CalcArraySize(type, count);
+
+		InitArray(info, reinterpret_cast<Type*>(object));
+	}
+	std::size_t Interpreter::CalcArraySize(Type type, std::uint64_t count) {
+		return static_cast<std::size_t>(type->Size * count + sizeof(ArrayObject));
 	}
 }
 

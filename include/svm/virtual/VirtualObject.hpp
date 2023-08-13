@@ -62,10 +62,14 @@ namespace svm {
 		VirtualObject ToPointer() const noexcept;
 		VirtualObject ToGCPointer() const noexcept;
 
+		void SetInt(std::uint32_t value) noexcept;
+		void SetLong(std::uint64_t value) noexcept;
+		void SetDouble(double value) noexcept;
+
 	private:
 		Object* GetObjectPtr() const noexcept;
 		template<typename T>
-		decltype(std::declval<T>().Value) GetValue() const noexcept;
+		decltype(std::declval<T>().Value)& GetValue() const noexcept;
 	};
 }
 

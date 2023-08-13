@@ -1,5 +1,7 @@
 #pragma once
 
+#include <svm/Structure.hpp>
+#include <svm/Type.hpp>
 #include <svm/virtual/VirtualObject.hpp>
 
 #include <cstddef>
@@ -29,9 +31,12 @@ namespace svm {
 	public:
 		bool IsEmpty() const noexcept;
 		VirtualObject GetTop() noexcept;
-		bool Push(const VirtualObject& object);
+		bool Expand(std::size_t size);
 		bool Pop();
 
-		VirtualObject Parameter(std::uint16_t index) noexcept;
+		VirtualObject GetParameter(std::uint16_t index) noexcept;
+
+	private:
+		void InitObject(Object* object, Type type);
 	};
 }

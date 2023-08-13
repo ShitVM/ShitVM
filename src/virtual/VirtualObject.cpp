@@ -23,10 +23,10 @@ namespace svm {
 		return m_Object = object.m_Object, *this;
 	}
 	bool VirtualObject::operator==(const VirtualObject& object) const noexcept {
-		return Compare(*this, object) == 0;
+		return m_Object == object.m_Object;
 	}
 	bool VirtualObject::operator!=(const VirtualObject& object) const noexcept {
-		return Compare(*this, object) != 0;
+		return m_Object != object.m_Object;
 	}
 
 	Type VirtualObject::GetType() const noexcept {
@@ -85,6 +85,22 @@ namespace svm {
 		assert(IsGCPointer());
 
 		return static_cast<ManagedHeapInfo*>(GetValue<GCPointerObject>());
+	}
+
+	void VirtualObject::SetInt(std::uint32_t value) noexcept {
+		assert(IsInt());
+
+		GetValue<IntObject>() = value;
+	}
+	void VirtualObject::SetLong(std::uint64_t value) noexcept {
+		assert(IsLong());
+
+		GetValue<LongObject>() = value;
+	}
+	void VirtualObject::SetDouble(double value) noexcept {
+		assert(IsDouble());
+
+		GetValue<DoubleObject>() = value;
 	}
 
 	Object* VirtualObject::GetObjectPtr() const noexcept {

@@ -10,5 +10,8 @@ namespace svm {
 
 	public:
 		void LoadStdLibraries();
+
+	private:
+		void LoadStdIoLibrary();
 	};
 }
