@@ -1,7 +1,6 @@
 #pragma once
 
 #include <svm/core/virtual/VirtualFunction.hpp>
-#include <svm/virtual/VirtualContext.hpp>
 
 #include <cstdint>
 #include <functional>
@@ -10,6 +9,8 @@
 #include <utility>
 
 namespace svm {
+	class VirtualContext;
+
 	class VirtualFunctionInfo final : public core::VirtualFunctionInfo {
 	private:
 		std::function<void(VirtualContext&)> m_Function;

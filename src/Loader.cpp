@@ -105,7 +105,7 @@ namespace svm::detail::stdlib::io {
 	struct State {
 		StreamManager StreamManager;
 
-		std::uint32_t VirtualStream;
+		VirtualModule::StructureIndex VirtualStream;
 
 		void Init(svm::Loader& loader) {
 			auto& module = loader.Create("/std/io.sbf");

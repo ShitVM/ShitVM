@@ -1,19 +1,15 @@
 #include <svm/virtual/VirtualModule.hpp>
 
 namespace svm {
-	std::uint32_t VirtualModule::AddDependency(std::string dependency) {
+	VirtualModule::DependencyIndex VirtualModule::AddDependency(std::string dependency) {
 		GetDependencies().push_back(std::move(dependency));
-		return static_cast<std::uint32_t>(GetDependencies().size() - 1);
+		return static_cast<DependencyIndex>(GetDependencies().size() - 1);
 	}
-	std::uint32_t VirtualModule::AddStructureMapping(std::uint32_t dependency, std::string name) {
-		GetMappings().AddStructureMapping(dependency, name);
-		return GetMappings().GetStructureMappingCount() - 1;
+	VirtualModule::MappedStructureIndex VirtualModule::AddStructureMapping(DependencyIndex dependency, std::string name) {
+		GetMappings().AddStructureMapping(static_cast<std::uint32_t>(dependency), name);
+		return static_cast<MappedStructureIndex>(GetMappings().GetStructureMappingCount() - 1);
 	}
-	std::uint32_t VirtualModule::AddFunctionMapping(std::uint32_t dependency, std::string name) {
-		GetMappings().AddFunctionMapping(dependency, std::move(name));
-		return GetMappings().GetFunctionMappingCount() - 1;
-	}
-	std::uint32_t VirtualModule::AddStructure(std::string name, std::vector<std::pair<Type, std::uint64_t>> fields) {
+	VirtualModule::StructureIndex VirtualModule::AddStructure(std::string name, std::vector<std::pair<Type, std::uint64_t>> fields) {
 		const auto index = static_cast<std::uint32_t>(GetStructures().size());
 		
 		StructureInfo& structure = GetStructures().emplace_back();
@@ -27,6 +23,6 @@ namespace svm {
 			field.Count = count;
 		}
 
-		return index;
+		return static_cast<StructureIndex>(index);
 	}
 }

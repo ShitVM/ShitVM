@@ -9,8 +9,16 @@ namespace svm {
 	VirtualContext::VirtualContext(Interpreter& interpreter, VirtualStack& stack) noexcept
 		: m_Interpreter(interpreter), m_Stack(stack) {}
 
-	Structure VirtualContext::GetStructure(std::uint32_t structure) {
-		return m_Interpreter.GetStructure(static_cast<TypeCode>(structure + static_cast<std::uint32_t>(TypeCode::Structure)));
+	Structure VirtualContext::GetStructure(VirtualModule::StructureIndex structure) {
+		return m_Interpreter.GetStructure(static_cast<TypeCode>(
+			static_cast<std::uint32_t>(structure)
+			+ static_cast<std::uint32_t>(TypeCode::Structure)));
+	}
+	Structure VirtualContext::GetStructure(VirtualModule::MappedStructureIndex structure) {
+		return m_Interpreter.GetStructure(static_cast<TypeCode>(
+			static_cast<std::uint32_t>(structure)
+			+ m_Interpreter.GetStructureCount()
+			+ static_cast<std::uint32_t>(TypeCode::Structure)));
 	}
 
 	VirtualObject VirtualContext::GetField(const VirtualObject& structure, std::uint32_t index) {

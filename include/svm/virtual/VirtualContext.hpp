@@ -1,6 +1,7 @@
 #pragma once
 
 #include <svm/Structure.hpp>
+#include <svm/virtual/VirtualModule.hpp>
 #include <svm/virtual/VirtualObject.hpp>
 #include <svm/virtual/VirtualStack.hpp>
 
@@ -26,7 +27,8 @@ namespace svm {
 		bool operator!=(const VirtualContext&) = delete;
 
 	public:
-		Structure GetStructure(std::uint32_t structure);
+		Structure GetStructure(VirtualModule::StructureIndex structure);
+		Structure GetStructure(VirtualModule::MappedStructureIndex structure);
 
 		VirtualObject GetField(const VirtualObject& structure, std::uint32_t index);
 		VirtualObject GetElement(const VirtualObject& array, std::uint64_t index);

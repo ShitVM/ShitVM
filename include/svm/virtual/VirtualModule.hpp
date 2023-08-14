@@ -12,6 +12,11 @@
 namespace svm {
 	class VirtualModule final : public core::VirtualModule<VirtualFunctionInfo> {
 	public:
+		enum class DependencyIndex : std::uint32_t {};
+		enum class StructureIndex : std::uint32_t {};
+		enum class MappedStructureIndex : std::uint32_t {};
+
+	public:
 		using core::VirtualModule<VirtualFunctionInfo>::VirtualModule;
 
 	private:
@@ -27,12 +32,11 @@ namespace svm {
 		using core::VirtualModule<VirtualFunctionInfo>::UpdateStructureInfos;
 
 	public:
-		std::uint32_t AddDependency(std::string dependency);
-		std::uint32_t AddStructureMapping(std::uint32_t dependency, std::string name);
-		std::uint32_t AddFunctionMapping(std::uint32_t dependency, std::string name);
-		std::uint32_t AddStructure(std::string name, std::vector<std::pair<Type, std::uint64_t>> fields);
+		DependencyIndex AddDependency(std::string dependency);
+		MappedStructureIndex AddStructureMapping(DependencyIndex dependency, std::string name);
+		StructureIndex AddStructure(std::string name, std::vector<std::pair<Type, std::uint64_t>> fields);
 		template<typename F>
-		std::uint32_t AddFunction(std::string name, std::uint16_t arity, bool hasResult, F&& function);
+		void AddFunction(std::string name, std::uint16_t arity, bool hasResult, F&& function);
 	};
 }
 

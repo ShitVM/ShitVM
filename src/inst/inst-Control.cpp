@@ -1,6 +1,7 @@
 #include <svm/Interpreter.hpp>
 
 #include <svm/detail/InterpreterExceptionCode.hpp>
+#include <svm/virtual/VirtualContext.hpp>
 #include <svm/virtual/VirtualStack.hpp>
 
 #include <cstring>
