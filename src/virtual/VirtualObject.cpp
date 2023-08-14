@@ -54,7 +54,7 @@ namespace svm {
 	Type VirtualObject::IsArray() const noexcept {
 		if (!GetType().IsArray()) return nullptr;
 
-		return reinterpret_cast<Object*>(GetObjectPtr() + 1)->GetType();
+		return (static_cast<ArrayObject*>(GetObjectPtr()) + 1)->GetType();
 	}
 	Type VirtualObject::IsStructure() const noexcept {
 		if (const Type type = GetType(); type.IsStructure()) return type;

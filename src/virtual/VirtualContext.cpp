@@ -199,9 +199,10 @@ namespace svm {
 		} else if (const Type array = src.IsArray(); array != nullptr) {
 			assert(dest.IsArray() == array);
 
-			std::memcpy(dest.GetObjectPtr(), src.GetObjectPtr(), std::min(
-				m_Interpreter.CalcArraySize(array, dest.GetCount()),
-				m_Interpreter.CalcArraySize(array, src.GetCount())));
+			std::memcpy(static_cast<ArrayObject*>(dest.GetObjectPtr()) + 1,
+				static_cast<ArrayObject*>(src.GetObjectPtr()) + 1,
+				std::min(m_Interpreter.CalcArraySize(array, dest.GetCount()),
+					m_Interpreter.CalcArraySize(array, src.GetCount())) - sizeof(ArrayObject));
 		}
 	}
 	void VirtualContext::CopyObjectUnsafe(VirtualObject::PointerTarget dest, VirtualObject::PointerTarget src, std::uint64_t count) {
@@ -216,6 +217,8 @@ namespace svm {
 			*static_cast<IntObject*>(target) = static_cast<const IntObject&>(object);
 		} else if (type == LongType) {
 			*static_cast<LongObject*>(target) = static_cast<const LongObject&>(object);
+		} else if (type == DoubleType) {
+			*static_cast<DoubleObject*>(target) = static_cast<const DoubleObject&>(object);
 		} else if (type == PointerType) {
 			*static_cast<PointerObject*>(target) = static_cast<const PointerObject&>(object);
 		} else if (type == GCPointerType) {
