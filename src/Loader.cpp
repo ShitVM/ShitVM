@@ -30,7 +30,10 @@ namespace svm::detail::stdlib::io {
 
 		virtual ~Stream() = default;
 
+		virtual std::uint32_t ReadChar32() = 0;
 		virtual std::int32_t ReadInt() = 0;
+
+		virtual void WriteChar32(std::uint32_t value) = 0;
 		virtual void WriteInt(std::int32_t value) = 0;
 	};
 
@@ -39,6 +42,9 @@ namespace svm::detail::stdlib::io {
 			IsReadable = true;
 		}
 
+		virtual void WriteChar32(std::uint32_t) override {
+			throw std::bad_function_call();
+		}
 		virtual void WriteInt(std::int32_t) override {
 			throw std::bad_function_call();
 		}
@@ -49,12 +55,20 @@ namespace svm::detail::stdlib::io {
 			IsWriteable = true;
 		}
 
+		virtual std::uint32_t ReadChar32() override {
+			throw std::bad_function_call();
+		}
 		virtual std::int32_t ReadInt() override {
 			throw std::bad_function_call();
 		}
 	};
 
 	struct StdinStream : ReadonlyStream {
+		virtual std::uint32_t ReadChar32() override {
+			char value;
+			std::cin >> value;
+			return value;
+		}
 		virtual std::int32_t ReadInt() override {
 			std::int32_t value;
 			std::cin >> value;
@@ -63,6 +77,9 @@ namespace svm::detail::stdlib::io {
 	};
 
 	struct StdoutStream : WriteonlyStream {
+		virtual void WriteChar32(std::uint32_t value) override {
+			std::cout << static_cast<char>(value);
+		}
 		virtual void WriteInt(std::int32_t value) override {
 			std::cout << value;
 		}
@@ -121,6 +138,22 @@ namespace svm::detail::stdlib::io {
 			module.AddFunction("getStdout", 0, true, [this](VirtualContext& context) {
 				auto result = context.PushStructure(context.GetStructure(VirtualStream));
 				context.GetField(result, 0).SetLong(StreamManager.Stdout);
+			});
+
+			module.AddFunction("readChar32", 1, true, [this](VirtualContext& context) {
+				auto stream = context.GetParameter(0); // TODO: 타입 검사
+				auto streamHandle = context.GetField(stream, 0).ToLong();
+				auto& cppStream = StreamManager.GetStream(streamHandle); // TODO: 유효성 검사
+
+				context.PushFundamental(IntObject(cppStream.ReadChar32()));
+			});
+			module.AddFunction("writeChar32", 2, false, [this](VirtualContext& context) {
+				auto stream = context.GetParameter(0); // TODO: 타입 검사
+				auto streamHandle = context.GetField(stream, 0).ToLong();
+				auto& cppStream = StreamManager.GetStream(streamHandle); // TODO: 유효성 검사
+
+				auto value = context.GetParameter(1).ToInt(); // TODO: 타입 검사
+				cppStream.WriteChar32(value);
 			});
 
 			module.AddFunction("readInt", 1, true, [this](VirtualContext& context) {

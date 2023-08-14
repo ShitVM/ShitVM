@@ -175,7 +175,7 @@ namespace svm {
 			const VirtualFunction function = std::get<VirtualFunction>(m_StackFrame.Function);
 
 			VirtualStack stack(&m_Stack, &m_StackFrame, &m_LocalVariables);
-			VirtualContext context(*this, stack);
+			VirtualContext context(*this, stack, m_Heap);
 			(*function)(context);
 
 			InterpretRet();

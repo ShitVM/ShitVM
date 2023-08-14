@@ -26,6 +26,10 @@ namespace svm {
 		friend class VirtualContext;
 		friend class VirtualStack;
 
+	public:
+		enum class PointerTarget : std::uintptr_t {};
+		enum class GCPointerTarget : std::uintptr_t {};
+
 	private:
 		std::variant<std::monostate, Object*, ManagedHeapInfo*> m_Object;
 
@@ -59,12 +63,15 @@ namespace svm {
 		std::uint32_t ToInt() const noexcept;
 		std::uint64_t ToLong() const noexcept;
 		double ToDouble() const noexcept;
-		VirtualObject ToPointer() const noexcept;
-		VirtualObject ToGCPointer() const noexcept;
+		PointerTarget ToPointer() const noexcept;
+		GCPointerTarget ToGCPointer() const noexcept;
 
 		void SetInt(std::uint32_t value) noexcept;
 		void SetLong(std::uint64_t value) noexcept;
 		void SetDouble(double value) noexcept;
+		void SetPointer(PointerTarget value) noexcept;
+		void SetPointer(GCPointerTarget value) noexcept;
+		void SetGCPointer(GCPointerTarget value) noexcept;
 
 	private:
 		Object* GetObjectPtr() const noexcept;
