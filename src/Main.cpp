@@ -44,10 +44,10 @@ int Run(const svm::ProgramOption& option) {
 	const auto startLoading = std::chrono::system_clock::now();
 
 	svm::Loader loader;
+	svm::StdModule stdModule;
 	svm::Module program;
 	try {
-		loader.LoadStdLibraries();
-
+		stdModule = svm::InitStdModule(loader);
 		program = loader.Load(option.Path);
 	} catch (const std::exception& e) {
 		std::cout << "Occured exception!\n"
