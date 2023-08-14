@@ -5,6 +5,7 @@
 
 #include <algorithm>
 #include <cstdint>
+#include <cstring>
 #include <fstream>
 #include <functional>
 #include <iostream>
@@ -23,7 +24,98 @@ namespace svm {
 	}
 }
 
+#define PREF(o) (context.GetPointer(o)) // Pointer reference
+#define PDREF(p) (context.GetObject(p.ToPointer())) // Pointer Dereference
+#define STRUCT(i) (context.GetStructure(i))
+#define FIELD(s, i) (context.GetField(s, i))
+#define ITEM(a, i) (context.GetElement(a, i)) // Array element
+#define PARAM(i) (context.GetParameter(i))
+
+namespace svm::detail::stdlib::string {
+	constexpr std::uint32_t StringData = 0;
+	constexpr std::uint32_t StringLength = 1;
+	constexpr std::uint32_t StringCapacity = 2;
+
+	void Expand32(VirtualContext& context, VirtualObject& string, std::uint64_t required) {
+		auto capacity = FIELD(string, StringCapacity).ToLong();
+		if (required <= capacity) return;
+
+		if (capacity == 0) {
+			capacity = required;
+		} else {
+			do {
+				capacity <<= 1; // Doubling
+			} while (required > capacity);
+		}
+
+		auto data = FIELD(string, StringData);
+		auto newData = context.NewFundamental(IntObject(), capacity);
+		if (data.ToPointer() != VPNULL) {
+			context.CopyObject(newData, PDREF(data));
+			context.DeleteObject(data);
+		}
+
+		data.SetPointer(PREF(newData));
+		FIELD(string, StringCapacity).SetLong(capacity);
+	}
+
+	struct State {
+		VirtualModule::StructureIndex VirtualString32;
+
+		void Init(svm::Loader& loader) {
+			auto& module = loader.Create("/std/string.sbf");
+
+			VirtualString32 = module.AddStructure("String32", {
+				{ svm::PointerType, 0 }, // data
+				{ svm::LongType, 0 }, // length
+				{ svm::LongType, 0 }, // capacity
+			});
+
+			module.AddFunction("createString", 0, true, [this](VirtualContext& context) {
+				auto result = context.PushStructure(STRUCT(VirtualString32));
+				FIELD(result, StringData).SetPointer(VPNULL);
+				FIELD(result, StringLength).SetLong(0);
+				FIELD(result, StringCapacity).SetLong(0);
+			});
+
+			module.AddFunction("push", 2, false, [this](VirtualContext& context) {
+				auto string = PDREF(PARAM(0)); // TODO: 타입 검사
+				auto stringLength = FIELD(string, StringLength).ToLong();
+
+				Expand32(context, string, stringLength + 1);
+				ITEM(PDREF(FIELD(string, StringData)), stringLength).SetInt(PARAM(1).ToInt()); // TODO: 타입 검사
+				FIELD(string, StringLength).SetLong(stringLength + 1);
+			});
+			module.AddFunction("concat", 2, false, [this](VirtualContext& context) {
+				auto dest = PDREF(PARAM(0)); // TODO: 타입 검사
+				auto src = PDREF(PARAM(1)); // TODO: 타입 검사
+				auto destLength = FIELD(dest, StringLength).ToLong();
+				auto srcLength = FIELD(src, StringLength).ToLong();
+
+				Expand32(context, dest, destLength + srcLength);
+				context.CopyObjectUnsafe(
+					PREF(ITEM(PDREF(FIELD(dest, StringData)), destLength)),
+					PREF(ITEM(PDREF(FIELD(src, StringData)), 0)), srcLength);
+				FIELD(dest, StringLength).SetLong(destLength + srcLength);
+			});
+
+			module.AddFunction("destroy", 1, false, [this](VirtualContext& context) {
+				auto string = PDREF(PARAM(0)); // TODO: 타입 검사
+				auto data = FIELD(string, StringData);
+				if (data.ToPointer() != VPNULL) {
+					context.DeleteObject(data);
+					data.SetPointer(VPNULL);
+				}
+			});
+
+			loader.Build(module);
+		}
+	};
+}
+
 namespace svm::detail::stdlib::io {
+	constexpr std::uint32_t StreamHandle = 0;
+
 	struct Stream {
 		bool IsReadable = false;
 		bool IsWriteable = false;
@@ -128,47 +220,47 @@ namespace svm::detail::stdlib::io {
 			auto& module = loader.Create("/std/io.sbf");
 
 			VirtualStream = module.AddStructure("Stream", {
-				{ svm::LongType, 0 }
+				{ svm::LongType, 0 }, // _handle
 			});
 
 			module.AddFunction("getStdin", 0, true, [this](VirtualContext& context) {
-				auto result = context.PushStructure(context.GetStructure(VirtualStream));
-				context.GetField(result, 0).SetLong(StreamManager.Stdin);
+				auto result = context.PushStructure(STRUCT(VirtualStream));
+				FIELD(result, 0).SetLong(StreamManager.Stdin);
 			});
 			module.AddFunction("getStdout", 0, true, [this](VirtualContext& context) {
-				auto result = context.PushStructure(context.GetStructure(VirtualStream));
-				context.GetField(result, 0).SetLong(StreamManager.Stdout);
+				auto result = context.PushStructure(STRUCT(VirtualStream));
+				FIELD(result, 0).SetLong(StreamManager.Stdout);
 			});
 
 			module.AddFunction("readChar32", 1, true, [this](VirtualContext& context) {
-				auto stream = context.GetParameter(0); // TODO: 타입 검사
-				auto streamHandle = context.GetField(stream, 0).ToLong();
+				auto stream = PARAM(0); // TODO: 타입 검사
+				auto streamHandle = FIELD(stream, StreamHandle).ToLong();
 				auto& cppStream = StreamManager.GetStream(streamHandle); // TODO: 유효성 검사
 
 				context.PushFundamental(IntObject(cppStream.ReadChar32()));
 			});
 			module.AddFunction("writeChar32", 2, false, [this](VirtualContext& context) {
-				auto stream = context.GetParameter(0); // TODO: 타입 검사
-				auto streamHandle = context.GetField(stream, 0).ToLong();
+				auto stream = PARAM(0); // TODO: 타입 검사
+				auto streamHandle = FIELD(stream, StreamHandle).ToLong();
 				auto& cppStream = StreamManager.GetStream(streamHandle); // TODO: 유효성 검사
 
-				auto value = context.GetParameter(1).ToInt(); // TODO: 타입 검사
+				auto value = PARAM(1).ToInt(); // TODO: 타입 검사
 				cppStream.WriteChar32(value);
 			});
 
 			module.AddFunction("readInt", 1, true, [this](VirtualContext& context) {
-				auto stream = context.GetParameter(0); // TODO: 타입 검사
-				auto streamHandle = context.GetField(stream, 0).ToLong();
+				auto stream = PARAM(0); // TODO: 타입 검사
+				auto streamHandle = FIELD(stream, StreamHandle).ToLong();
 				auto& cppStream = StreamManager.GetStream(streamHandle); // TODO: 유효성 검사
 
 				context.PushFundamental(IntObject(cppStream.ReadInt()));
 			});
 			module.AddFunction("writeInt", 2, false, [this](VirtualContext& context) {
-				auto stream = context.GetParameter(0); // TODO: 타입 검사
-				auto streamHandle = context.GetField(stream, 0).ToLong();
+				auto stream = PARAM(0); // TODO: 타입 검사
+				auto streamHandle = FIELD(stream, StreamHandle).ToLong();
 				auto& cppStream = StreamManager.GetStream(streamHandle); // TODO: 유효성 검사
 
-				auto value = context.GetParameter(1).ToInt(); // TODO: 타입 검사
+				auto value = PARAM(1).ToInt(); // TODO: 타입 검사
 				cppStream.WriteInt(value);
 			});
 
@@ -181,6 +273,7 @@ namespace svm {
 	namespace detail {
 		struct StdModuleState {
 			stdlib::io::State IOState;
+			stdlib::string::State StringState;
 		};
 	}
 
@@ -188,6 +281,7 @@ namespace svm {
 		StdModule module = std::make_shared<detail::StdModuleState>();
 
 		module->IOState.Init(loader);
+		module->StringState.Init(loader);
 
 		return module;
 	}
