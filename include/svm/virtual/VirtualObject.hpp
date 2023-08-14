@@ -15,7 +15,7 @@ namespace svm {
 
 	extern const detail::VirtualNullObject VNull;
 
-#define VNULL svm::VNull
+#define VNULL ::svm::VNull
 }
 
 namespace svm {
@@ -27,8 +27,15 @@ namespace svm {
 		friend class VirtualStack;
 
 	public:
-		enum class PointerTarget : std::uintptr_t {};
-		enum class GCPointerTarget : std::uintptr_t {};
+		enum class PointerTarget : std::uintptr_t {
+			Null,
+		};
+		enum class GCPointerTarget : std::uintptr_t {
+			Null,
+		};
+
+#define VPNULL ::svm::VirtualObject::PointerTarget::Null
+#define VGPNULL ::svm::VirtualObject::GCPointerTarget::Null
 
 	private:
 		std::variant<std::monostate, Object*, ManagedHeapInfo*> m_Object;
@@ -72,6 +79,8 @@ namespace svm {
 		void SetPointer(PointerTarget value) noexcept;
 		void SetPointer(GCPointerTarget value) noexcept;
 		void SetGCPointer(GCPointerTarget value) noexcept;
+
+		std::uint64_t GetCount() const noexcept;
 
 	private:
 		Object* GetObjectPtr() const noexcept;

@@ -118,6 +118,12 @@ namespace svm {
 		GetValue<GCPointerObject>() = reinterpret_cast<ManagedHeapInfo*>(static_cast<std::uintptr_t>(value));
 	}
 
+	std::uint64_t VirtualObject::GetCount() const noexcept {
+		assert(IsArray() != nullptr);
+
+		return static_cast<std::uint64_t>(static_cast<ArrayObject*>(GetObjectPtr())->Count);
+	}
+
 	Object* VirtualObject::GetObjectPtr() const noexcept {
 		assert(!std::holds_alternative<std::monostate>(m_Object));
 

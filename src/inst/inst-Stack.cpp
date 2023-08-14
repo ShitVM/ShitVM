@@ -52,7 +52,7 @@ namespace svm {
 		std::memcpy(&to, &from, from->Size);
 	}
 
-	void Interpreter::InitStructure(Object* object, Structure structure) {
+	void Interpreter::InitStructure(Object* object, Structure structure) noexcept {
 		InitStructure(structure, reinterpret_cast<Type*>(object));
 	}
 }
@@ -403,7 +403,7 @@ namespace svm {
 		return static_cast<std::size_t>(array->Count * elementSize + sizeof(ArrayObject));
 	}
 
-	void Interpreter::InitArray(Object* object, Type type, std::uint64_t count) {
+	void Interpreter::InitArray(Object* object, Type type, std::uint64_t count) noexcept {
 		detail::ArrayInfo info;
 		info.ElementType = type;
 		info.Count = count;
@@ -411,7 +411,7 @@ namespace svm {
 
 		InitArray(info, reinterpret_cast<Type*>(object));
 	}
-	std::size_t Interpreter::CalcArraySize(Type type, std::uint64_t count) {
+	std::size_t Interpreter::CalcArraySize(Type type, std::uint64_t count) const noexcept {
 		return static_cast<std::size_t>(type->Size * count + sizeof(ArrayObject));
 	}
 }

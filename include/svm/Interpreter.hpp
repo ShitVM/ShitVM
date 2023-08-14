@@ -121,9 +121,9 @@ namespace svm {
 		std::size_t CalcArraySize(const ArrayObject* array) const noexcept;
 
 	public:
-		void InitStructure(Object* object, Structure structure);
-		void InitArray(Object* object, Type type, std::uint64_t count);
-		std::size_t CalcArraySize(Type type, std::uint64_t count);
+		void InitStructure(Object* object, Structure structure) noexcept;
+		void InitArray(Object* object, Type type, std::uint64_t count) noexcept;
+		std::size_t CalcArraySize(Type type, std::uint64_t count) const noexcept;
 
 	private:
 		void InterpretPush(std::uint32_t operand) noexcept;

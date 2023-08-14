@@ -5,6 +5,8 @@
 #include <svm/Object.hpp>
 
 #include <cassert>
+#include <cstddef>
+#include <cstring>
 
 namespace svm {
 	VirtualContext::VirtualContext(Interpreter& interpreter, VirtualStack& stack, Heap& heap) noexcept
@@ -138,7 +140,7 @@ namespace svm {
 	}
 	VirtualObject VirtualContext::NewStructure(Structure structure, std::uint64_t count) {
 		assert(structure != nullptr);
-		
+
 		if (count == 0) {
 			if (void* const addr = m_Heap.AllocateUnmanagedHeap(structure->Type.Size); addr) {
 				InitStructure(addr, structure);
@@ -183,6 +185,30 @@ namespace svm {
 
 		m_Heap.DeallocateUnmanagedHeap(
 			reinterpret_cast<void*>(static_cast<std::uintptr_t>(object.ToPointer())));
+	}
+
+	void VirtualContext::CopyObject(const VirtualObject& dest, const VirtualObject& src) {
+		if (src.GetType().IsFundamentalType()) {
+			assert(dest.GetType() == src.GetType());
+
+			std::memcpy(dest.GetObjectPtr(), src.GetObjectPtr(), src.GetType()->Size);
+		} else if (const Type structure = src.IsStructure(); structure != nullptr) {
+			assert(dest.GetType() == structure);
+
+			std::memcpy(dest.GetObjectPtr(), src.GetObjectPtr(), structure->Size);
+		} else if (const Type array = src.IsArray(); array != nullptr) {
+			assert(dest.IsArray() == array);
+
+			std::memcpy(dest.GetObjectPtr(), src.GetObjectPtr(), std::min(
+				m_Interpreter.CalcArraySize(array, dest.GetCount()),
+				m_Interpreter.CalcArraySize(array, src.GetCount())));
+		}
+	}
+	void VirtualContext::CopyObjectUnsafe(VirtualObject::PointerTarget dest, VirtualObject::PointerTarget src, std::uint64_t count) {
+		std::memcpy(
+			reinterpret_cast<void*>(static_cast<std::uintptr_t>(dest)),
+			reinterpret_cast<void*>(static_cast<std::uintptr_t>(src)),
+			static_cast<std::size_t>(reinterpret_cast<Object*>(static_cast<std::uintptr_t>(src))->GetType()->Size * count));
 	}
 
 	void VirtualContext::InitFundamental(void* target, const Object& object, const Type& type) {

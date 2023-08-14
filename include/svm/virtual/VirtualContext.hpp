@@ -51,6 +51,9 @@ namespace svm {
 		VirtualObject GCNewStructure(Structure structure, std::uint64_t count = 0);
 		void DeleteObject(const VirtualObject& object);
 
+		void CopyObject(const VirtualObject& dest, const VirtualObject& src);
+		void CopyObjectUnsafe(VirtualObject::PointerTarget dest, VirtualObject::PointerTarget src, std::uint64_t count);
+
 	private:
 		void InitFundamental(void* target, const Object& object, const Type& type);
 		void InitFundamental(void* target, const Type& type, std::uint64_t count);
