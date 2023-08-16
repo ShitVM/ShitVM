@@ -36,6 +36,30 @@ namespace svm {
 #define ITEM(a, i) (context.GetElement(a, i)) // Array element
 #define PARAM(i) (context.GetParameter(i))
 
+namespace svm::detail::stdlib::array {
+	struct State {
+		void Init(Loader& loader, std::vector<VirtualModule*>& modules) {
+			auto& module = loader.Create("/std/array.sbf");
+			modules.push_back(&module);
+
+			module.AddFunction("getLength", 1, true, [this](VirtualContext& context) {
+				auto array = PDREF(PARAM(0)); // TODO: 타입 검사
+				context.PushFundamental(LongObject(array.GetCount()));
+			});
+
+			module.AddFunction("copy", 5, false, [this](VirtualContext& context) {
+				auto dest = PDREF(PARAM(0)); // TODO: 타입 검사
+				auto destBegin = PARAM(1).ToLong(); // TODO: 타입 검사
+				auto src = PDREF(PARAM(2)); // TODO: 타입 검사
+				auto srcBegin = PARAM(3).ToLong(); // TODO: 타입 검사
+				auto count = PARAM(4).ToLong(); // TODO: 타입 검사
+
+				context.CopyObjectUnsafe(PREF(ITEM(dest, destBegin)), PREF(ITEM(src, srcBegin)), count); // TODO: 유효성 검사
+			});
+		}
+	};
+}
+
 namespace svm::detail::stdlib::string {
 	constexpr std::uint32_t StringData = 0;
 	constexpr std::uint32_t StringLength = 1;
@@ -88,7 +112,7 @@ namespace svm::detail::stdlib::string {
 	struct State {
 		VirtualModule::StructureIndex VirtualString32;
 
-		void Init(svm::Loader& loader, std::vector<VirtualModule*>& modules) {
+		void Init(Loader& loader, std::vector<VirtualModule*>& modules) {
 			auto& module = loader.Create("/std/string.sbf");
 			modules.push_back(&module);
 
@@ -134,8 +158,6 @@ namespace svm::detail::stdlib::string {
 					data.SetPointer(VPNULL);
 				}
 			});
-
-			loader.Build(module);
 		}
 	};
 }
@@ -429,7 +451,7 @@ namespace svm::detail::stdlib::io {
 		VirtualModule::DependencyIndex StringModule;
 		VirtualModule::MappedStructureIndex VirtualString32;
 
-		void Init(svm::Loader& loader, std::vector<VirtualModule*>& modules) {
+		void Init(Loader& loader, std::vector<VirtualModule*>& modules) {
 			auto& module = loader.Create("/std/io.sbf");
 			modules.push_back(&module);
 
@@ -593,6 +615,7 @@ namespace svm::detail::stdlib::io {
 namespace svm {
 	namespace detail {
 		struct StdModuleState {
+			stdlib::array::State ArrayState;
 			stdlib::io::State IOState;
 			stdlib::string::State StringState;
 		};
@@ -600,8 +623,9 @@ namespace svm {
 
 	StdModule InitStdModule(Loader& loader) {
 		StdModule module = std::make_shared<detail::StdModuleState>();
-		
 		std::vector<VirtualModule*> modules;
+
+		module->IOState.Init(loader, modules);
 		module->IOState.Init(loader, modules);
 		module->StringState.Init(loader, modules);
 
