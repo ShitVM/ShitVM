@@ -249,6 +249,9 @@ namespace svm {
 	std::uint32_t Interpreter::GetStructureCount() const noexcept {
 		return m_StackFrame.Program->GetStructureCount() + m_StackFrame.Program->GetMappings().GetStructureMappingCount();
 	}
+	std::uint32_t Interpreter::GetStructureCountWithoutMappings() const noexcept {
+		return m_StackFrame.Program->GetStructureCount();
+	}
 	std::variant<std::monostate, Function, VirtualFunction> Interpreter::GetFunction(std::uint32_t index) const noexcept {
 		const auto funcCount = m_StackFrame.Program->GetFunctionCount();
 		if (index < funcCount) {

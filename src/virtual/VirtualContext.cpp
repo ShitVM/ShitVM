@@ -20,7 +20,7 @@ namespace svm {
 	Structure VirtualContext::GetStructure(VirtualModule::MappedStructureIndex structure) {
 		return m_Interpreter.GetStructure(static_cast<TypeCode>(
 			static_cast<std::uint32_t>(structure)
-			+ m_Interpreter.GetStructureCount()
+			+ m_Interpreter.GetStructureCountWithoutMappings()
 			+ static_cast<std::uint32_t>(TypeCode::Structure)));
 	}
 
@@ -30,7 +30,7 @@ namespace svm {
 
 		return reinterpret_cast<Object*>(
 			reinterpret_cast<std::uint8_t*>(structure.GetObjectPtr())
-			+ m_Interpreter.GetStructure(type->Code)->Fields[index].Offset);
+			+ m_Interpreter.GetStructure(type)->Fields[index].Offset);
 	}
 	VirtualObject VirtualContext::GetElement(const VirtualObject& array, std::uint64_t index) {
 		const Type type = array.IsArray();

@@ -93,6 +93,7 @@ namespace svm {
 		Structure GetStructure(Type type) const noexcept;
 		Structure GetStructure(TypeCode code) const noexcept;
 		std::uint32_t GetStructureCount() const noexcept;
+		std::uint32_t GetStructureCountWithoutMappings() const noexcept;
 		std::variant<std::monostate, Function, VirtualFunction> GetFunction(std::uint32_t index) const noexcept;
 		std::uint32_t GetFunctionCount() const noexcept;
 		const Type* GetLocalVariable(std::uint32_t index) const noexcept;
