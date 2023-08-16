@@ -1031,7 +1031,7 @@ ShitVM에서는 포인터가 잘못된 메모리 영역을 가리킬 경우 `POI
 - `ARRAY_INVALIDFORARRAY`<br>피연산자가 배열일 수 없습니다.
 
 ## 저장 규격
-[ShitBF 스펙](https://github.com/ShitVM/ShitVM/blob/master/docs/ShitBF.md)을 참조하세요.
+[ShitBF 스펙](ShitBF.md)을 참조하세요.
 
 ### 최소 요구 버전
 |ShitBC 버전|ShitBF 최소 요구 버전|

@@ -144,4 +144,4 @@
 |명령어|?||명령어의 개수만큼 명령어가 순서대로 저장됨|
 
 ## 명령어
-[ShitBC 스펙](https://github.com/ShitVM/ShitVM/blob/master/docs/ShitBC.md)을 참조하세요.
+[ShitBC 스펙](ShitBC.md)을 참조하세요.

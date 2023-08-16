@@ -39,7 +39,7 @@ $ ./ShitVM <입력: ShitVM 바이트 파일> [명령줄 옵션...]
 |`young`|8388608|Young Generation의 블록 크기를 바이트 단위로 설정합니다. 0일 수 없으며, 512의 배수여야 합니다.|
 |`old`|33554432|Old Generation의 최소 블록 크기를 바이트 단위로 설정합니다. 0일 수 없으며, 512의 배수여야 합니다.|
 
-## [문서](https://github.com/ShitVM/ShitVM/tree/master/docs)
+## [문서](docs/README.md)
 
 ## 관련된 레포지토리
 - **[ShitAsm](https://github.com/ShitVM/ShitAsm):** ShitBC 어셈블러
