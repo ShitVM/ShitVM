@@ -73,12 +73,12 @@ namespace svm {
 		PointerTarget ToPointer() const noexcept;
 		GCPointerTarget ToGCPointer() const noexcept;
 
-		void SetInt(std::uint32_t value) noexcept;
-		void SetLong(std::uint64_t value) noexcept;
-		void SetDouble(double value) noexcept;
-		void SetPointer(PointerTarget value) noexcept;
-		void SetPointer(GCPointerTarget value) noexcept;
-		void SetGCPointer(GCPointerTarget value) noexcept;
+		void SetInt(std::uint32_t value) const noexcept;
+		void SetLong(std::uint64_t value) const noexcept;
+		void SetDouble(double value) const noexcept;
+		void SetPointer(PointerTarget value) const noexcept;
+		void SetPointer(GCPointerTarget value) const noexcept;
+		void SetGCPointer(GCPointerTarget value) const noexcept;
 
 		std::uint64_t GetCount() const noexcept;
 

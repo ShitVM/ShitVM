@@ -87,32 +87,32 @@ namespace svm {
 		return static_cast<GCPointerTarget>(reinterpret_cast<std::uintptr_t>(GetValue<GCPointerObject>()));
 	}
 
-	void VirtualObject::SetInt(std::uint32_t value) noexcept {
+	void VirtualObject::SetInt(std::uint32_t value) const noexcept {
 		assert(IsInt());
 
 		GetValue<IntObject>() = value;
 	}
-	void VirtualObject::SetLong(std::uint64_t value) noexcept {
+	void VirtualObject::SetLong(std::uint64_t value) const noexcept {
 		assert(IsLong());
 
 		GetValue<LongObject>() = value;
 	}
-	void VirtualObject::SetDouble(double value) noexcept {
+	void VirtualObject::SetDouble(double value) const noexcept {
 		assert(IsDouble());
 
 		GetValue<DoubleObject>() = value;
 	}
-	void VirtualObject::SetPointer(PointerTarget value) noexcept {
+	void VirtualObject::SetPointer(PointerTarget value) const noexcept {
 		assert(IsPointer());
 
 		GetValue<PointerObject>() = reinterpret_cast<Object*>(static_cast<std::uintptr_t>(value));
 	}
-	void VirtualObject::SetPointer(GCPointerTarget value) noexcept {
+	void VirtualObject::SetPointer(GCPointerTarget value) const noexcept {
 		assert(IsPointer());
 
 		GetValue<PointerObject>() = reinterpret_cast<ManagedHeapInfo*>(static_cast<std::uintptr_t>(value)) + 1;
 	}
-	void VirtualObject::SetGCPointer(GCPointerTarget value) noexcept {
+	void VirtualObject::SetGCPointer(GCPointerTarget value) const noexcept {
 		assert(IsGCPointer());
 
 		GetValue<GCPointerObject>() = reinterpret_cast<ManagedHeapInfo*>(static_cast<std::uintptr_t>(value));
