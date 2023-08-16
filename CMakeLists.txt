@@ -15,7 +15,7 @@ endif()
 add_subdirectory(./ShitCore)
 link_libraries(ShitCore)
 
-include_directories("./include" "./ShitCore/include")
+include_directories("./include" "./ShitCore/include" "./utfcpp/source")
 file(GLOB_RECURSE SOURCE_LIST "./src/*.cpp")
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "./bin")
 

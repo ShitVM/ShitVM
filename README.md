@@ -44,3 +44,6 @@ $ ./ShitVM <입력: ShitVM 바이트 파일> [명령줄 옵션...]
 ## 관련된 레포지토리
 - **[ShitAsm](https://github.com/ShitVM/ShitAsm):** ShitBC 어셈블러
 - **[ShitGen](https://github.com/ShitVM/ShitGen):** ShitVM 바이트 파일 생성기
+
+## 사용된 외부 라이브러리
+- [UTF8-CPP](https://github.com/nemtrif/utfcpp)

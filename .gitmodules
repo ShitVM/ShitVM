@@ -1,3 +1,6 @@
 [submodule "ShitCore"]
 	path = ShitCore
 	url = https://github.com/ShitVM/ShitCore.git
+[submodule "utfcpp"]
+	path = utfcpp
+	url = https://github.com/nemtrif/utfcpp
