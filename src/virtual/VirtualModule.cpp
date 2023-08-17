@@ -2,7 +2,7 @@
 
 namespace svm {
 	VirtualModule::DependencyIndex VirtualModule::AddDependency(std::string dependency) {
-		GetDependencies().push_back(std::move(dependency));
+		GetDependencies().push_back({ std::move(dependency) });
 		return static_cast<DependencyIndex>(GetDependencies().size() - 1);
 	}
 	VirtualModule::MappedStructureIndex VirtualModule::AddStructureMapping(DependencyIndex dependency, std::string name) {

@@ -244,8 +244,7 @@ namespace svm {
 		if (index >= mappings.GetStructureMappingCount()) return nullptr;
 
 		const Mapping& mapping = mappings.GetStructureMapping(index);
-		return m_Loader.GetModule(
-			m_Loader.ResolveDependency(m_StackFrame.Program, m_StackFrame.Program->GetDependencies()[mapping.Module]))->GetStructure(mapping.Name); // TODO: 최적화
+		return static_cast<const ModuleInfo*>(m_StackFrame.Program->GetDependency(mapping.Module).Module)->GetStructure(mapping.Name);
 	}
 	std::uint32_t Interpreter::GetStructureCount() const noexcept {
 		return m_StackFrame.Program->GetStructureCount() + m_StackFrame.Program->GetMappings().GetStructureMappingCount();
@@ -266,9 +265,8 @@ namespace svm {
 		if (index >= mappings.GetFunctionMappingCount()) return std::monostate();
 
 		const Mapping& mapping = mappings.GetFunctionMapping(index);
-		const auto result = m_Loader.GetModule(
-			m_Loader.ResolveDependency(m_StackFrame.Program, m_StackFrame.Program->GetDependencies()[mapping.Module]))
-			->GetFunction(mapping.Name); // TODO: 최적화
+		const auto result =
+			static_cast<const ModuleInfo*>(m_StackFrame.Program->GetDependency(mapping.Module).Module)->GetFunction(mapping.Name);
 
 		if (std::holds_alternative<Function>(result)) return std::get<Function>(result);
 		else return std::get<VirtualFunction>(result);
