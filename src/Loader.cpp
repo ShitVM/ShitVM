@@ -42,11 +42,6 @@ namespace svm::detail::stdlib::array {
 			auto& module = loader.Create("/std/array.sbf");
 			modules.push_back(&module);
 
-			module.AddFunction("getLength", 1, true, [this](VirtualContext& context) {
-				auto array = PDREF(PARAM(0)); // TODO: 타입 검사
-				context.PushFundamental(LongObject(array.GetCount()));
-			});
-
 			module.AddFunction("copy", 5, false, [this](VirtualContext& context) {
 				auto dest = PDREF(PARAM(0)); // TODO: 타입 검사
 				auto destBegin = PARAM(1).ToLong(); // TODO: 타입 검사
