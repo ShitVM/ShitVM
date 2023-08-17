@@ -1,7 +1,8 @@
 #include <svm/Interpreter.hpp>
 
-#include <svm/Macro.hpp>
 #include <svm/detail/InterpreterExceptionCode.hpp>
+#include <svm/virtual/VirtualContext.hpp>
+#include <svm/virtual/VirtualStack.hpp>
 
 #include <cstring>
 
@@ -112,9 +113,7 @@ namespace svm {
 		JumpCondition<NotEqualOne>(operand);
 	}
 	SVM_NOINLINE_FOR_PROFILING void Interpreter::InterpretCall(std::uint32_t operand) {
-		const Functions& functions = m_ByteFile.GetFunctions();
-
-		if (operand >= functions.size()) {
+		if (operand >= GetFunctionCount()) {
 			OccurException(SVM_IEC_FUNCTION_OUTOFRANGE);
 			return;
 		} else if (!m_Stack.Push(m_StackFrame)) {
@@ -122,11 +121,26 @@ namespace svm {
 			return;
 		}
 
-		m_StackFrame = { NoneType, m_Stack.GetUsedSize(), static_cast<std::uint32_t>(m_LocalVariables.size()) };
-		m_StackFrame.Function = &functions[operand];
-		m_StackFrame.Instructions = &m_StackFrame.Function->GetInstructions();
+		const Module orgProgram = m_StackFrame.Program;
 
-		const std::uint16_t arity = m_StackFrame.Function->GetArity();
+		m_StackFrame = { NoneType, m_Stack.GetUsedSize(), static_cast<std::uint32_t>(m_LocalVariables.size()) };
+		std::uint16_t arity = 0;
+
+		m_StackFrame.Program = orgProgram;
+		m_StackFrame.Function = GetFunction(operand);
+		if (std::holds_alternative<Function>(m_StackFrame.Function)) {
+			const Function function = std::get<Function>(m_StackFrame.Function);
+
+			m_StackFrame.Instructions = &function->Instructions;
+			m_StackFrame.Caller = static_cast<std::uint64_t>(-1);
+
+			arity = function->Arity;
+		} else {
+			const VirtualFunction function = std::get<VirtualFunction>(m_StackFrame.Function);
+
+			arity = function->GetArity();
+		}
+
 		std::size_t stackOffset = m_Stack.GetUsedSize() - sizeof(m_StackFrame);
 		for (std::uint16_t j = 0; j < arity; ++j) {
 			const Type* const typePtr = m_Stack.Get<Type>(stackOffset);
@@ -151,8 +165,21 @@ namespace svm {
 			}
 		}
 
-		m_StackFrame.Caller = static_cast<std::uint64_t>(-1);
 		++m_Depth;
+
+		if (std::holds_alternative<Function>(m_StackFrame.Function)) {
+			m_StackFrame.Program = m_Loader.GetModule(std::get<Function>(m_StackFrame.Function)->Module);
+		} else if (std::holds_alternative<VirtualFunction>(m_StackFrame.Function)) {
+			m_StackFrame.Program = m_Loader.GetModule(std::get<VirtualFunction>(m_StackFrame.Function)->Module);
+
+			const VirtualFunction function = std::get<VirtualFunction>(m_StackFrame.Function);
+
+			VirtualStack stack(&m_Stack, &m_StackFrame, &m_LocalVariables);
+			VirtualContext context(*this, stack, m_Heap);
+			(*function)(context);
+
+			InterpretRet();
+		}
 	}
 	SVM_NOINLINE_FOR_PROFILING void Interpreter::InterpretRet() noexcept {
 		if (m_Depth == 0) {
@@ -160,8 +187,22 @@ namespace svm {
 			return;
 		}
 
+		std::uint16_t arity = 0;
+		bool hasResult = false;
+		if (std::holds_alternative<Function>(m_StackFrame.Function)) {
+			const Function function = std::get<Function>(m_StackFrame.Function);
+
+			arity = function->Arity;
+			hasResult = function->HasResult;
+		} else {
+			const VirtualFunction function = std::get<VirtualFunction>(m_StackFrame.Function);
+
+			arity = function->GetArity();
+			hasResult = function->HasResult();
+		}
+
 		const Type* result = nullptr;
-		if (m_StackFrame.Function->HasResult()) {
+		if (hasResult) {
 			if (IsLocalVariable()) {
 				OccurException(SVM_IEC_STACK_EMPTY);
 				return;
@@ -188,7 +229,6 @@ namespace svm {
 
 		m_LocalVariables.erase(m_LocalVariables.begin() + m_StackFrame.VariableBegin, m_LocalVariables.end());
 
-		const std::uint16_t arity = m_StackFrame.Function->GetArity();
 		m_Stack.SetUsedSize(m_StackFrame.StackBegin);
 		m_StackFrame = *m_Stack.Pop<StackFrame>();
 

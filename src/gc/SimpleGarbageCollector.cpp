@@ -149,8 +149,7 @@ namespace svm {
 
 			MakeGray(pointerTable, grayColorList, &object->Value, targetBlock, targetInfo);
 		} else if (typePtr->IsStructure()) {
-			const std::uint32_t structCode = static_cast<std::uint32_t>(typePtr->GetReference().Code) - static_cast<std::uint32_t>(TypeCode::Structure);
-			const Structure structure = interpreter.GetByteFile().GetStructures()[structCode];
+			const Structure structure = interpreter.GetStructure(*typePtr);
 			const std::uint32_t fieldCount = static_cast<std::uint32_t>(structure->Fields.size());
 
 			for (std::uint32_t i = 0; i < fieldCount; ++i) {
@@ -216,14 +215,11 @@ namespace svm {
 		}
 	}
 	void SimpleGarbageCollector::UpdateCardTable(const Interpreter& interpreter, const PointerList& promoted) {
-		const Structures& structures = interpreter.GetByteFile().GetStructures();
-
 		for (const auto address : promoted) {
 			const ManagedHeapInfo* const info = static_cast<const ManagedHeapInfo*>(address);
 			const Type* const typePtr = reinterpret_cast<const Type*>(info + 1);
 
-			const std::uint32_t structCode = static_cast<std::uint32_t>(typePtr->GetReference().Code) - static_cast<std::uint32_t>(TypeCode::Structure);
-			const Structure structure = structures[structCode];
+			const Structure structure = interpreter.GetStructure(*typePtr);
 			const std::uint32_t fieldCount = static_cast<std::uint32_t>(structure->Fields.size());
 
 			for (std::uint32_t i = 0; i < fieldCount; ++i) {

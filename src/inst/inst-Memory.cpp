@@ -1,6 +1,5 @@
 #include <svm/Interpreter.hpp>
 
-#include <svm/Macro.hpp>
 #include <svm/detail/InterpreterExceptionCode.hpp>
 
 #include <cstring>
@@ -145,8 +144,7 @@ namespace svm {
 			return;
 		}
 
-		const Structure structure =
-			m_ByteFile.GetStructures()[static_cast<std::uint32_t>(targetTypePtr->GetReference().Code) - static_cast<std::uint32_t>(TypeCode::Structure)];
+		const Structure structure = GetStructure(*targetTypePtr);
 		if (operand >= structure->Fields.size()) {
 			m_Stack.Expand(sizeof(*ptr));
 			OccurException(SVM_IEC_STRUCTURE_FIELD_OUTOFRANGE);
@@ -241,9 +239,7 @@ namespace svm {
 		}
 	}
 	SVM_NOINLINE_FOR_PROFILING void Interpreter::InterpretNew(std::uint32_t operand) {
-		const Structures& structures = m_ByteFile.GetStructures();
-
-		if (operand >= structures.GetStructureCount() + static_cast<std::uint32_t>(TypeCode::Structure)) {
+		if (operand >= GetStructureCount() + static_cast<std::uint32_t>(TypeCode::Structure)) {
 			OccurException(SVM_IEC_TYPE_OUTOFRANGE);
 			return;
 		}
@@ -253,7 +249,7 @@ namespace svm {
 			return;
 		}
 
-		const Type type = GetTypeFromTypeCode(structures, static_cast<TypeCode>(operand));
+		const Type type = GetType(static_cast<TypeCode>(operand));
 		void* const address = m_Heap.AllocateUnmanagedHeap(type->Size);
 
 		m_Stack.Push<PointerObject>(address);
@@ -262,7 +258,7 @@ namespace svm {
 		else if (type.IsFundamentalType()) {
 			*static_cast<Type*>(address) = type;
 		} else if (type.IsStructure()) {
-			InitStructure(structures, structures[operand - static_cast<std::uint32_t>(TypeCode::Structure)], static_cast<Type*>(address));
+			InitStructure(GetStructure(type), static_cast<Type*>(address));
 		}
 	}
 	SVM_NOINLINE_FOR_PROFILING void Interpreter::InterpretDelete() noexcept {
@@ -294,9 +290,7 @@ namespace svm {
 		}
 	}
 	SVM_NOINLINE_FOR_PROFILING void Interpreter::InterpretGCNew(std::uint32_t operand) {
-		const Structures& structures = m_ByteFile.GetStructures();
-
-		if (operand >= structures.GetStructureCount() + static_cast<std::uint32_t>(TypeCode::Structure)) {
+		if (operand >= GetStructureCount() + static_cast<std::uint32_t>(TypeCode::Structure)) {
 			OccurException(SVM_IEC_TYPE_OUTOFRANGE);
 			return;
 		}
@@ -306,7 +300,7 @@ namespace svm {
 			return;
 		}
 
-		const Type type = GetTypeFromTypeCode(structures, static_cast<TypeCode>(operand));
+		const Type type = GetType(static_cast<TypeCode>(operand));
 		void* const address = m_Heap.AllocateManagedHeap(*this, type->Size);
 		Type* const addressReal = reinterpret_cast<Type*>(static_cast<ManagedHeapInfo*>(address) + 1);
 
@@ -316,7 +310,7 @@ namespace svm {
 		else if (type.IsFundamentalType()) {
 			*addressReal = type;
 		} else if (type.IsStructure()) {
-			InitStructure(structures, structures[operand - static_cast<std::uint32_t>(TypeCode::Structure)], addressReal);
+			InitStructure(GetStructure(type), addressReal);
 		}
 	}
 }

@@ -1,23 +1,25 @@
 #include <svm/Interpreter.hpp>
 
 #include <svm/Object.hpp>
+#include <svm/core/ByteFile.hpp>
 #include <svm/detail/InterpreterExceptionCode.hpp>
 
 #include <utility>
 
 namespace svm {
-	Interpreter::Interpreter(ByteFile&& byteFile) noexcept
-		: m_ByteFile(std::move(byteFile)) {
-		m_StackFrame.Instructions = &m_ByteFile.GetEntryPoint();
+	Interpreter::Interpreter(Loader&& loader, Module program) noexcept
+		: m_Loader(std::move(loader)) {
+		m_StackFrame.Program = program;
+		m_StackFrame.Instructions = &std::get<core::ByteFile>(program->Module).GetEntrypoint();
 	}
 	Interpreter::Interpreter(Interpreter&& interpreter) noexcept
-		: m_ByteFile(std::move(interpreter.m_ByteFile)), m_Exception(std::move(interpreter.m_Exception)),
+		: m_Loader(std::move(interpreter.m_Loader)), m_Exception(std::move(interpreter.m_Exception)),
 		m_Stack(std::move(interpreter.m_Stack)), m_StackFrame(interpreter.m_StackFrame), m_Depth(interpreter.m_Depth),
 		m_LocalVariables(std::move(interpreter.m_LocalVariables)),
 		m_Heap(std::move(interpreter.m_Heap)) {}
 
 	Interpreter& Interpreter::operator=(Interpreter&& interpreter) noexcept {
-		m_ByteFile = std::move(interpreter.m_ByteFile);
+		m_Loader = std::move(interpreter.m_Loader);
 		m_Exception = std::move(interpreter.m_Exception);
 
 		m_Stack = std::move(interpreter.m_Stack);
@@ -27,12 +29,11 @@ namespace svm {
 		m_LocalVariables = std::move(interpreter.m_LocalVariables);
 
 		m_Heap = std::move(interpreter.m_Heap);
-
 		return *this;
 	}
 
 	void Interpreter::Clear() noexcept {
-		m_ByteFile.Clear();
+		m_Loader.Clear();
 		m_Exception.reset();
 
 		m_Stack.Deallocate();
@@ -43,12 +44,10 @@ namespace svm {
 
 		m_Heap.Deallocate();
 	}
-	void Interpreter::Load(ByteFile&& byteFile) noexcept {
-		m_ByteFile = std::move(byteFile);
-		m_StackFrame.Instructions = &m_ByteFile.GetEntryPoint();
-	}
-	const ByteFile& Interpreter::GetByteFile() const noexcept {
-		return m_ByteFile;
+	void Interpreter::Load(Loader&& loader, Module program) noexcept {
+		m_Loader = std::move(loader);
+		m_StackFrame.Program = program;
+		m_StackFrame.Instructions = &std::get<core::ByteFile>(program->Module).GetEntrypoint();
 	}
 
 	void Interpreter::AllocateStack(std::size_t size) {
@@ -160,7 +159,7 @@ namespace svm {
 			}
 			return;
 		} else if (type.IsStructure()) {
-			const Structure structure = m_ByteFile.GetStructures()[static_cast<std::uint32_t>(type->Code) - static_cast<std::uint32_t>(TypeCode::Structure)];
+			const Structure structure = GetStructure(type);
 			const std::uint32_t fieldCount = static_cast<std::uint32_t>(structure->Fields.size());
 
 			stream << type->Name << '(';
@@ -226,6 +225,54 @@ namespace svm {
 		return result;
 	}
 
+	Type Interpreter::GetType(TypeCode code) const noexcept {
+		auto result = GetFundamentalType(code);
+		if (result != NoneType) return result;
+		else return GetStructure(code)->Type;
+	}
+	Structure Interpreter::GetStructure(Type type) const noexcept {
+		return m_Loader.GetModule(type->Module)->GetStructure(static_cast<std::uint32_t>(type->Code) - static_cast<std::uint32_t>(TypeCode::Structure));
+	}
+	Structure Interpreter::GetStructure(TypeCode code) const noexcept {
+		std::uint32_t index = static_cast<std::uint32_t>(code) - static_cast<std::uint32_t>(TypeCode::Structure);
+
+		const auto structCount = m_StackFrame.Program->GetStructureCount();
+		if (index < structCount) return m_StackFrame.Program->GetStructure(index);
+
+		index -= structCount;
+		const Mappings& mappings = m_StackFrame.Program->GetMappings();
+		if (index >= mappings.GetStructureMappingCount()) return nullptr;
+
+		const Mapping& mapping = mappings.GetStructureMapping(index);
+		return m_Loader.GetModule(m_StackFrame.Program->GetDependencies()[mapping.Module])->GetStructure(mapping.Name); // TODO: 최적화
+	}
+	std::uint32_t Interpreter::GetStructureCount() const noexcept {
+		return m_StackFrame.Program->GetStructureCount() + m_StackFrame.Program->GetMappings().GetStructureMappingCount();
+	}
+	std::uint32_t Interpreter::GetStructureCountWithoutMappings() const noexcept {
+		return m_StackFrame.Program->GetStructureCount();
+	}
+	std::variant<std::monostate, Function, VirtualFunction> Interpreter::GetFunction(std::uint32_t index) const noexcept {
+		const auto funcCount = m_StackFrame.Program->GetFunctionCount();
+		if (index < funcCount) {
+			const auto function = m_StackFrame.Program->GetFunction(index);
+			if (std::holds_alternative<Function>(function)) return std::get<Function>(function);
+			else if (std::holds_alternative<VirtualFunction>(function)) return std::get<VirtualFunction>(function);
+		}
+
+		index -= funcCount;
+		const Mappings& mappings = m_StackFrame.Program->GetMappings();
+		if (index >= mappings.GetFunctionMappingCount()) return std::monostate();
+
+		const Mapping& mapping = mappings.GetFunctionMapping(index);
+		const auto result = m_Loader.GetModule(m_StackFrame.Program->GetDependencies()[mapping.Module])->GetFunction(mapping.Name); // TODO: 최적화
+
+		if (std::holds_alternative<Function>(result)) return std::get<Function>(result);
+		else return std::get<VirtualFunction>(result);
+	}
+	std::uint32_t Interpreter::GetFunctionCount() const noexcept {
+		return m_StackFrame.Program->GetFunctionCount() + m_StackFrame.Program->GetMappings().GetFunctionMappingCount();
+	}
 	const Type* Interpreter::GetLocalVariable(std::uint32_t index) const noexcept {
 		return m_Stack.Get<Type>(m_LocalVariables[index]);
 	}

@@ -6,9 +6,13 @@
 #include <svm/GarbageCollector.hpp>
 #include <svm/Heap.hpp>
 #include <svm/Instruction.hpp>
+#include <svm/Loader.hpp>
+#include <svm/Module.hpp>
 #include <svm/Object.hpp>
+#include <svm/Predefined.hpp>
 #include <svm/Stack.hpp>
 #include <svm/Type.hpp>
+#include <svm/virtual/VirtualFunction.hpp>
 
 #include <cstddef>
 #include <cstdint>
@@ -24,7 +28,8 @@ namespace svm {
 		std::size_t StackBegin = 0;
 		std::uint32_t VariableBegin = 0;
 		std::uint64_t Caller = 0;
-		const svm::Function* Function = nullptr;
+		Module Program;
+		std::variant<std::monostate, Function, VirtualFunction> Function;
 		const svm::Instructions* Instructions = nullptr;
 	};
 }
@@ -41,7 +46,7 @@ namespace svm {
 
 	class Interpreter final {
 	private:
-		ByteFile m_ByteFile;
+		Loader m_Loader;
 		std::optional<InterpreterException> m_Exception;
 
 		Stack m_Stack;
@@ -54,7 +59,7 @@ namespace svm {
 
 	public:
 		Interpreter() noexcept = default;
-		explicit Interpreter(ByteFile&& byteFile) noexcept;
+		Interpreter(Loader&& loader, Module program) noexcept;
 		Interpreter(Interpreter&& interpreter) noexcept;
 		~Interpreter() = default;
 
@@ -65,8 +70,7 @@ namespace svm {
 
 	public:
 		void Clear() noexcept;
-		void Load(ByteFile&& byteFile) noexcept;
-		const ByteFile& GetByteFile() const noexcept;
+		void Load(Loader&& loader, Module program) noexcept;
 
 		void AllocateStack(std::size_t size = 1 * 1024 * 1024);
 		void ReallocateStack(std::size_t newSize);
@@ -85,6 +89,13 @@ namespace svm {
 		std::vector<StackFrame> GetCallStacks() const;
 
 	public:
+		Type GetType(TypeCode code) const noexcept;
+		Structure GetStructure(Type type) const noexcept;
+		Structure GetStructure(TypeCode code) const noexcept;
+		std::uint32_t GetStructureCount() const noexcept;
+		std::uint32_t GetStructureCountWithoutMappings() const noexcept;
+		std::variant<std::monostate, Function, VirtualFunction> GetFunction(std::uint32_t index) const noexcept;
+		std::uint32_t GetFunctionCount() const noexcept;
 		const Type* GetLocalVariable(std::uint32_t index) const noexcept;
 		Type* GetLocalVariable(std::uint32_t index) noexcept;
 		std::uint32_t GetLocalVariableCount() const noexcept;
@@ -99,7 +110,7 @@ namespace svm {
 
 	private: // Stack
 		void PushStructure(std::uint32_t code) noexcept;
-		void InitStructure(const Structures& structures, Structure structure, Type* type) noexcept;
+		void InitStructure(Structure structure, Type* type) noexcept;
 		void CopyStructure(const Type& type) noexcept;
 		void CopyStructure(const Type& from, Type& to) noexcept;
 
@@ -109,6 +120,11 @@ namespace svm {
 		bool GetArrayInfo(detail::ArrayInfo& info, std::uint32_t operand) noexcept;
 		void InitArray(const detail::ArrayInfo& info, Type* type) noexcept;
 		std::size_t CalcArraySize(const ArrayObject* array) const noexcept;
+
+	public:
+		void InitStructure(Object* object, Structure structure) noexcept;
+		void InitArray(Object* object, Type type, std::uint64_t count) noexcept;
+		std::size_t CalcArraySize(Type type, std::uint64_t count) const noexcept;
 
 	private:
 		void InterpretPush(std::uint32_t operand) noexcept;
@@ -201,3 +217,9 @@ namespace svm {
 		void InterpretRet() noexcept;
 	};
 }
+
+#if defined(SVM_MSVC) && defined(SVM_PROFILING)
+#	define SVM_NOINLINE_FOR_PROFILING __declspec(noinline)
+#else
+#	define SVM_NOINLINE_FOR_PROFILING
+#endif
