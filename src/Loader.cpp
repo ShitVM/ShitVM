@@ -468,7 +468,7 @@ namespace svm::detail::stdlib::io {
 	};
 
 	struct State {
-		StreamManager StreamManager;
+		io::StreamManager StreamManager;
 
 		VirtualModule::StructureIndex VirtualStream;
 

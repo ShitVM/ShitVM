@@ -29,7 +29,7 @@ namespace svm {
 		std::uint32_t VariableBegin = 0;
 		std::uint64_t Caller = 0;
 		Module Program;
-		std::variant<std::monostate, Function, VirtualFunction> Function;
+		std::variant<std::monostate, svm::Function, VirtualFunction> Function;
 		const svm::Instructions* Instructions = nullptr;
 	};
 }
