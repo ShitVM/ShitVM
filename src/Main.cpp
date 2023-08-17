@@ -22,16 +22,17 @@ int main(int argc, char* argv[]) {
 		  .AddVariable("stack", 1 * 1024 * 1024)
 		  .AddVariable("young", 8 * 1024 * 1024)
 		  .AddVariable("old", 32 * 1024 * 1024)
-		  .AddFlag("gc", true);
+		  .AddFlag("gc", true)
+		  .AddStringList('L');
 
 	if (!option.Parse(argc, argv) || !option.Verity()) {
 		return EXIT_FAILURE;
 	} else if (option.GetOption("version")) {
 		std::cout << "ShitVM " << svm::Version << '\n'
-				  << "(C) 2020. kmc7468 All rights reserved.\n"
+				  << "(C) 2020-2023. kmc7468 All rights reserved.\n"
 				  << "This version is based on ShitCore " << svm::core::Version << "\n\n"
-				  << "You can get the source of latest ShitVM here:\n"
-				  << "https://github.com/ShitVM\n";
+				  << "You can get the source of the latest ShitVM here:\n"
+				  << "https://github.com/ShitVM/ShitVM\n";
 		return EXIT_SUCCESS;
 	}
 
@@ -44,6 +45,10 @@ int Run(const svm::ProgramOption& option) {
 	const auto startLoading = std::chrono::system_clock::now();
 
 	svm::Loader loader;
+	for (const std::string& directory : option.GetStringList('L')) {
+		loader.AddLibraryDirectory(directory);
+	}
+
 	svm::StdModule stdModule;
 	svm::Module program;
 	try {

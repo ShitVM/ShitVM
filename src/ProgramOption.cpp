@@ -1,5 +1,6 @@
 #include <svm/ProgramOption.hpp>
 
+#include <filesystem>
 #include <iostream>
 #include <utility>
 
@@ -37,6 +38,10 @@ namespace svm {
 		Flags[name].DefaultValue = defaultValue;
 		return *this;
 	}
+	ProgramOption& ProgramOption::AddStringList(char prefix) {
+		StringLists[prefix];
+		return *this;
+	}
 	bool ProgramOption::GetOption(const char* name) const {
 		return *Options.at(name).Value;
 	}
@@ -45,6 +50,9 @@ namespace svm {
 	}
 	bool ProgramOption::GetFlag(const char* name) const {
 		return *Flags.at(name).Value;
+	}
+	const std::vector<std::string>& ProgramOption::GetStringList(char prefix) const {
+		return StringLists.at(prefix);
 	}
 
 	bool ProgramOption::Parse(int argc, char* argv[]) {
@@ -62,7 +70,7 @@ namespace svm {
 				}
 
 				const std::string_view option = arg.substr(1);
-				if (option.compare(0, 4, "fno-") == 0) {
+				if (option.compare(0, 4, "fno-") == 0) { // Flag
 					const std::string_view flag = option.substr(4);
 					const auto iter = Flags.find(flag);
 					if (iter == Flags.end()) {
@@ -70,7 +78,7 @@ namespace svm {
 						return false;
 					}
 					iter->second.Value = false;
-				} else if (option.front() == 'f') {
+				} else if (option.front() == 'f') { // Flag
 					const std::string_view flag = option.substr(1);
 					const auto iter = Flags.find(flag);
 					if (iter == Flags.end()) {
@@ -78,7 +86,7 @@ namespace svm {
 						return false;
 					}
 					iter->second.Value = true;
-				} else if (option.size() >= 2 && option.front() == '-') {
+				} else if (option.size() >= 2 && option.front() == '-') { // Option
 					const std::string_view opt = option.substr(1);
 					const auto iter = Options.find(opt);
 					if (iter == Options.end()) {
@@ -88,18 +96,27 @@ namespace svm {
 					iter->second.Value = true;
 				} else {
 					const std::size_t assign = option.find('=');
-					if (assign == std::string_view::npos) {
+					if (assign != std::string_view::npos) { // Variable
+						const std::string_view var = option.substr(0, assign);
+						const std::string value(option.substr(assign + 1));
+						const auto iter = Variables.find(var);
+						if (iter == Variables.end()) {
+							std::cout << "Error: Unknown variable '" << var << "'.\n";
+							return false;
+						}
+						iter->second.Value = static_cast<std::uint64_t>(std::stoull(value));
+					} else if (option.size() >= 2) { // StringList
+						const char prefix = option[0];
+						const auto iter = StringLists.find(prefix);
+						if (iter == StringLists.end()) {
+							std::cout << "Error: Invalid command line option '-" << option << "'.\n";
+							return false;
+						}
+						iter->second.push_back(std::string(option.substr(1)));
+					} else {
 						std::cout << "Error: Invalid command line option '-" << option << "'.\n";
 						return false;
 					}
-					const std::string_view var = option.substr(0, assign);
-					const std::string value(option.substr(assign + 1));
-					const auto iter = Variables.find(var);
-					if (iter == Variables.end()) {
-						std::cout << "Error: Unknown variable '" << var << "'.\n";
-						return false;
-					}
-					iter->second.Value = static_cast<std::uint64_t>(std::stoull(value));
 				}
 			} else {
 				if (!Path.empty()) {
@@ -155,6 +172,18 @@ namespace svm {
 		} else if (GetVariable("old") % 512) {
 			std::cout << "Error: Size of a old block must be a multiple of 512.\n";
 			return false;
+		}
+
+		const auto& linkDirs = GetStringList('L');
+		for (const auto& linkDir : linkDirs) {
+			const std::filesystem::path path(linkDir);
+			if (!std::filesystem::exists(path)) {
+				std::cout << "Error: \"" << linkDir << "\" does not exist.\n";
+				return false;
+			} else if (!std::filesystem::is_directory(path)) {
+				std::cout << "Error: \"" << linkDir << "\" is not a directory.\n";
+				return false;
+			}
 		}
 
 		return true;
