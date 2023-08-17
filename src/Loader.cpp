@@ -625,7 +625,7 @@ namespace svm {
 		StdModule module = std::make_shared<detail::StdModuleState>();
 		std::vector<VirtualModule*> modules;
 
-		module->IOState.Init(loader, modules);
+		module->ArrayState.Init(loader, modules);
 		module->IOState.Init(loader, modules);
 		module->StringState.Init(loader, modules);
 
