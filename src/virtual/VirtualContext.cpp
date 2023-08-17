@@ -12,6 +12,10 @@ namespace svm {
 	VirtualContext::VirtualContext(Interpreter& interpreter, VirtualStack& stack, Heap& heap) noexcept
 		: m_Interpreter(interpreter), m_Stack(stack), m_Heap(heap) {}
 
+	void VirtualContext::OccurException(std::uint32_t code) noexcept {
+		m_Interpreter.OccurException(code);
+	}
+
 	Structure VirtualContext::GetStructure(VirtualModule::StructureIndex structure) {
 		return m_Interpreter.GetStructure(static_cast<TypeCode>(
 			static_cast<std::uint32_t>(structure)

@@ -40,6 +40,10 @@ namespace svm {
 		case SVM_IEC_ARRAY_NOTARRAY: return "Not an array."sv;
 		case SVM_IEC_ARRAY_INVALIDFORARRAY: return "Can't operate on arrays."sv;
 
+		case SVM_IEC_STDLIB_TYPEASSERTFAIL: return "Some parameter has inappropriate type."sv;
+		case SVM_IEC_STDLIB_ARRAY_OUTOFRANGE: return "Index is out of range."sv;
+		case SVM_IEC_STDLIB_IO_INVALIDSTREAM: return "Invalid stream."sv;
+
 		default: return ""sv;
 		}
 	}

@@ -103,9 +103,10 @@ namespace svm {
 	private:
 		void PrintPointerTaget(std::ostream& stream, const Object& object) const;
 
-	private:
+	public:
 		void OccurException(std::uint32_t code) noexcept;
 
+	private:
 		bool IsLocalVariable(std::size_t delta = 0) const noexcept;
 
 	private: // Stack

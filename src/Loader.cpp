@@ -1,5 +1,6 @@
 #include <svm/Loader.hpp>
 
+#include <svm/detail/InterpreterExceptionCode.hpp>
 #include <svm/virtual/VirtualContext.hpp>
 #include <svm/virtual/VirtualModule.hpp>
 
@@ -36,6 +37,22 @@ namespace svm {
 #define ITEM(a, i) (context.GetElement(a, i)) // Array element
 #define PARAM(i) (context.GetParameter(i))
 
+namespace svm::detail::stdlib {
+	VirtualObject Assert(const VirtualObject& object, Type type) {
+		if (object.GetType() == type) return object;
+		else throw SVM_IEC_STDLIB_TYPEASSERTFAIL;
+	}
+	void Assert(bool pass, int code) {
+		if (!pass) throw code;
+	}
+}
+
+#define ASSERT_BEGIN try
+#define ASSERT_END catch (int code) { context.OccurException(code); return; }
+
+#define PDREF_A(p, t) (Assert(PDREF(p), t))
+#define PARAM_A(i, t) (Assert(PARAM(i), t))
+
 namespace svm::detail::stdlib::array {
 	struct State {
 		void Init(Loader& loader, std::vector<VirtualModule*>& modules) {
@@ -43,13 +60,19 @@ namespace svm::detail::stdlib::array {
 			modules.push_back(&module);
 
 			module.AddFunction("copy", 5, false, [this](VirtualContext& context) {
-				auto dest = PDREF(PARAM(0)); // TODO: 타입 검사
-				auto destBegin = PARAM(1).ToLong(); // TODO: 타입 검사
-				auto src = PDREF(PARAM(2)); // TODO: 타입 검사
-				auto srcBegin = PARAM(3).ToLong(); // TODO: 타입 검사
-				auto count = PARAM(4).ToLong(); // TODO: 타입 검사
+				ASSERT_BEGIN {
+					const auto dest = PDREF_A(PARAM_A(0, PointerType), ArrayType);
+					const auto destBegin = PARAM_A(1, LongType).ToLong();
+					const auto src = PDREF_A(PARAM_A(2, PointerType), ArrayType);
+					const auto srcBegin = PARAM_A(3, LongType).ToLong();
+					const auto count = PARAM_A(4, LongType).ToLong();
 
-				context.CopyObjectUnsafe(PREF(ITEM(dest, destBegin)), PREF(ITEM(src, srcBegin)), count); // TODO: 유효성 검사
+					Assert(dest.IsArray() == src.IsArray(), SVM_IEC_STDLIB_TYPEASSERTFAIL);
+					Assert(destBegin + count <= dest.GetCount(), SVM_IEC_STDLIB_ARRAY_OUTOFRANGE);
+					Assert(srcBegin + count <= src.GetCount(), SVM_IEC_STDLIB_ARRAY_OUTOFRANGE);
+
+					context.CopyObjectUnsafe(PREF(ITEM(dest, destBegin)), PREF(ITEM(src, srcBegin)), count);
+				} ASSERT_END;
 			});
 		}
 	};
@@ -72,8 +95,8 @@ namespace svm::detail::stdlib::string {
 			} while (required > capacity);
 		}
 
-		auto data = FIELD(string, StringData);
-		auto newData = context.NewFundamental(IntObject(), capacity);
+		const auto data = FIELD(string, StringData);
+		const auto newData = context.NewFundamental(IntObject(), capacity);
 		if (data.ToPointer() != VPNULL) {
 			context.CopyObject(newData, PDREF(data));
 			context.DeleteObject(data);
@@ -118,40 +141,46 @@ namespace svm::detail::stdlib::string {
 			});
 
 			module.AddFunction("create32", 0, true, [this](VirtualContext& context) {
-				auto result = context.PushStructure(STRUCT(VirtualString32));
+				const auto result = context.PushStructure(STRUCT(VirtualString32));
 				FIELD(result, StringData).SetPointer(VPNULL);
 				FIELD(result, StringLength).SetLong(0);
 				FIELD(result, StringCapacity).SetLong(0);
 			});
 
 			module.AddFunction("push", 2, false, [this](VirtualContext& context) {
-				auto string = PDREF(PARAM(0)); // TODO: 타입 검사
-				auto stringLength = FIELD(string, StringLength).ToLong();
+				ASSERT_BEGIN {
+					const auto string = PDREF_A(PARAM_A(0, PointerType), STRUCT(VirtualString32)->Type);
+					const auto stringLength = FIELD(string, StringLength).ToLong();
+					const auto value = PARAM_A(1, IntType).ToInt();
 
-				Expand32(context, string, stringLength + 1);
-				ITEM(PDREF(FIELD(string, StringData)), stringLength).SetInt(PARAM(1).ToInt()); // TODO: 타입 검사
-				FIELD(string, StringLength).SetLong(stringLength + 1);
+					Expand32(context, string, stringLength + 1);
+					ITEM(PDREF(FIELD(string, StringData)), stringLength).SetInt(value);
+					FIELD(string, StringLength).SetLong(stringLength + 1);
+				} ASSERT_END;
 			});
 			module.AddFunction("concat", 2, false, [this](VirtualContext& context) {
-				auto dest = PDREF(PARAM(0)); // TODO: 타입 검사
-				auto src = PDREF(PARAM(1)); // TODO: 타입 검사
-				auto destLength = FIELD(dest, StringLength).ToLong();
-				auto srcLength = FIELD(src, StringLength).ToLong();
+				ASSERT_BEGIN {
+					const auto dest = PDREF_A(PARAM_A(0, PointerType), STRUCT(VirtualString32)->Type);
+					const auto destLength = FIELD(dest, StringLength).ToLong();
+					const auto src = PDREF_A(PARAM_A(1, PointerType), STRUCT(VirtualString32)->Type);
+					const auto srcLength = FIELD(src, StringLength).ToLong();
 
-				Expand32(context, dest, destLength + srcLength);
-				context.CopyObjectUnsafe(
-					PREF(ITEM(PDREF(FIELD(dest, StringData)), destLength)),
-					PREF(ITEM(PDREF(FIELD(src, StringData)), 0)), srcLength);
-				FIELD(dest, StringLength).SetLong(destLength + srcLength);
+					Expand32(context, dest, destLength + srcLength);
+					context.CopyObjectUnsafe(
+						PREF(ITEM(PDREF(FIELD(dest, StringData)), destLength)),
+						PREF(ITEM(PDREF(FIELD(src, StringData)), 0)), srcLength);
+					FIELD(dest, StringLength).SetLong(destLength + srcLength);
+				} ASSERT_END;
 			});
 
 			module.AddFunction("destroy", 1, false, [this](VirtualContext& context) {
-				auto string = PDREF(PARAM(0)); // TODO: 타입 검사
-				auto data = FIELD(string, StringData);
-				if (data.ToPointer() != VPNULL) {
-					context.DeleteObject(data);
-					data.SetPointer(VPNULL);
-				}
+				ASSERT_BEGIN {
+					const auto string = PDREF_A(PARAM_A(0, PointerType), STRUCT(VirtualString32)->Type);
+					const auto data = FIELD(string, StringData);
+					if (data.ToPointer() != VPNULL) {
+						context.DeleteObject(data);
+					}
+				} ASSERT_END;
 			});
 		}
 	};
@@ -455,150 +484,214 @@ namespace svm::detail::stdlib::io {
 			});
 
 			module.AddFunction("getStdin", 0, true, [this](VirtualContext& context) {
-				auto result = context.PushStructure(STRUCT(VirtualStream));
+				const auto result = context.PushStructure(STRUCT(VirtualStream));
 				FIELD(result, 0).SetLong(StreamManager.Stdin);
 			});
 			module.AddFunction("getStdout", 0, true, [this](VirtualContext& context) {
-				auto result = context.PushStructure(STRUCT(VirtualStream));
+				const auto result = context.PushStructure(STRUCT(VirtualStream));
 				FIELD(result, 0).SetLong(StreamManager.Stdout);
 			});
 
 			module.AddFunction("openReadonlyFile", 1, true, [this](VirtualContext& context) {
-				auto path = PDREF(PARAM(0)); // TODO: 타입 검사
-				auto cppPath = string::ConvertToCppString32(context, path);
+				ASSERT_BEGIN {
+					const auto path = PDREF_A(PARAM_A(0, PointerType), STRUCT(VirtualString32)->Type);
+					const auto cppPath = string::ConvertToCppString32(context, path);
 
-				auto streamHandle = StreamManager.AddStream(std::make_unique<FileStream>(
-					std::fstream(std::filesystem::path(cppPath), std::fstream::in)));
-				auto result = context.PushStructure(STRUCT(VirtualStream));
-				FIELD(result, StreamHandle).SetLong(streamHandle);
+					const auto streamHandle = StreamManager.AddStream(std::make_unique<FileStream>(
+						std::fstream(std::filesystem::path(cppPath), std::fstream::in)));
+					const auto result = context.PushStructure(STRUCT(VirtualStream));
+					FIELD(result, StreamHandle).SetLong(streamHandle);
+				} ASSERT_END;
 			});
 			module.AddFunction("openWriteonlyFile", 1, true, [this](VirtualContext& context) {
-				auto path = PDREF(PARAM(0)); // TODO: 타입 검사
-				auto cppPath = string::ConvertToCppString32(context, path);
+				ASSERT_BEGIN {
+					const auto path = PDREF_A(PARAM_A(0, PointerType), STRUCT(VirtualString32)->Type);
+					const auto cppPath = string::ConvertToCppString32(context, path);
 
-				auto streamHandle = StreamManager.AddStream(std::make_unique<FileStream>(
-					std::fstream(std::filesystem::path(cppPath), std::fstream::out)));
-				auto result = context.PushStructure(STRUCT(VirtualStream));
-				FIELD(result, StreamHandle).SetLong(streamHandle);
+					const auto streamHandle = StreamManager.AddStream(std::make_unique<FileStream>(
+						std::fstream(std::filesystem::path(cppPath), std::fstream::out)));
+					const auto result = context.PushStructure(STRUCT(VirtualStream));
+					FIELD(result, StreamHandle).SetLong(streamHandle);
+				} ASSERT_END;
 			});
 			module.AddFunction("closeFile", 1, false, [this](VirtualContext& context) {
-				auto stream = PARAM(0); // TODO: 타입 검사
-				auto streamHandle = FIELD(stream, StreamHandle).ToLong();
-				auto& cppStream = static_cast<FileStream&>(StreamManager.GetStream(streamHandle)); // TODO: 유효성 검사
+				ASSERT_BEGIN {
+					const auto stream = PARAM_A(0, STRUCT(VirtualStream)->Type);
+					const auto streamHandle = FIELD(stream, StreamHandle).ToLong();
 
-				cppStream.Stream.close();
-				StreamManager.RemoveStream(streamHandle);
+					Assert(StreamManager.IsValidStream(streamHandle), SVM_IEC_STDLIB_IO_INVALIDSTREAM);
+
+					auto& cppStream = static_cast<FileStream&>(StreamManager.GetStream(streamHandle));
+					cppStream.Stream.close();
+					StreamManager.RemoveStream(streamHandle);
+				} ASSERT_END;
 			});
 
 			module.AddFunction("readInt", 1, true, [this](VirtualContext& context) {
-				auto stream = PARAM(0); // TODO: 타입 검사
-				auto streamHandle = FIELD(stream, StreamHandle).ToLong();
-				auto& cppStream = StreamManager.GetStream(streamHandle); // TODO: 유효성 검사
+				ASSERT_BEGIN {
+					const auto stream = PARAM_A(0, STRUCT(VirtualStream)->Type);
+					const auto streamHandle = FIELD(stream, StreamHandle).ToLong();
 
-				context.PushFundamental(IntObject(cppStream.ReadInt()));
+					Assert(StreamManager.IsValidStream(streamHandle), SVM_IEC_STDLIB_IO_INVALIDSTREAM);
+
+					auto& cppStream = static_cast<FileStream&>(StreamManager.GetStream(streamHandle));
+					context.PushFundamental(IntObject(cppStream.ReadInt()));
+				} ASSERT_END;
 			});
 			module.AddFunction("writeInt", 2, false, [this](VirtualContext& context) {
-				auto stream = PARAM(0); // TODO: 타입 검사
-				auto streamHandle = FIELD(stream, StreamHandle).ToLong();
-				auto& cppStream = StreamManager.GetStream(streamHandle); // TODO: 유효성 검사
+				ASSERT_BEGIN {
+					const auto stream = PARAM_A(0, STRUCT(VirtualStream)->Type);
+					const auto streamHandle = FIELD(stream, StreamHandle).ToLong();
+					const auto value = PARAM_A(1, IntType).ToInt();
 
-				auto value = PARAM(1).ToInt(); // TODO: 타입 검사
-				cppStream.WriteInt(value);
+					Assert(StreamManager.IsValidStream(streamHandle), SVM_IEC_STDLIB_IO_INVALIDSTREAM);
+
+					auto& cppStream = static_cast<FileStream&>(StreamManager.GetStream(streamHandle));
+					cppStream.WriteInt(value);
+				} ASSERT_END;
 			});
 			module.AddFunction("readSignedInt", 1, true, [this](VirtualContext& context) {
-				auto stream = PARAM(0); // TODO: 타입 검사
-				auto streamHandle = FIELD(stream, StreamHandle).ToLong();
-				auto& cppStream = StreamManager.GetStream(streamHandle); // TODO: 유효성 검사
+				ASSERT_BEGIN {
+					const auto stream = PARAM_A(0, STRUCT(VirtualStream)->Type);
+					const auto streamHandle = FIELD(stream, StreamHandle).ToLong();
 
-				context.PushFundamental(IntObject(cppStream.ReadSignedInt()));
+					Assert(StreamManager.IsValidStream(streamHandle), SVM_IEC_STDLIB_IO_INVALIDSTREAM);
+
+					auto& cppStream = static_cast<FileStream&>(StreamManager.GetStream(streamHandle));
+					context.PushFundamental(IntObject(cppStream.ReadSignedInt()));
+				} ASSERT_END;
 			});
 			module.AddFunction("writeSignedInt", 2, false, [this](VirtualContext& context) {
-				auto stream = PARAM(0); // TODO: 타입 검사
-				auto streamHandle = FIELD(stream, StreamHandle).ToLong();
-				auto& cppStream = StreamManager.GetStream(streamHandle); // TODO: 유효성 검사
+				ASSERT_BEGIN {
+					const auto stream = PARAM_A(0, STRUCT(VirtualStream)->Type);
+					const auto streamHandle = FIELD(stream, StreamHandle).ToLong();
+					const auto value = PARAM_A(1, IntType).ToInt();
 
-				auto value = PARAM(1).ToInt(); // TODO: 타입 검사
-				cppStream.WriteSignedInt(value);
+					Assert(StreamManager.IsValidStream(streamHandle), SVM_IEC_STDLIB_IO_INVALIDSTREAM);
+
+					auto& cppStream = static_cast<FileStream&>(StreamManager.GetStream(streamHandle));
+					cppStream.WriteSignedInt(value);
+				} ASSERT_END;
 			});
 
 			module.AddFunction("readLong", 1, true, [this](VirtualContext& context) {
-				auto stream = PARAM(0); // TODO: 타입 검사
-				auto streamHandle = FIELD(stream, StreamHandle).ToLong();
-				auto& cppStream = StreamManager.GetStream(streamHandle); // TODO: 유효성 검사
+				ASSERT_BEGIN {
+					const auto stream = PARAM_A(0, STRUCT(VirtualStream)->Type);
+					const auto streamHandle = FIELD(stream, StreamHandle).ToLong();
 
-				context.PushFundamental(LongObject(cppStream.ReadLong()));
+					Assert(StreamManager.IsValidStream(streamHandle), SVM_IEC_STDLIB_IO_INVALIDSTREAM);
+
+					auto& cppStream = static_cast<FileStream&>(StreamManager.GetStream(streamHandle));
+					context.PushFundamental(LongObject(cppStream.ReadLong()));
+				} ASSERT_END;
 			});
 			module.AddFunction("writeLong", 2, false, [this](VirtualContext& context) {
-				auto stream = PARAM(0); // TODO: 타입 검사
-				auto streamHandle = FIELD(stream, StreamHandle).ToLong();
-				auto& cppStream = StreamManager.GetStream(streamHandle); // TODO: 유효성 검사
+				ASSERT_BEGIN {
+					const auto stream = PARAM_A(0, STRUCT(VirtualStream)->Type);
+					const auto streamHandle = FIELD(stream, StreamHandle).ToLong();
+					const auto value = PARAM_A(1, LongType).ToLong();
 
-				auto value = PARAM(1).ToLong(); // TODO: 타입 검사
-				cppStream.WriteLong(value);
+					Assert(StreamManager.IsValidStream(streamHandle), SVM_IEC_STDLIB_IO_INVALIDSTREAM);
+
+					auto& cppStream = static_cast<FileStream&>(StreamManager.GetStream(streamHandle));
+					cppStream.WriteLong(value);
+				} ASSERT_END;
 			});
 			module.AddFunction("readSignedLong", 1, true, [this](VirtualContext& context) {
-				auto stream = PARAM(0); // TODO: 타입 검사
-				auto streamHandle = FIELD(stream, StreamHandle).ToLong();
-				auto& cppStream = StreamManager.GetStream(streamHandle); // TODO: 유효성 검사
+				ASSERT_BEGIN {
+					const auto stream = PARAM_A(0, STRUCT(VirtualStream)->Type);
+					const auto streamHandle = FIELD(stream, StreamHandle).ToLong();
 
-				context.PushFundamental(LongObject(cppStream.ReadSignedLong()));
+					Assert(StreamManager.IsValidStream(streamHandle), SVM_IEC_STDLIB_IO_INVALIDSTREAM);
+
+					auto& cppStream = static_cast<FileStream&>(StreamManager.GetStream(streamHandle));
+					context.PushFundamental(LongObject(cppStream.ReadSignedLong()));
+				} ASSERT_END;
 			});
 			module.AddFunction("writeSignedLong", 2, false, [this](VirtualContext& context) {
-				auto stream = PARAM(0); // TODO: 타입 검사
-				auto streamHandle = FIELD(stream, StreamHandle).ToLong();
-				auto& cppStream = StreamManager.GetStream(streamHandle); // TODO: 유효성 검사
+				ASSERT_BEGIN {
+					const auto stream = PARAM_A(0, STRUCT(VirtualStream)->Type);
+					const auto streamHandle = FIELD(stream, StreamHandle).ToLong();
+					const auto value = PARAM_A(1, LongType).ToLong();
 
-				auto value = PARAM(1).ToLong(); // TODO: 타입 검사
-				cppStream.WriteSignedLong(value);
+					Assert(StreamManager.IsValidStream(streamHandle), SVM_IEC_STDLIB_IO_INVALIDSTREAM);
+
+					auto& cppStream = static_cast<FileStream&>(StreamManager.GetStream(streamHandle));
+					cppStream.WriteSignedLong(value);
+				} ASSERT_END;
 			});
 
 			module.AddFunction("readDouble", 1, true, [this](VirtualContext& context) {
-				auto stream = PARAM(0); // TODO: 타입 검사
-				auto streamHandle = FIELD(stream, StreamHandle).ToLong();
-				auto& cppStream = StreamManager.GetStream(streamHandle); // TODO: 유효성 검사
+				ASSERT_BEGIN {
+					const auto stream = PARAM_A(0, STRUCT(VirtualStream)->Type);
+					const auto streamHandle = FIELD(stream, StreamHandle).ToLong();
 
-				context.PushFundamental(DoubleObject(cppStream.ReadDouble()));
+					Assert(StreamManager.IsValidStream(streamHandle), SVM_IEC_STDLIB_IO_INVALIDSTREAM);
+
+					auto& cppStream = static_cast<FileStream&>(StreamManager.GetStream(streamHandle));
+					context.PushFundamental(DoubleObject(cppStream.ReadDouble()));
+				} ASSERT_END;
 			});
 			module.AddFunction("writeDouble", 2, false, [this](VirtualContext& context) {
-				auto stream = PARAM(0); // TODO: 타입 검사
-				auto streamHandle = FIELD(stream, StreamHandle).ToLong();
-				auto& cppStream = StreamManager.GetStream(streamHandle); // TODO: 유효성 검사
+				ASSERT_BEGIN {
+					const auto stream = PARAM_A(0, STRUCT(VirtualStream)->Type);
+					const auto streamHandle = FIELD(stream, StreamHandle).ToLong();
+					const auto value = PARAM_A(1, DoubleType).ToDouble();
 
-				auto value = PARAM(1).ToDouble(); // TODO: 타입 검사
-				cppStream.WriteDouble(value);
+					Assert(StreamManager.IsValidStream(streamHandle), SVM_IEC_STDLIB_IO_INVALIDSTREAM);
+
+					auto& cppStream = static_cast<FileStream&>(StreamManager.GetStream(streamHandle));
+					cppStream.WriteDouble(value);
+				} ASSERT_END;
 			});
 
 			module.AddFunction("readChar32", 1, true, [this](VirtualContext& context) {
-				auto stream = PARAM(0); // TODO: 타입 검사
-				auto streamHandle = FIELD(stream, StreamHandle).ToLong();
-				auto& cppStream = StreamManager.GetStream(streamHandle); // TODO: 유효성 검사
+				ASSERT_BEGIN {
+					const auto stream = PARAM_A(0, STRUCT(VirtualStream)->Type);
+					const auto streamHandle = FIELD(stream, StreamHandle).ToLong();
 
-				context.PushFundamental(IntObject(cppStream.ReadChar32()));
+					Assert(StreamManager.IsValidStream(streamHandle), SVM_IEC_STDLIB_IO_INVALIDSTREAM);
+
+					auto& cppStream = static_cast<FileStream&>(StreamManager.GetStream(streamHandle));
+					context.PushFundamental(IntObject(cppStream.ReadChar32()));
+				} ASSERT_END;
 			});
 			module.AddFunction("writeChar32", 2, false, [this](VirtualContext& context) {
-				auto stream = PARAM(0); // TODO: 타입 검사
-				auto streamHandle = FIELD(stream, StreamHandle).ToLong();
-				auto& cppStream = StreamManager.GetStream(streamHandle); // TODO: 유효성 검사
+				ASSERT_BEGIN {
+					const auto stream = PARAM_A(0, STRUCT(VirtualStream)->Type);
+					const auto streamHandle = FIELD(stream, StreamHandle).ToLong();
+					const auto value = PARAM_A(1, IntType).ToInt();
 
-				auto value = PARAM(1).ToInt(); // TODO: 타입 검사
-				cppStream.WriteChar32(value);
+					Assert(StreamManager.IsValidStream(streamHandle), SVM_IEC_STDLIB_IO_INVALIDSTREAM);
+
+					auto& cppStream = static_cast<FileStream&>(StreamManager.GetStream(streamHandle));
+					cppStream.WriteChar32(value);
+				} ASSERT_END;
 			});
 
 			module.AddFunction("readString32", 1, true, [this](VirtualContext& context) {
-				auto stream = PARAM(0); // TODO: 타입 검사
-				auto streamHandle = FIELD(stream, StreamHandle).ToLong();
-				auto& cppStream = StreamManager.GetStream(streamHandle); // TODO: 유효성 검사
+				ASSERT_BEGIN {
+					const auto stream = PARAM_A(0, STRUCT(VirtualStream)->Type);
+					const auto streamHandle = FIELD(stream, StreamHandle).ToLong();
 
-				auto result = context.PushStructure(STRUCT(VirtualString32));
-				string::ConvertFromCppString32(context, cppStream.ReadString32(), result);
+					Assert(StreamManager.IsValidStream(streamHandle), SVM_IEC_STDLIB_IO_INVALIDSTREAM);
+
+					auto& cppStream = static_cast<FileStream&>(StreamManager.GetStream(streamHandle));
+					const auto result = context.PushStructure(STRUCT(VirtualString32));
+					string::ConvertFromCppString32(context, cppStream.ReadString32(), result);
+				} ASSERT_END;
 			});
 			module.AddFunction("writeString32", 2, false, [this](VirtualContext& context) {
-				auto stream = PARAM(0); // TODO: 타입 검사
-				auto streamHandle = FIELD(stream, StreamHandle).ToLong();
-				auto& cppStream = StreamManager.GetStream(streamHandle); // TODO: 유효성 검사
+				ASSERT_BEGIN {
+					const auto stream = PARAM_A(0, STRUCT(VirtualStream)->Type);
+					const auto streamHandle = FIELD(stream, StreamHandle).ToLong();
+					const auto value = PDREF_A(PARAM_A(1, PointerType), STRUCT(VirtualString32)->Type);
 
-				auto value = PDREF(PARAM(1)); // TODO: 타입 검사
-				cppStream.WriteString32(string::ConvertToCppString32(context, value));
+					Assert(StreamManager.IsValidStream(streamHandle), SVM_IEC_STDLIB_IO_INVALIDSTREAM);
+
+					auto& cppStream = static_cast<FileStream&>(StreamManager.GetStream(streamHandle));
+					cppStream.WriteString32(string::ConvertToCppString32(context, value));
+				} ASSERT_END;
 			});
 
 			StringModule = module.AddDependency("/std/string.sbf");

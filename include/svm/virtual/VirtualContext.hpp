@@ -29,6 +29,8 @@ namespace svm {
 		bool operator!=(const VirtualContext&) = delete;
 
 	public:
+		void OccurException(std::uint32_t code) noexcept;
+
 		Structure GetStructure(VirtualModule::StructureIndex structure);
 		Structure GetStructure(VirtualModule::MappedStructureIndex structure);
 

@@ -178,7 +178,9 @@ namespace svm {
 			VirtualContext context(*this, stack, m_Heap);
 			(*function)(context);
 
-			InterpretRet();
+			if (!m_Exception) {
+				InterpretRet();
+			}
 		}
 	}
 	SVM_NOINLINE_FOR_PROFILING void Interpreter::InterpretRet() noexcept {
