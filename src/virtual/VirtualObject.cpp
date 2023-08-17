@@ -128,6 +128,6 @@ namespace svm {
 		assert(!std::holds_alternative<std::monostate>(m_Object));
 
 		if (std::holds_alternative<Object*>(m_Object)) return std::get<Object*>(m_Object);
-		else if (std::holds_alternative<ManagedHeapInfo*>(m_Object)) return reinterpret_cast<Object*>(std::get<ManagedHeapInfo*>(m_Object) + 1);
+		else return reinterpret_cast<Object*>(std::get<ManagedHeapInfo*>(m_Object) + 1);
 	}
 }

@@ -710,17 +710,17 @@ namespace svm {
 	}
 
 	StdModule InitStdModule(Loader& loader) {
-		StdModule module = std::make_shared<detail::StdModuleState>();
+		StdModule stdModule = std::make_shared<detail::StdModuleState>();
 		std::vector<VirtualModule*> modules;
 
-		module->ArrayState.Init(loader, modules);
-		module->IOState.Init(loader, modules);
-		module->StringState.Init(loader, modules);
+		stdModule->ArrayState.Init(loader, modules);
+		stdModule->IOState.Init(loader, modules);
+		stdModule->StringState.Init(loader, modules);
 
 		for (const auto& module : modules) {
 			loader.Build(*module);
 		}
 
-		return module;
+		return stdModule;
 	}
 }
