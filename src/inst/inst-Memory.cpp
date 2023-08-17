@@ -332,6 +332,7 @@ namespace svm {
 			InitArray(info, static_cast<Type*>(address));
 		}
 
+		m_Stack.Reduce(info.CountSize);
 		m_Stack.Push<PointerObject>(address);
 	}
 	SVM_NOINLINE_FOR_PROFILING void Interpreter::InterpretAGCNew(std::uint32_t operand) noexcept {
@@ -351,6 +352,7 @@ namespace svm {
 			InitArray(info, addressReal);
 		}
 
+		m_Stack.Reduce(info.CountSize);
 		m_Stack.Push<GCPointerObject>(address);
 	}
 	SVM_NOINLINE_FOR_PROFILING void Interpreter::InterpretALea() noexcept {
