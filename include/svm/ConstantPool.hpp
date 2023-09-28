@@ -15,9 +15,11 @@ namespace svm {
 	private:
 		using core::ConstantPool::AddIntConstant;
 		using core::ConstantPool::AddLongConstant;
+		using core::ConstantPool::AddSingleConstant;
 		using core::ConstantPool::AddDoubleConstant;
 		using core::ConstantPool::FindIntConstant;
 		using core::ConstantPool::FindLongConstant;
+		using core::ConstantPool::FindSingleConstant;
 		using core::ConstantPool::FindDoubleConstant;
 	};
 

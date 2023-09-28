@@ -36,6 +36,12 @@ namespace svm {
 				m_StackFrame.Caller = m_StackFrame.Instructions->GetLabel(operand) - 1;
 				m_Stack.Reduce(sizeof(LongObject));
 			}
+		} else if (type == SingleType) {
+			const SingleObject* value = reinterpret_cast<const SingleObject*>(typePtr);
+			if (T::Compare(value->Value)) {
+				m_StackFrame.Caller = m_StackFrame.Instructions->GetLabel(operand) - 1;
+				m_Stack.Reduce(sizeof(SingleObject));
+			}
 		} else if (type == DoubleType) {
 			const DoubleObject* value = reinterpret_cast<const DoubleObject*>(typePtr);
 			if (T::Compare(value->Value)) {

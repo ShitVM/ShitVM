@@ -22,6 +22,8 @@ namespace svm {
 			TypeCast<IntObject, IntObject>(typePtr);
 		} else if (type == LongType) {
 			TypeCast<IntObject, LongObject>(typePtr);
+		} else if (type == SingleType) {
+			TypeCast<IntObject, SingleObject>(typePtr);
 		} else if (type == DoubleType) {
 			TypeCast<IntObject, DoubleObject>(typePtr);
 		} else if (type == PointerType) {
@@ -53,10 +55,45 @@ namespace svm {
 			TypeCast<LongObject, IntObject>(typePtr);
 		} else if (type == LongType) {
 			TypeCast<LongObject, LongObject>(typePtr);
+		} else if (type == SingleType) {
+			TypeCast<LongObject, SingleObject>(typePtr);
 		} else if (type == DoubleType) {
 			TypeCast<LongObject, DoubleObject>(typePtr);
 		} else if (type == PointerType) {
 			TypeCast<LongObject, PointerObject>(typePtr);
+		} else if (type == GCPointerType) {
+			OccurException(SVM_IEC_POINTER_INVALIDFORPOINTER);
+		} else if (type.IsStructure()) {
+			OccurException(SVM_IEC_STRUCTURE_INVALIDFORSTRUCTURE);
+		} else if (type.IsArray()) {
+			OccurException(SVM_IEC_ARRAY_INVALIDFORARRAY);
+		} else {
+			OccurException(SVM_IEC_STACK_EMPTY);
+		}
+	}
+	SVM_NOINLINE_FOR_PROFILING void Interpreter::InterpretToSi() noexcept {
+		if (IsLocalVariable()) {
+			OccurException(SVM_IEC_STACK_EMPTY);
+			return;
+		}
+
+		Type* const typePtr = m_Stack.GetTopType();
+		if (!typePtr) {
+			OccurException(SVM_IEC_STACK_EMPTY);
+			return;
+		}
+
+		const Type type = *typePtr;
+		if (type == IntType) {
+			TypeCast<SingleObject, IntObject>(typePtr);
+		} else if (type == LongType) {
+			TypeCast<SingleObject, LongObject>(typePtr);
+		} else if (type == SingleType) {
+			TypeCast<SingleObject, SingleObject>(typePtr);
+		} else if (type == DoubleType) {
+			TypeCast<SingleObject, DoubleObject>(typePtr);
+		} else if (type == PointerType) {
+			TypeCast<SingleObject, PointerObject>(typePtr);
 		} else if (type == GCPointerType) {
 			OccurException(SVM_IEC_POINTER_INVALIDFORPOINTER);
 		} else if (type.IsStructure()) {
@@ -84,6 +121,8 @@ namespace svm {
 			TypeCast<DoubleObject, IntObject>(typePtr);
 		} else if (type == LongType) {
 			TypeCast<DoubleObject, LongObject>(typePtr);
+		} else if (type == SingleType) {
+			TypeCast<DoubleObject, SingleObject>(typePtr);
 		} else if (type == DoubleType) {
 			TypeCast<DoubleObject, DoubleObject>(typePtr);
 		} else if (type == PointerType) {
@@ -115,6 +154,8 @@ namespace svm {
 			TypeCast<PointerObject, IntObject>(typePtr);
 		} else if (type == LongType) {
 			TypeCast<PointerObject, LongObject>(typePtr);
+		} else if (type == SingleType) {
+			TypeCast<PointerObject, SingleObject>(typePtr);
 		} else if (type == DoubleType) {
 			TypeCast<PointerObject, DoubleObject>(typePtr);
 		} else if (type == PointerType) {

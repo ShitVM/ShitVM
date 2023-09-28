@@ -94,6 +94,8 @@ namespace svm {
 			isSuccess = m_Stack.Push(constantPool.GetConstant<IntObject>(operand));
 		} else if (constType == LongType) {
 			isSuccess = m_Stack.Push(constantPool.GetConstant<LongObject>(operand));
+		} else if (constType == SingleType) {
+			isSuccess = m_Stack.Push(constantPool.GetConstant<SingleObject>(operand));
 		} else if (constType == DoubleType) {
 			isSuccess = m_Stack.Push(constantPool.GetConstant<DoubleObject>(operand));
 		}
@@ -136,6 +138,8 @@ namespace svm {
 			isSuccess = m_Stack.Push(reinterpret_cast<const IntObject&>(*typePtr));
 		} else if (type == LongType) {
 			isSuccess = m_Stack.Push(reinterpret_cast<const LongObject&>(*typePtr));
+		} else if (type == SingleType) {
+			isSuccess = m_Stack.Push(reinterpret_cast<const SingleObject&>(*typePtr));
 		} else if (type == DoubleType) {
 			isSuccess = m_Stack.Push(reinterpret_cast<const DoubleObject&>(*typePtr));
 		} else if (type == PointerType) {
@@ -193,6 +197,8 @@ namespace svm {
 			reinterpret_cast<IntObject&>(varType) = reinterpret_cast<const IntObject&>(*typePtr);
 		} else if (type == LongType) {
 			reinterpret_cast<LongObject&>(varType) = reinterpret_cast<const LongObject&>(*typePtr);
+		} else if (type == SingleType) {
+			reinterpret_cast<SingleObject&>(varType) = reinterpret_cast<const SingleObject&>(*typePtr);
 		} else if (type == DoubleType) {
 			reinterpret_cast<DoubleObject&>(varType) = reinterpret_cast<const DoubleObject&>(*typePtr);
 		} else if (type == PointerType) {
@@ -247,6 +253,8 @@ namespace svm {
 			isSuccess = m_Stack.Push(reinterpret_cast<const IntObject&>(*typePtr));
 		} else if (type == LongType) {
 			isSuccess = m_Stack.Push(reinterpret_cast<const LongObject&>(*typePtr));
+		} else if (type == SingleType) {
+			isSuccess = m_Stack.Push(reinterpret_cast<const SingleObject&>(*typePtr));
 		} else if (type == DoubleType) {
 			isSuccess = m_Stack.Push(reinterpret_cast<const DoubleObject&>(*typePtr));
 		} else if (type == PointerType) {
@@ -286,6 +294,10 @@ namespace svm {
 			LongObject* second = nullptr;
 			if (!GetTwoSameType(firstType, second)) return;
 			std::iter_swap(reinterpret_cast<LongObject*>(firstTypePtr), second);
+		} else if (firstType == SingleType) {
+			SingleObject* second = nullptr;
+			if (!GetTwoSameType(firstType, second)) return;
+			std::iter_swap(reinterpret_cast<SingleObject*>(firstTypePtr), second);
 		} else if (firstType == DoubleType) {
 			DoubleObject* second = nullptr;
 			if (!GetTwoSameType(firstType, second)) return;

@@ -82,6 +82,12 @@ namespace svm {
 			if (!PopTwoSameTypeAndPushOne(rhsTypePtr, lhs, rhs)) return;
 
 			lhs->Value += rhs->Value;
+		} else if (rhsType == SingleType) {
+			SingleObject* lhs = nullptr;
+			const SingleObject* rhs = nullptr;
+			if (!PopTwoSameTypeAndPushOne(rhsTypePtr, lhs, rhs)) return;
+
+			lhs->Value += rhs->Value;
 		} else if (rhsType == DoubleType) {
 			DoubleObject* lhs = nullptr;
 			const DoubleObject* rhs = nullptr;
@@ -115,6 +121,12 @@ namespace svm {
 		} else if (rhsType == LongType) {
 			LongObject* lhs = nullptr;
 			const LongObject* rhs = nullptr;
+			if (!PopTwoSameTypeAndPushOne(rhsTypePtr, lhs, rhs)) return;
+
+			lhs->Value -= rhs->Value;
+		} else if (rhsType == SingleType) {
+			SingleObject* lhs = nullptr;
+			const SingleObject* rhs = nullptr;
 			if (!PopTwoSameTypeAndPushOne(rhsTypePtr, lhs, rhs)) return;
 
 			lhs->Value -= rhs->Value;
@@ -154,6 +166,12 @@ namespace svm {
 			if (!PopTwoSameTypeAndPushOne(rhsTypePtr, lhs, rhs)) return;
 
 			lhs->Value *= rhs->Value;
+		} else if (rhsType == SingleType) {
+			SingleObject* lhs = nullptr;
+			const SingleObject* rhs = nullptr;
+			if (!PopTwoSameTypeAndPushOne(rhsTypePtr, lhs, rhs)) return;
+
+			lhs->Value *= rhs->Value;
 		} else if (rhsType == DoubleType) {
 			DoubleObject* lhs = nullptr;
 			const DoubleObject* rhs = nullptr;
@@ -190,6 +208,12 @@ namespace svm {
 			if (!PopTwoSameTypeAndPushOne(rhsTypePtr, lhs, rhs)) return;
 
 			lhs->Value = static_cast<std::int64_t>(lhs->Value) * static_cast<std::int64_t>(rhs->Value);
+		} else if (rhsType == SingleType) {
+			SingleObject* lhs = nullptr;
+			const SingleObject* rhs = nullptr;
+			if (!PopTwoSameTypeAndPushOne(rhsTypePtr, lhs, rhs)) return;
+
+			lhs->Value *= rhs->Value;
 		} else if (rhsType == DoubleType) {
 			DoubleObject* lhs = nullptr;
 			const DoubleObject* rhs = nullptr;
@@ -227,6 +251,16 @@ namespace svm {
 		} else if (rhsType == LongType) {
 			LongObject* lhs = nullptr;
 			const LongObject* rhs = nullptr;
+			if (!PopTwoSameTypeAndPushOne(rhsTypePtr, lhs, rhs)) return;
+			else if (rhs->Value == 0) {
+				OccurException(SVM_IEC_ARITHMETIC_DIVIDEBYZERO);
+				return;
+			}
+
+			lhs->Value /= rhs->Value;
+		} else if (rhsType == SingleType) {
+			SingleObject* lhs = nullptr;
+			const SingleObject* rhs = nullptr;
 			if (!PopTwoSameTypeAndPushOne(rhsTypePtr, lhs, rhs)) return;
 			else if (rhs->Value == 0) {
 				OccurException(SVM_IEC_ARITHMETIC_DIVIDEBYZERO);
@@ -282,6 +316,16 @@ namespace svm {
 			}
 
 			lhs->Value = static_cast<std::int64_t>(lhs->Value) / static_cast<std::int64_t>(rhs->Value);
+		} else if (rhsType == SingleType) {
+			SingleObject* lhs = nullptr;
+			const SingleObject* rhs = nullptr;
+			if (!PopTwoSameTypeAndPushOne(rhsTypePtr, lhs, rhs)) return;
+			else if (rhs->Value == 0) {
+				OccurException(SVM_IEC_ARITHMETIC_DIVIDEBYZERO);
+				return;
+			}
+
+			lhs->Value /= rhs->Value;
 		} else if (rhsType == DoubleType) {
 			DoubleObject* lhs = nullptr;
 			const DoubleObject* rhs = nullptr;
@@ -330,6 +374,16 @@ namespace svm {
 			}
 
 			lhs->Value %= rhs->Value;
+		} else if (rhsType == SingleType) {
+			SingleObject* lhs = nullptr;
+			const SingleObject* rhs = nullptr;
+			if (!PopTwoSameTypeAndPushOne(rhsTypePtr, lhs, rhs)) return;
+			else if (rhs->Value == 0) {
+				OccurException(SVM_IEC_ARITHMETIC_DIVIDEBYZERO);
+				return;
+			}
+
+			lhs->Value = std::fmod(lhs->Value, rhs->Value);
 		} else if (rhsType == DoubleType) {
 			DoubleObject* lhs = nullptr;
 			const DoubleObject* rhs = nullptr;
@@ -378,6 +432,16 @@ namespace svm {
 			}
 
 			lhs->Value = static_cast<std::int64_t>(lhs->Value) % static_cast<std::int64_t>(rhs->Value);
+		} else if (rhsType == SingleType) {
+			SingleObject* lhs = nullptr;
+			const SingleObject* rhs = nullptr;
+			if (!PopTwoSameTypeAndPushOne(rhsTypePtr, lhs, rhs)) return;
+			else if (rhs->Value == 0) {
+				OccurException(SVM_IEC_ARITHMETIC_DIVIDEBYZERO);
+				return;
+			}
+
+			lhs->Value = std::fmod(lhs->Value, rhs->Value);
 		} else if (rhsType == DoubleType) {
 			DoubleObject* lhs = nullptr;
 			const DoubleObject* rhs = nullptr;
@@ -417,6 +481,9 @@ namespace svm {
 		} else if (type == LongType) {
 			LongObject& top = reinterpret_cast<LongObject&>(*typePtr);
 			top.Value = -static_cast<std::int64_t>(top.Value);
+		} else if (type == SingleType) {
+			SingleObject& top = reinterpret_cast<SingleObject&>(*typePtr);
+			top.Value = -top.Value;
 		} else if (type == DoubleType) {
 			DoubleObject& top = reinterpret_cast<DoubleObject&>(*typePtr);
 			top.Value = -top.Value;
@@ -463,6 +530,8 @@ namespace svm {
 			reinterpret_cast<IntObject*>(targetTypePtr)->Value += delta;
 		} else if (targetType == LongType) {
 			reinterpret_cast<LongObject*>(targetTypePtr)->Value += delta;
+		} else if (targetType == SingleType) {
+			reinterpret_cast<SingleObject*>(targetTypePtr)->Value += delta;
 		} else if (targetType == DoubleType) {
 			reinterpret_cast<DoubleObject*>(targetTypePtr)->Value += delta;
 		} else if (targetType == PointerType || targetType == GCPointerType) {
@@ -486,7 +555,7 @@ namespace svm {
 		}
 
 		const Type rhsType = *rhsTypePtr;
-		if (rhsType == IntType) {
+		if (rhsType == IntType || rhsType == SingleType) {
 			IntObject* lhs = nullptr;
 			const IntObject* rhs = nullptr;
 			if (!PopTwoSameTypeAndPushOne(rhsTypePtr, lhs, rhs)) return;
@@ -516,7 +585,7 @@ namespace svm {
 		}
 
 		const Type rhsType = *rhsTypePtr;
-		if (rhsType == IntType) {
+		if (rhsType == IntType || rhsType == SingleType) {
 			IntObject* lhs = nullptr;
 			const IntObject* rhs = nullptr;
 			if (!PopTwoSameTypeAndPushOne(rhsTypePtr, lhs, rhs)) return;
@@ -546,7 +615,7 @@ namespace svm {
 		}
 
 		const Type rhsType = *rhsTypePtr;
-		if (rhsType == IntType) {
+		if (rhsType == IntType || rhsType == SingleType) {
 			IntObject* lhs = nullptr;
 			const IntObject* rhs = nullptr;
 			if (!PopTwoSameTypeAndPushOne(rhsTypePtr, lhs, rhs)) return;
@@ -581,7 +650,7 @@ namespace svm {
 		}
 
 		const Type type = *typePtr;
-		if (type == IntType) {
+		if (type == IntType || type == SingleType) {
 			IntObject& top = reinterpret_cast<IntObject&>(*typePtr);
 			top.Value = ~top.Value;
 		} else if (type == LongType || type == DoubleType) {
@@ -605,7 +674,7 @@ namespace svm {
 		}
 
 		const Type rhsType = *rhsTypePtr;
-		if (rhsType == IntType) {
+		if (rhsType == IntType || rhsType == SingleType) {
 			IntObject* lhs = nullptr;
 			const IntObject* rhs = nullptr;
 			if (!PopTwoSameTypeAndPushOne(rhsTypePtr, lhs, rhs)) return;
@@ -638,7 +707,7 @@ namespace svm {
 		}
 
 		const Type rhsType = *rhsTypePtr;
-		if (rhsType == IntType) {
+		if (rhsType == IntType || rhsType == SingleType) {
 			IntObject* lhs = nullptr;
 			const IntObject* rhs = nullptr;
 			if (!PopTwoSameTypeAndPushOne(rhsTypePtr, lhs, rhs)) return;
@@ -668,7 +737,7 @@ namespace svm {
 		}
 
 		const Type rhsType = *rhsTypePtr;
-		if (rhsType == IntType) {
+		if (rhsType == IntType || rhsType == SingleType) {
 			IntObject* lhs = nullptr;
 			const IntObject* rhs = nullptr;
 			if (!PopTwoSameTypeAndPushOne(rhsTypePtr, lhs, rhs)) return;
@@ -709,6 +778,10 @@ namespace svm {
 			LongObject lhs, rhs;
 			if (!PopTwoSameType(rhsTypePtr, lhs, rhs)) return;
 			m_Stack.Push(CompareTwoSameType(lhs.Value, rhs.Value));
+		} else if (rhsType == SingleType) {
+			SingleObject lhs, rhs;
+			if (!PopTwoSameType(rhsTypePtr, lhs, rhs)) return;
+			m_Stack.Push(CompareTwoSameType(lhs.Value, rhs.Value));
 		} else if (rhsType == DoubleType) {
 			DoubleObject lhs, rhs;
 			if (!PopTwoSameType(rhsTypePtr, lhs, rhs)) return;
@@ -741,6 +814,10 @@ namespace svm {
 			LongObject lhs, rhs;
 			if (!PopTwoSameType(rhsTypePtr, lhs, rhs)) return;
 			m_Stack.Push(CompareTwoSameType<std::int64_t>(lhs.Value, rhs.Value));
+		} else if (rhsType == SingleType) {
+			SingleObject lhs, rhs;
+			if (!PopTwoSameType(rhsTypePtr, lhs, rhs)) return;
+			m_Stack.Push(CompareTwoSameType(lhs.Value, rhs.Value));
 		} else if (rhsType == DoubleType) {
 			DoubleObject lhs, rhs;
 			if (!PopTwoSameType(rhsTypePtr, lhs, rhs)) return;

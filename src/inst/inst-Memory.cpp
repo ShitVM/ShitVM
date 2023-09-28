@@ -184,6 +184,8 @@ namespace svm {
 			isSuccess = m_Stack.Push(reinterpret_cast<const IntObject&>(*targetTypePtr));
 		} else if (targetType == LongType) {
 			isSuccess = m_Stack.Push(reinterpret_cast<const LongObject&>(*targetTypePtr));
+		} else if (targetType == SingleType) {
+			isSuccess = m_Stack.Push(reinterpret_cast<const SingleObject&>(*targetTypePtr));
 		} else if (targetType == DoubleType) {
 			isSuccess = m_Stack.Push(reinterpret_cast<const DoubleObject&>(*targetTypePtr));
 		} else if (targetType == PointerType) {
@@ -216,6 +218,8 @@ namespace svm {
 			DRefAndAssign<IntObject>(rhsTypePtr);
 		} else if (rhsType == LongType) {
 			DRefAndAssign<LongObject>(rhsTypePtr);
+		} else if (rhsType == SingleType) {
+			DRefAndAssign<SingleObject>(rhsTypePtr);
 		} else if (rhsType == DoubleType) {
 			DRefAndAssign<DoubleObject>(rhsTypePtr);
 		} else if (rhsType == PointerType) {

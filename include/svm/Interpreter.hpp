@@ -145,6 +145,7 @@ namespace svm {
 	private:
 		void InterpretToI() noexcept;
 		void InterpretToL() noexcept;
+		void InterpretToSi() noexcept;
 		void InterpretToD() noexcept;
 		void InterpretToP() noexcept;
 

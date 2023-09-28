@@ -1,8 +1,8 @@
 #pragma once
 
-#define SVM_VERSION "0.4.0"
+#define SVM_VERSION "0.5.0"
 #define SVM_VERSION_MAJOR 0
-#define SVM_VERSION_MINOR 4
+#define SVM_VERSION_MINOR 5
 #define SVM_VERSION_PATCH 0
 #define SVM_VERSION_IDENTIFIER ""
 #define SVM_VERSION_TAG ""
