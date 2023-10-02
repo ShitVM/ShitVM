@@ -149,6 +149,8 @@ namespace svm {
 				stream << static_cast<const IntObject&>(object).Value;
 			} else if (type == LongType) {
 				stream << static_cast<const LongObject&>(object).Value;
+			} else if (type == SingleType) {
+				stream << static_cast<const SingleObject&>(object).Value;
 			} else if (type == DoubleType) {
 				stream << static_cast<const DoubleObject&>(object).Value;
 			} else if (type == PointerType || type == GCPointerType) {
