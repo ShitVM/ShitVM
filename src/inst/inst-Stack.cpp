@@ -1,6 +1,7 @@
 #include <svm/Interpreter.hpp>
 
 #include <svm/ConstantPool.hpp>
+#include <svm/Memory.hpp>
 #include <svm/detail/InterpreterExceptionCode.hpp>
 
 #include <algorithm>
@@ -22,26 +23,24 @@ namespace svm {
 		InitStructure(structure, m_Stack.GetTopType());
 	}
 	SVM_NOINLINE_FOR_PROFILING void Interpreter::InitStructure(Structure structure, Type* type) noexcept {
-		const std::uint32_t fieldCount = static_cast<std::uint32_t>(structure->Fields.size());
-
 		*type = structure->Type;
+
+		InitStructure(structure, reinterpret_cast<StructureObject*>(type) + 1);
+	}
+	SVM_NOINLINE_FOR_PROFILING void Interpreter::InitStructure(Structure structure, void* firstField) noexcept {
+		const std::uint32_t fieldCount = static_cast<std::uint32_t>(structure->Fields.size());
 
 		for (std::uint32_t i = 0; i < fieldCount; ++i) {
 			const Field& field = structure->Fields[i];
-			Type* const pointer = reinterpret_cast<Type*>(reinterpret_cast<std::uint8_t*>(type) + field.Offset);
+			void* const pointer = static_cast<std::uint8_t*>(firstField) + field.Offset;
 
 			if (field.IsArray()) {
-				*pointer = ArrayType;
-				reinterpret_cast<ArrayObject*>(pointer)->Count = static_cast<std::size_t>(field.Count);
-
 				detail::ArrayInfo info;
 				info.ElementType = field.Type;
 				info.Count = field.Count;
 				InitArray(info, pointer);
 			} else if (field.Type.IsStructure()) {
 				InitStructure(GetStructure(field.Type), pointer);
-			} else {
-				*pointer = field.Type;
 			}
 		}
 	}
@@ -52,30 +51,8 @@ namespace svm {
 		std::memcpy(&to, &from, from->Size);
 	}
 
-	void Interpreter::InitStructure(Object* object, Structure structure) noexcept {
+	SVM_NOINLINE_FOR_PROFILING void Interpreter::InitStructure(Object* object, Structure structure) noexcept {
 		InitStructure(structure, reinterpret_cast<Type*>(object));
-	}
-}
-
-namespace svm {
-	template<typename T>
-	SVM_NOINLINE_FOR_PROFILING bool Interpreter::GetTwoSameType(Type rhsType, T*& lhs) noexcept {
-		if (IsLocalVariable() || IsLocalVariable(sizeof(T))) {
-			OccurException(SVM_IEC_STACK_EMPTY);
-			return false;
-		}
-
-		Type* const lhsTypePtr = m_Stack.Get<Type>(m_Stack.GetUsedSize() - sizeof(T));
-		if (!lhsTypePtr) {
-			OccurException(SVM_IEC_STACK_EMPTY);
-			return false;
-		} else if (rhsType != *lhsTypePtr) {
-			OccurException(SVM_IEC_STACK_DIFFERENTTYPE);
-			return false;
-		}
-
-		lhs = reinterpret_cast<T*>(lhsTypePtr);
-		return true;
 	}
 }
 
@@ -151,7 +128,7 @@ namespace svm {
 		} else if (type.IsArray()) {
 			const std::size_t size = CalcArraySize(reinterpret_cast<const ArrayObject*>(typePtr));
 			if ((isSuccess = m_Stack.Expand(size))) {
-				std::memcpy(m_Stack.GetTopType(), typePtr, size);
+				CopyArray(*typePtr, *m_Stack.GetTopType(), size);
 			}
 		}
 
@@ -170,7 +147,7 @@ namespace svm {
 			OccurException(SVM_IEC_LOCALVARIABLE_INVALIDINDEX);
 			return;
 		} else if (operand == m_LocalVariables.size()) {
-			const Type* const typePtr = m_Stack.GetTopType();
+			Type* const typePtr = m_Stack.GetTopType();
 			if (!typePtr || !typePtr->IsValidType()) {
 				OccurException(SVM_IEC_STACK_EMPTY);
 				return;
@@ -208,14 +185,15 @@ namespace svm {
 		} else if (type.IsStructure()) {
 			CopyStructure(*typePtr, varType);
 		} else if (type.IsArray()) {
-			const std::size_t size = CalcArraySize(reinterpret_cast<const ArrayObject*>(typePtr));
-
-			if (reinterpret_cast<ArrayObject&>(varType).Count != reinterpret_cast<const ArrayObject*>(typePtr)->Count) {
+			if (reinterpret_cast<ArrayObject&>(varType).ElementType != reinterpret_cast<const ArrayObject*>(typePtr)->ElementType) {
+				OccurException(SVM_IEC_STACK_DIFFERENTTYPE);
+				return;
+			} else if (reinterpret_cast<ArrayObject&>(varType).Count != reinterpret_cast<const ArrayObject*>(typePtr)->Count) {
 				OccurException(SVM_IEC_ARRAY_COUNT_DIFFERENTCOUNT);
 				return;
-			}
+			} 
 
-			std::memcpy(&varType, typePtr, size);
+			CopyArray(*typePtr, varType);
 			return;
 		} else {
 			OccurException(SVM_IEC_STACK_EMPTY);
@@ -231,9 +209,27 @@ namespace svm {
 			return;
 		}
 
-		if (!m_Stack.Push<PointerObject>(m_Stack.Get<Type>(m_LocalVariables[operand]))) {
-			OccurException(SVM_IEC_STACK_OVERFLOW);
-		}
+		Type* const typePtr = m_Stack.Get<Type>(m_LocalVariables[operand]);
+		RawPointerObject rawPointer;
+
+		if (typePtr->IsArray()) {
+			ArrayObject* const arrayPtr = reinterpret_cast<ArrayObject*>(typePtr);
+
+			rawPointer.Type = arrayPtr->ElementType;
+			rawPointer.Count = arrayPtr->Count;
+			rawPointer.Address = arrayPtr + 1;
+
+			if (!m_Stack.Push<PointerObject>(rawPointer)) {
+				OccurException(SVM_IEC_STACK_OVERFLOW);
+			}
+		} else {
+			rawPointer.Type = *typePtr;
+			rawPointer.Address = reinterpret_cast<Object*>(typePtr) + 1;
+
+			if (!m_Stack.Push<PointerObject>(rawPointer)) {
+				OccurException(SVM_IEC_STACK_OVERFLOW);
+			}
+		}		
 	}
 	SVM_NOINLINE_FOR_PROFILING void Interpreter::InterpretCopy() noexcept {
 		if (IsLocalVariable()) {
@@ -268,7 +264,7 @@ namespace svm {
 		} else if (type.IsArray()) {
 			const std::size_t size = CalcArraySize(reinterpret_cast<const ArrayObject*>(typePtr));
 			if (isSuccess = m_Stack.Expand(type->Size)) {
-				std::memcpy(m_Stack.GetTopType(), typePtr, size);
+				CopyArray(type, size);
 			}
 		} else {
 			OccurException(SVM_IEC_STACK_EMPTY);
@@ -286,61 +282,33 @@ namespace svm {
 		}
 
 		const Type firstType = *firstTypePtr;
-		if (firstType == IntType) {
-			IntObject* second = nullptr;
-			if (!GetTwoSameType(firstType, second)) return;
-			std::iter_swap(reinterpret_cast<IntObject*>(firstTypePtr), second);
-		} else if (firstType == LongType) {
-			LongObject* second = nullptr;
-			if (!GetTwoSameType(firstType, second)) return;
-			std::iter_swap(reinterpret_cast<LongObject*>(firstTypePtr), second);
-		} else if (firstType == SingleType) {
-			SingleObject* second = nullptr;
-			if (!GetTwoSameType(firstType, second)) return;
-			std::iter_swap(reinterpret_cast<SingleObject*>(firstTypePtr), second);
-		} else if (firstType == DoubleType) {
-			DoubleObject* second = nullptr;
-			if (!GetTwoSameType(firstType, second)) return;
-			std::iter_swap(reinterpret_cast<DoubleObject*>(firstTypePtr), second);
-		} else if (firstType == PointerType) {
-			PointerObject* second = nullptr;
-			if (!GetTwoSameType(firstType, second)) return;
-			std::iter_swap(reinterpret_cast<PointerObject*>(firstTypePtr), second);
-		} else if (firstType == GCPointerType) {
-			GCPointerObject* second = nullptr;
-			if (!GetTwoSameType(firstType, second)) return;
-			std::iter_swap(reinterpret_cast<GCPointerObject*>(firstTypePtr), second);
-		} else if (firstType.IsStructure()) {
-			if (IsLocalVariable() || IsLocalVariable(firstType->Size)) {
-				OccurException(SVM_IEC_STACK_EMPTY);
-				return;
-			} else if (!m_Stack.Get<Type>(m_Stack.GetUsedSize() - firstType->Size)->IsStructure()) {
-				OccurException(SVM_IEC_STACK_DIFFERENTTYPE);
-				return;
-			}
+		std::size_t firstTypeSize = firstType->Size;
+		if (firstType.IsArray()) {
+			firstTypeSize = CalcArraySize(reinterpret_cast<ArrayObject*>(firstTypePtr));
+		}
 
-			for (std::size_t i = sizeof(Type); i < firstType->Size; i += sizeof(void*)) {
-				std::iter_swap(m_Stack.Get<void*>(m_Stack.GetUsedSize() - i), m_Stack.Get<void*>(m_Stack.GetUsedSize() - firstType->Size - i));
-			}
-		} else if (firstType.IsArray()) {
-			const std::size_t size = CalcArraySize(reinterpret_cast<ArrayObject*>(firstTypePtr));
-
-			if (IsLocalVariable() || IsLocalVariable(size)) {
-				OccurException(SVM_IEC_STACK_EMPTY);
-				return;
-			} else if (!m_Stack.Get<Type>(m_Stack.GetUsedSize() - size)->IsArray()) {
-				OccurException(SVM_IEC_STACK_DIFFERENTTYPE);
-				return;
-			} else if (m_Stack.Get<ArrayObject>(m_Stack.GetUsedSize() - size)->Count != reinterpret_cast<ArrayObject*>(firstTypePtr)->Count) {
-				OccurException(SVM_IEC_ARRAY_COUNT_DIFFERENTCOUNT);
-				return;
-			}
-
-			for (std::size_t i = sizeof(ArrayObject); i < size; i += sizeof(void*)) {
-				std::iter_swap(m_Stack.Get<void*>(m_Stack.GetUsedSize() - i), m_Stack.Get<void*>(m_Stack.GetUsedSize() - size - i));
-			}
-		} else {
+		Type* const secondTypePtr = m_Stack.Get<Type>(m_Stack.GetUsedSize() - firstTypeSize);
+		if (!secondTypePtr) {
 			OccurException(SVM_IEC_STACK_EMPTY);
+			return;
+		}
+
+		const Type secondType = *secondTypePtr;
+		std::size_t secondTypeSize = secondType->Size;
+		if (secondType.IsArray()) {
+			secondTypeSize = CalcArraySize(reinterpret_cast<ArrayObject*>(secondTypePtr));
+		}
+
+		if (firstTypeSize > secondTypeSize) {
+			const auto buffer = std::make_unique<std::uint8_t[]>(secondTypeSize);
+			std::memcpy(buffer.get(), secondTypePtr, secondTypeSize);
+			std::memcpy(secondTypePtr, firstTypePtr, firstTypeSize);
+			std::memcpy(firstTypePtr, buffer.get(), secondTypeSize);
+		} else {
+			const auto buffer = std::make_unique<std::uint8_t[]>(firstTypeSize);
+			std::memcpy(buffer.get(), firstTypePtr, firstTypeSize);
+			std::memcpy(firstTypePtr, secondTypePtr, secondTypeSize);
+			std::memcpy(secondTypePtr, buffer.get(), firstTypeSize);
 		}
 	}
 }
@@ -373,9 +341,9 @@ namespace svm {
 		const Type type = *typePtr;
 		info.CountSize = type->Size;
 		if (type == IntType) {
-			info.Count = reinterpret_cast<IntObject*>(typePtr)->Value;
+			info.Count = reinterpret_cast<IntObject*>(typePtr)->RawObject.Value;
 		} else if (type == LongType) {
-			info.Count = reinterpret_cast<LongObject*>(typePtr)->Value;
+			info.Count = reinterpret_cast<LongObject*>(typePtr)->RawObject.Value;
 		} else {
 			OccurException(SVM_IEC_STACK_DIFFERENTTYPE);
 			return false;
@@ -390,29 +358,36 @@ namespace svm {
 		return true;
 	}
 	SVM_NOINLINE_FOR_PROFILING void Interpreter::InitArray(const detail::ArrayInfo& info, Type* type) noexcept {
-		std::memset(type, 0, info.Size);
+		ArrayObject* const array = reinterpret_cast<ArrayObject*>(type);
 
-		Structure structure;
-		if (info.ElementType.IsStructure()) {
-			structure = GetStructure(info.ElementType);
-		}
+		array->SetType(ArrayType);
+		array->ElementType = info.ElementType;
+		array->Count = static_cast<std::size_t>(info.Count);
 
-		*type = ArrayType;
-		reinterpret_cast<ArrayObject*>(type)->Count = static_cast<std::size_t>(info.Count);
-		type = reinterpret_cast<Type*>(reinterpret_cast<std::uint8_t*>(type) + sizeof(ArrayObject));
+		InitArray(info, array + 1);
+	}
+	SVM_NOINLINE_FOR_PROFILING void Interpreter::InitArray(const detail::ArrayInfo& info, void* firstElement) noexcept {
+		if (!info.ElementType.IsStructure()) return;
+
+		const std::size_t rawSize = info.ElementType->RawSize;
+		const Structure structure = GetStructure(info.ElementType);
 
 		for (std::uint64_t i = 0; i < info.Count; ++i) {
-			if (info.ElementType.IsStructure()) {
-				InitStructure(structure, type);
-			} else {
-				*type = info.ElementType;
-			}
-			type = reinterpret_cast<Type*>(reinterpret_cast<std::uint8_t*>(type) + info.ElementType->Size);
+			InitStructure(structure, static_cast<std::uint8_t*>(firstElement) + i * info.ElementType->RawSize);
 		}
 	}
+	SVM_NOINLINE_FOR_PROFILING void Interpreter::CopyArray(const Type& type, std::size_t size) noexcept {
+		CopyArray(type, *m_Stack.GetTopType(), size);
+	}
+	SVM_NOINLINE_FOR_PROFILING void Interpreter::CopyArray(const Type& from, Type& to, std::size_t size) noexcept {
+		if (!size) {
+			size = CalcArraySize(reinterpret_cast<const ArrayObject*>(&from);
+		}
+
+		std::memcpy(&to, &from, size);
+	}
 	SVM_NOINLINE_FOR_PROFILING std::size_t Interpreter::CalcArraySize(const ArrayObject* array) const noexcept {
-		const std::size_t elementSize = reinterpret_cast<const Type*>(array + 1)->GetReference().Size;
-		return static_cast<std::size_t>(array->Count * elementSize + sizeof(ArrayObject));
+		return CalcArraySize(array->ElementType, array->Count);
 	}
 
 	void Interpreter::InitArray(Object* object, Type type, std::uint64_t count) noexcept {
@@ -424,7 +399,9 @@ namespace svm {
 		InitArray(info, reinterpret_cast<Type*>(object));
 	}
 	std::size_t Interpreter::CalcArraySize(Type type, std::uint64_t count) const noexcept {
-		return static_cast<std::size_t>(type->Size * count + sizeof(ArrayObject));
+		return CalcNearestMultiplier(
+			static_cast<std::size_t>(count * type->RawSize + sizeof(ArrayObject)),
+			ObjectAlignment);
 	}
 }
 

@@ -137,7 +137,7 @@ namespace svm {
 			OccurException(SVM_IEC_STACK_EMPTY);
 		}
 	}
-	SVM_NOINLINE_FOR_PROFILING void Interpreter::InterpretToP() noexcept {
+	SVM_NOINLINE_FOR_PROFILING void Interpreter::InterpretToP(std::uint32_t operand) noexcept {
 		if (IsLocalVariable()) {
 			OccurException(SVM_IEC_STACK_EMPTY);
 			return;
@@ -149,17 +149,40 @@ namespace svm {
 			return;
 		}
 
+		const Type targetType = GetType(static_cast<TypeCode>(operand & 0x7FFFFFFF));
+		std::size_t targetCount = 0;
+		std::size_t countSize = 0;
+
+		if (operand >> 31) {
+			const Type* const countTypePtr = m_Stack.Get<Type>(m_Stack.GetUsedSize() - (*typePtr)->Size);
+			if (!countTypePtr || IsLocalVariable((*typePtr)->Size)) {
+				OccurException(SVM_IEC_STACK_EMPTY);
+				return;
+			} else if (*countTypePtr == IntType) {
+				targetCount = static_cast<std::size_t>(
+					reinterpret_cast<const IntObject*>(countTypePtr)->RawObject.Value);
+			} else if (*countTypePtr == LongType) {
+				targetCount = static_cast<std::size_t>(
+					reinterpret_cast<const LongObject*>(countTypePtr)->RawObject.Value);
+			} else {
+				OccurException(SVM_IEC_STACK_DIFFERENTTYPE);
+				return;
+			}
+
+			countSize = (*countTypePtr)->Size;
+		}
+
 		const Type type = *typePtr;
 		if (type == IntType) {
-			TypeCast<PointerObject, IntObject>(typePtr);
+			PointerCast<IntObject>(typePtr, targetType, targetCount, countSize);
 		} else if (type == LongType) {
-			TypeCast<PointerObject, LongObject>(typePtr);
+			PointerCast<LongObject>(typePtr, targetType, targetCount, countSize);
 		} else if (type == SingleType) {
-			TypeCast<PointerObject, SingleObject>(typePtr);
+			PointerCast<SingleObject>(typePtr, targetType, targetCount, countSize);
 		} else if (type == DoubleType) {
-			TypeCast<PointerObject, DoubleObject>(typePtr);
+			PointerCast<DoubleObject>(typePtr, targetType, targetCount, countSize);
 		} else if (type == PointerType) {
-			TypeCast<PointerObject, PointerObject>(typePtr);
+			PointerCast<PointerObject>(typePtr, targetType, targetCount, countSize);
 		} else if (type == GCPointerType) {
 			OccurException(SVM_IEC_POINTER_INVALIDFORPOINTER);
 		} else if (type.IsStructure()) {
@@ -186,5 +209,19 @@ namespace svm {
 		}
 
 		*m_Stack.GetTop<T>() = reinterpret_cast<F*>(typePtr)->template Cast<T>();
+	}
+	template<typename F>
+	SVM_NOINLINE_FOR_PROFILING void Interpreter::PointerCast(
+		Type* typePtr, Type targetType, std::size_t targetCount, std::size_t countSize) noexcept {
+		if (sizeof(PointerObject) > sizeof(F) + countSize) {
+			if (!m_Stack.Expand(sizeof(PointerObject) - sizeof(F) - countSize)) {
+				OccurException(SVM_IEC_STACK_OVERFLOW);
+				return;
+			}
+		} else if (sizeof(PointerObject) < sizeof(F) + countSize) {
+			m_Stack.Reduce(sizeof(F) + countSize - sizeof(PointerObject));
+		}
+
+		*m_Stack.GetTop<PointerObject>() = reinterpret_cast<F*>(typePtr)->CastToPointer(targetType, targetCount);
 	}
 }

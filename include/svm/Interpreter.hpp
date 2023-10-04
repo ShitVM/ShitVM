@@ -23,7 +23,7 @@
 #include <vector>
 
 namespace svm {
-	struct StackFrame final {
+	struct alignas(ObjectAlignment) StackFrame final {
 		svm::Type Type = NoneType;
 		std::size_t StackBegin = 0;
 		std::uint32_t VariableBegin = 0;
@@ -112,14 +112,15 @@ namespace svm {
 	private: // Stack
 		void PushStructure(std::uint32_t code) noexcept;
 		void InitStructure(Structure structure, Type* type) noexcept;
+		void InitStructure(Structure structure, void* firstField) noexcept;
 		void CopyStructure(const Type& type) noexcept;
 		void CopyStructure(const Type& from, Type& to) noexcept;
 
-		template<typename T>
-		bool GetTwoSameType(Type rhsType, T*& lhs) noexcept;
-
 		bool GetArrayInfo(detail::ArrayInfo& info, std::uint32_t operand) noexcept;
 		void InitArray(const detail::ArrayInfo& info, Type* type) noexcept;
+		void InitArray(const detail::ArrayInfo& info, void* firstElement) noexcept;
+		void CopyArray(const Type& type, std::size_t size = 0) noexcept;
+		void CopyArray(const Type& from, Type& to, std::size_t size = 0) noexcept;
 		std::size_t CalcArraySize(const ArrayObject* array) const noexcept;
 
 	public:
@@ -141,17 +142,21 @@ namespace svm {
 	private: // Type-cast
 		template<typename T, typename F>
 		void TypeCast(Type* typePtr) noexcept;
+		template<typename F>
+		void PointerCast(Type* typePtr, Type targetType, std::size_t targetCount, std::size_t countSize) noexcept;
 
 	private:
 		void InterpretToI() noexcept;
 		void InterpretToL() noexcept;
 		void InterpretToSi() noexcept;
 		void InterpretToD() noexcept;
-		void InterpretToP() noexcept;
+		void InterpretToP(std::uint32_t operand) noexcept;
 
 	private: // Memory
 		template<typename T>
 		void DRefAndAssign(const Type* rhsTypePtr) noexcept;
+
+		std::optional<RawPointerObject> GetRawPointerObject(Type* typePtr) noexcept;
 
 	private:
 		void InterpretFLea(std::uint32_t operand) noexcept;

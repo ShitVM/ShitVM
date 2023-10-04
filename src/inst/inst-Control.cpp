@@ -26,37 +26,37 @@ namespace svm {
 		const Type type = *typePtr;
 		if (type == IntType) {
 			const IntObject* value = reinterpret_cast<const IntObject*>(typePtr);
-			if (T::Compare(value->Value)) {
+			if (T::Compare(value->RawObject.Value)) {
 				m_StackFrame.Caller = m_StackFrame.Instructions->GetLabel(operand) - 1;
 				m_Stack.Reduce(sizeof(IntObject));
 			}
 		} else if (type == LongType) {
 			const LongObject* value = reinterpret_cast<const LongObject*>(typePtr);
-			if (T::Compare(value->Value)) {
+			if (T::Compare(value->RawObject.Value)) {
 				m_StackFrame.Caller = m_StackFrame.Instructions->GetLabel(operand) - 1;
 				m_Stack.Reduce(sizeof(LongObject));
 			}
 		} else if (type == SingleType) {
 			const SingleObject* value = reinterpret_cast<const SingleObject*>(typePtr);
-			if (T::Compare(value->Value)) {
+			if (T::Compare(value->RawObject.Value)) {
 				m_StackFrame.Caller = m_StackFrame.Instructions->GetLabel(operand) - 1;
 				m_Stack.Reduce(sizeof(SingleObject));
 			}
 		} else if (type == DoubleType) {
 			const DoubleObject* value = reinterpret_cast<const DoubleObject*>(typePtr);
-			if (T::Compare(value->Value)) {
+			if (T::Compare(value->RawObject.Value)) {
 				m_StackFrame.Caller = m_StackFrame.Instructions->GetLabel(operand) - 1;
 				m_Stack.Reduce(sizeof(DoubleObject));
 			}
 		} else if (type == PointerType) {
 			const PointerObject* value = reinterpret_cast<const PointerObject*>(typePtr);
-			if (T::Compare(value->Value)) {
+			if (T::Compare(value->RawObject.Address)) {
 				m_StackFrame.Caller = m_StackFrame.Instructions->GetLabel(operand) - 1;
 				m_Stack.Reduce(sizeof(PointerObject));
 			}
 		} else if (type == GCPointerType) {
 			const GCPointerObject* value = reinterpret_cast<const GCPointerObject*>(typePtr);
-			if (T::Compare(value->Value)) {
+			if (T::Compare(value->RawObject.Address)) {
 				m_StackFrame.Caller = m_StackFrame.Instructions->GetLabel(operand) - 1;
 				m_Stack.Reduce(sizeof(GCPointerObject));
 			}

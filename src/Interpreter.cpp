@@ -110,7 +110,9 @@ namespace svm {
 
 			case OpCode::ToI: InterpretToI(); break;
 			case OpCode::ToL: InterpretToL(); break;
+			case OpCode::ToSi: InterpretToSi(); break;
 			case OpCode::ToD: InterpretToD(); break;
+			case OpCode::ToP: InterpretToP(inst.Operand); break;
 
 			case OpCode::Null: InterpretNull(); break;
 			case OpCode::New: InterpretNew(inst.Operand); break;
