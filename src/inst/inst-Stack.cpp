@@ -354,7 +354,6 @@ namespace svm {
 			return false;
 		}
 
-		info.Size = CalcArraySize(info.ElementType, info.Count);
 		return true;
 	}
 	SVM_NOINLINE_FOR_PROFILING void Interpreter::InitArray(const detail::ArrayInfo& info, Type* type) noexcept {
@@ -381,7 +380,7 @@ namespace svm {
 	}
 	SVM_NOINLINE_FOR_PROFILING void Interpreter::CopyArray(const Type& from, Type& to, std::size_t size) noexcept {
 		if (!size) {
-			size = CalcArraySize(reinterpret_cast<const ArrayObject*>(&from);
+			size = CalcArraySize(reinterpret_cast<const ArrayObject*>(&from));
 		}
 
 		std::memcpy(&to, &from, size);
@@ -394,7 +393,6 @@ namespace svm {
 		detail::ArrayInfo info;
 		info.ElementType = type;
 		info.Count = count;
-		info.Size = CalcArraySize(type, count);
 
 		InitArray(info, reinterpret_cast<Type*>(object));
 	}
@@ -412,12 +410,13 @@ namespace svm {
 			return;
 		}
 
-		if (m_Stack.GetFreeSize() < info.Size - info.CountSize) {
+		const std::size_t size = CalcArraySize(info.ElementType, info.Count);
+		if (m_Stack.GetFreeSize() < size - info.CountSize) {
 			OccurException(SVM_IEC_STACK_OVERFLOW);
 			return;
 		}
 
-		m_Stack.Expand(info.Size - info.CountSize);
+		m_Stack.Expand(size - info.CountSize);
 		InitArray(info, m_Stack.GetTopType());
 	}
 }

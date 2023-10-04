@@ -40,7 +40,6 @@ namespace svm {
 			Type ElementType;
 			std::uint64_t Count = 0;
 			std::size_t CountSize = 0;
-			std::size_t Size = 0;
 		};
 	}
 
@@ -153,9 +152,6 @@ namespace svm {
 		void InterpretToP(std::uint32_t operand) noexcept;
 
 	private: // Memory
-		template<typename T>
-		void DRefAndAssign(const Type* rhsTypePtr) noexcept;
-
 		std::optional<RawPointerObject> GetRawPointerObject(Type* typePtr) noexcept;
 
 	private:
